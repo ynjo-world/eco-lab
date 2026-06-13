@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>eco-lab · 스터디 발표 자료</title>
+<meta name="description" content="가볍게, 그러나 깊이 있게. 스터디 모임 발표 자료 모음." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #1a2238;
+    --ink-soft: #4a5269;
+    --paper: #f7f4ec;
+    --paper-2: #fffdf8;
+    --line: #e2dccd;
+    --accent: #c0563a;
+    --accent-soft: #f0d9d0;
+    --shadow: 0 1px 2px rgba(26,34,56,.04), 0 8px 28px rgba(26,34,56,.07);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "IBM Plex Sans KR", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Header ───────────────────────────── */
+  header {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .eyebrow {
+    font-size: 13px; font-weight: 600; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: "Gowun Batang", serif;
+    font-size: clamp(38px, 6vw, 60px);
+    font-weight: 700; line-height: 1.1; letter-spacing: -.01em;
+  }
+  h1 .dot { color: var(--accent); }
+  .tagline {
+    margin-top: 18px; font-size: 17px; color: var(--ink-soft);
+    max-width: 46ch;
+  }
+
+  /* ── Controls ─────────────────────────── */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    align-items: center; justify-content: space-between;
+    padding: 28px 0 8px;
+  }
+  .search {
+    position: relative; flex: 1; min-width: 220px;
+  }
+  .search input {
+    width: 100%; padding: 12px 16px 12px 42px;
+    font: inherit; font-size: 15px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--paper-2); color: var(--ink);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .search svg {
+    position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; stroke: var(--ink-soft);
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    font: inherit; font-size: 13px; font-weight: 500;
+    padding: 7px 14px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--paper-2);
+    color: var(--ink-soft); cursor: pointer;
+    transition: all .18s;
+  }
+  .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .tag.active {
+    background: var(--ink); border-color: var(--ink); color: #fff;
+  }
+
+  .count { padding: 18px 0 6px; font-size: 14px; color: var(--ink-soft); }
+
+  /* ── Cards ────────────────────────────── */
+  .grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    padding: 8px 0 64px;
+  }
+  .card {
+    display: flex; flex-direction: column;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 24px;
+    text-decoration: none; color: inherit;
+    box-shadow: var(--shadow);
+    transition: transform .22s cubic-bezier(.2,.7,.3,1), box-shadow .22s, border-color .22s;
+    opacity: 0; transform: translateY(14px);
+    animation: rise .5s forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 2px 4px rgba(26,34,56,.05), 0 18px 40px rgba(192,86,58,.13);
+  }
+  .card .date {
+    font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    color: var(--accent); margin-bottom: 12px;
+  }
+  .card h2 {
+    font-family: "Gowun Batang", serif;
+    font-size: 23px; font-weight: 700; line-height: 1.25;
+    letter-spacing: -.01em; margin-bottom: 10px;
+  }
+  .card p {
+    font-size: 14.5px; color: var(--ink-soft); flex: 1;
+  }
+  .card .cardtags {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px;
+  }
+  .card .cardtags span {
+    font-size: 12px; padding: 4px 10px; border-radius: 999px;
+    background: var(--paper); border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .card .go {
+    margin-top: 16px; font-size: 14px; font-weight: 600; color: var(--ink);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .card .go svg { width: 15px; height: 15px; transition: transform .2s; }
+  .card:hover .go svg { transform: translateX(3px); }
+
+  .empty, .error {
+    text-align: center; padding: 60px 20px; color: var(--ink-soft);
+  }
+  .error { color: var(--accent); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 32px 0 48px; font-size: 13px; color: var(--ink-soft);
+  }
+
+  @media (max-width: 560px) {
+    header { padding: 48px 0 32px; }
+    .controls { flex-direction: column; align-items: stretch; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card { animation: none; opacity: 1; transform: none; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">Study Group · 발표 자료실</div>
+      <h1>eco&#8209;lab<span class="dot">.</span></h1>
+      <p class="tagline">가볍게 모여 깊이 있게 나누는 이야기. 지금까지의 발표 자료를 한곳에 모았습니다.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="controls">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input id="q" type="text" placeholder="제목·내용으로 검색…" aria-label="검색" />
+      </div>
+      <div class="tags" id="tags"></div>
+    </div>
+
+    <div class="count" id="count"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer>
+    <div class="wrap">© <span id="yr"></span> eco-lab · 새 발표를 추가하려면 <code>slides/</code>에 폴더를 만들고 <code>presentations.json</code>에 항목을 추가하세요.</div>
+  </footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  let DATA = [];
+  let activeTag = null;
+  let query = '';
+
+  const grid = document.getElementById('grid');
+  const tagsEl = document.getElementById('tags');
+  const countEl = document.getElementById('count');
+
+  const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+  function fmtDate(s){
+    const d = new Date(s);
+    if (isNaN(d)) return s;
+    return d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+  }
+
+  function render(){
+    const list = DATA
+      .filter(p => !activeTag || (p.tags||[]).includes(activeTag))
+      .filter(p => {
+        if (!query) return true;
+        const hay = (p.title + ' ' + (p.summary||'') + ' ' + (p.tags||[]).join(' ')).toLowerCase();
+        return hay.includes(query.toLowerCase());
+      })
+      .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    countEl.textContent = `발표 ${list.length}개`;
+
+    if (!list.length){
+      grid.innerHTML = '<div class="empty">조건에 맞는 발표가 없어요.</div>';
+      return;
+    }
+
+    grid.innerHTML = list.map((p, i) => `
+      <a class="card" href="slides/${p.slug}/" style="animation-delay:${i*60}ms">
+        <span class="date">${fmtDate(p.date)}</span>
+        <h2>${p.title}</h2>
+        <p>${p.summary || ''}</p>
+        <div class="cardtags">${(p.tags||[]).map(t=>`<span>${t}</span>`).join('')}</div>
+        <span class="go">자료 보기 ${arrow}</span>
+      </a>
+    `).join('');
+  }
+
+  function buildTags(){
+    const all = [...new Set(DATA.flatMap(p => p.tags || []))].sort();
+    tagsEl.innerHTML = '';
+    const mk = (label, val) => {
+      const b = document.createElement('button');
+      b.className = 'tag' + (activeTag === val ? ' active' : '');
+      b.textContent = label;
+      b.onclick = () => { activeTag = (activeTag === val ? null : val); buildTags(); render(); };
+      tagsEl.appendChild(b);
+    };
+    mk('전체', null);
+    all.forEach(t => mk(t, t));
+  }
+
+  document.getElementById('q').addEventListener('input', e => { query = e.target.value; render(); });
+
+  fetch('presentations.json', { cache: 'no-store' })
+    .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data => { DATA = Array.isArray(data) ? data : []; buildTags(); render(); })
+    .catch(err => {
+      grid.innerHTML = `<div class="error">presentations.json을 불러오지 못했어요 (${err.message}).<br>파일이 루트에 있는지 확인해 주세요.</div>`;
+      countEl.textContent = '';
+    });
+</script>
+</body>
+</html>

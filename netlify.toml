@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+# /slides/xxx 로 끝에 슬래시 없이 접근해도 동작하도록
+[[redirects]]
+  from = "/slides/*"
+  to = "/slides/:splat/index.html"
+  status = 200

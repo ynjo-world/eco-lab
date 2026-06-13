@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>금리, 처음부터 끝까지 — 스터디 발표자료</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15202b;
+    --paper:#f6f3ec;
+    --paper-2:#efe9dc;
+    --line:#d6cdb8;
+    --accent:#0a5d57;       /* 깊은 청록 — 안정·중앙은행 */
+    --accent-soft:#e3efed;
+    --rise:#b5482e;         /* 인상 — 벽돌 */
+    --fall:#2c6e8f;         /* 인하 — 청 */
+    --hold:#8a7a52;         /* 동결 — 황토 */
+    --muted:#6a6353;
+    --gold:#a9842f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'IBM Plex Sans KR',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Gowun Batang',serif;}
+
+  /* ===== 진행 막대 ===== */
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0%;z-index:100;transition:width .15s ease-out}
+
+  /* ===== 슬라이드 공통 ===== */
+  section.slide{
+    min-height:100vh;
+    padding:clamp(2.4rem,6vw,6rem) clamp(1.4rem,7vw,9rem);
+    display:flex;flex-direction:column;justify-content:center;
+    border-bottom:1px solid var(--line);
+    position:relative;
+    max-width:1180px;margin:0 auto;
+  }
+  .eyebrow{
+    font-size:.74rem;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;margin-bottom:1.1rem;
+    display:flex;align-items:center;gap:.7rem;
+  }
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--accent)}
+  h1,h2{font-weight:700;line-height:1.18;letter-spacing:-.01em}
+  h2.display{font-size:clamp(1.9rem,4.4vw,3.1rem);margin-bottom:1.4rem}
+  p{margin-bottom:1rem;font-weight:300;font-size:clamp(1rem,1.15vw,1.12rem)}
+  p strong{font-weight:600}
+  .lead{font-size:clamp(1.1rem,1.5vw,1.32rem);color:var(--ink);font-weight:400}
+
+  /* ===== 표지 ===== */
+  .cover{justify-content:center;text-align:left;background:
+     radial-gradient(circle at 85% 12%,rgba(10,93,87,.07),transparent 45%),
+     var(--paper)}
+  .cover .kicker{font-size:.8rem;letter-spacing:.36em;color:var(--accent);font-weight:600;margin-bottom:1.6rem}
+  .cover h1{font-size:clamp(2.7rem,8vw,6rem);font-family:'Gowun Batang',serif}
+  .cover h1 .pct{color:var(--accent);font-style:normal}
+  .cover .sub{margin-top:1.7rem;font-size:clamp(1.05rem,1.6vw,1.35rem);color:var(--muted);max-width:46ch;font-weight:300}
+  .cover .meta{margin-top:3rem;display:flex;gap:2.2rem;flex-wrap:wrap;font-size:.84rem;color:var(--muted);letter-spacing:.04em}
+  .cover .meta b{display:block;color:var(--ink);font-weight:600;font-size:1rem;margin-top:.2rem;font-family:'Gowun Batang',serif}
+
+  /* ===== 목차 ===== */
+  .toc-list{counter-reset:toc;border-top:1px solid var(--line);margin-top:1rem}
+  .toc-list a{
+    counter-increment:toc;display:grid;grid-template-columns:3.2rem 1fr auto;
+    align-items:baseline;gap:1rem;padding:1.05rem .2rem;border-bottom:1px solid var(--line);
+    text-decoration:none;color:var(--ink);transition:.2s;
+  }
+  .toc-list a::before{content:counter(toc,decimal-leading-zero);color:var(--accent);font-weight:600;font-size:.95rem}
+  .toc-list a .t{font-weight:500;font-size:1.12rem}
+  .toc-list a .d{color:var(--muted);font-size:.86rem;font-weight:300;justify-self:end;text-align:right}
+  .toc-list a:hover{background:var(--accent-soft);padding-left:1rem}
+
+  /* ===== 강조 정의 박스 ===== */
+  .def{
+    background:var(--accent);color:#fff;border-radius:3px;
+    padding:clamp(1.6rem,3vw,2.4rem);margin:1.6rem 0;
+    box-shadow:0 14px 40px -22px rgba(10,93,87,.7);
+  }
+  .def .label{font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;opacity:.8;font-weight:600;margin-bottom:.7rem}
+  .def .body{font-family:'Gowun Batang',serif;font-size:clamp(1.25rem,2.3vw,1.7rem);line-height:1.55;font-weight:400}
+  .def .body em{color:#f3d9a0;font-style:normal;font-weight:700}
+
+  /* ===== 일반 카드 ===== */
+  .grid{display:grid;gap:1.1rem;margin-top:1.4rem}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{
+    background:#fff;border:1px solid var(--line);border-radius:3px;
+    padding:1.5rem 1.45rem;position:relative;
+  }
+  .card h3{font-size:1.08rem;font-weight:600;margin-bottom:.55rem;display:flex;align-items:center;gap:.55rem}
+  .card h3 .num{font-family:'Gowun Batang',serif;color:var(--accent);font-size:1.3rem}
+  .card p{font-size:.95rem;margin-bottom:0;color:#3a4149}
+  .card .ico{font-size:1.5rem;line-height:1;margin-bottom:.7rem;display:block}
+
+  /* ===== 비유 박스 ===== */
+  .analogy{
+    border-left:3px solid var(--gold);background:var(--paper-2);
+    padding:1.2rem 1.5rem;margin:1.4rem 0;border-radius:0 3px 3px 0;
+  }
+  .analogy .tag{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.45rem}
+  .analogy p{margin-bottom:0;font-size:1rem}
+
+  /* ===== 흐름 다이어그램 ===== */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:1.6rem 0}
+  .flow .step{
+    flex:1;min-width:150px;background:#fff;border:1px solid var(--line);
+    padding:1.15rem 1rem;text-align:center;position:relative;
+  }
+  .flow .step .n{font-size:.7rem;letter-spacing:.2em;color:var(--accent);font-weight:700}
+  .flow .step .h{font-weight:600;margin:.35rem 0;font-size:1rem}
+  .flow .step .x{font-size:.85rem;color:var(--muted)}
+  .flow .arrow{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:1.4rem;padding:0 .3rem}
+  @media(max-width:680px){.flow .arrow{transform:rotate(90deg)}}
+
+  /* ===== 인상/인하 효과 ===== */
+  .seesaw{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:1.4rem}
+  .seesaw .col{border-radius:3px;padding:1.4rem 1.35rem;color:#fff}
+  .seesaw .up{background:var(--rise)}
+  .seesaw .down{background:var(--fall)}
+  .seesaw .col h3{font-size:1.15rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+  .seesaw .col ul{list-style:none;font-size:.95rem}
+  .seesaw .col li{padding:.32rem 0;padding-left:1.3rem;position:relative;font-weight:300}
+  .seesaw .col li::before{content:"→";position:absolute;left:0;opacity:.75}
+
+  /* ===== 한국 금리 결정 주체 ===== */
+  .bok-quote{font-family:'Gowun Batang',serif;font-size:clamp(1.15rem,2vw,1.5rem);line-height:1.6;border-left:3px solid var(--accent);padding-left:1.4rem;margin:1.4rem 0;color:var(--ink)}
+
+  /* ===== 표 ===== */
+  table{width:100%;border-collapse:collapse;margin:1.4rem 0;font-size:.95rem;background:#fff}
+  caption{text-align:left;font-size:.8rem;color:var(--muted);margin-bottom:.6rem;letter-spacing:.04em}
+  th,td{padding:.85rem 1rem;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{background:var(--ink);color:var(--paper);font-weight:500;font-size:.85rem;letter-spacing:.03em}
+  tbody tr:hover{background:var(--accent-soft)}
+  td .rate{font-family:'Gowun Batang',serif;font-weight:700;font-size:1.15rem}
+  .pill{display:inline-block;font-size:.72rem;font-weight:600;padding:.18rem .6rem;border-radius:20px;letter-spacing:.03em}
+  .pill.up{background:#f5e2dc;color:var(--rise)}
+  .pill.down{background:#dceaf1;color:var(--fall)}
+  .pill.hold{background:#efe7cf;color:var(--hold)}
+
+  /* ===== 국가 예측 카드 ===== */
+  .country{background:#fff;border:1px solid var(--line);border-radius:3px;padding:1.5rem;margin-bottom:1.1rem;border-top:4px solid}
+  .country.kr{border-top-color:#c33}
+  .country.us{border-top-color:#2b4a8b}
+  .country.jp{border-top-color:#b5482e}
+  .country .head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.7rem}
+  .country .flag{font-size:1.05rem;font-weight:700}
+  .country .now{font-family:'Gowun Batang',serif}
+  .country .now b{font-size:1.5rem;color:var(--accent)}
+  .country .now span{font-size:.8rem;color:var(--muted);font-weight:300}
+  .country p{font-size:.96rem;margin-bottom:0}
+  .country .dir{font-size:.78rem;font-weight:600;letter-spacing:.05em;margin-bottom:.6rem}
+
+  /* ===== 은행원 시선 ===== */
+  .banker{background:var(--ink);color:var(--paper);border-radius:4px;padding:clamp(1.6rem,3vw,2.4rem);margin:1.5rem 0}
+  .banker .eyebrow{color:#f3d9a0}
+  .banker .eyebrow::before{background:#f3d9a0}
+  .banker h3{font-family:'Gowun Batang',serif;font-size:1.4rem;margin-bottom:1rem;color:#fff}
+  .banker .spread{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1.3rem 0;font-family:'Gowun Batang',serif}
+  .banker .spread .box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:3px;padding:.9rem 1.2rem;text-align:center;flex:1;min-width:130px}
+  .banker .spread .box small{display:block;font-family:'IBM Plex Sans KR';font-size:.72rem;letter-spacing:.1em;opacity:.7;font-weight:300;margin-bottom:.3rem}
+  .banker .spread .box b{font-size:1.3rem;color:#f3d9a0}
+  .banker .spread .op{font-size:1.6rem;color:#f3d9a0}
+  .banker p{color:#d9d4c5}
+  .banker ul{list-style:none;margin-top:.5rem}
+  .banker li{padding:.4rem 0 .4rem 1.5rem;position:relative;color:#e6e2d6;font-weight:300;font-size:.98rem}
+  .banker li::before{content:"◆";position:absolute;left:0;color:#f3d9a0;font-size:.7rem;top:.7rem}
+
+  /* ===== 요약/마무리 ===== */
+  .takeaways{counter-reset:tk;margin-top:1.2rem}
+  .takeaways .item{counter-increment:tk;display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:start;padding:1.1rem 0;border-bottom:1px solid var(--line)}
+  .takeaways .item::before{content:counter(tk);font-family:'Gowun Batang',serif;font-size:1.6rem;color:var(--accent);font-weight:700;line-height:1.2}
+  .takeaways .item p{margin-bottom:0}
+  .takeaways .item b{font-weight:600}
+
+  .note{font-size:.8rem;color:var(--muted);margin-top:1.4rem;font-weight:300;border-top:1px dashed var(--line);padding-top:1rem}
+  .footer{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:.85rem;background:var(--paper-2)}
+
+  /* ===== 청중에게 던지는 질문 ===== */
+  .ask{
+    background:var(--accent-soft);border:1px dashed var(--accent);
+    border-radius:4px;padding:1.2rem 1.4rem;margin:1.5rem 0;
+    display:flex;gap:.9rem;align-items:flex-start;
+  }
+  .ask .bubble{font-size:1.6rem;line-height:1;flex-shrink:0;margin-top:.1rem}
+  .ask .q-label{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:.35rem}
+  .ask p{margin-bottom:0;font-size:1.06rem;font-weight:500;color:var(--ink)}
+
+  /* ===== 퀴즈 카드 ===== */
+  .quiz{
+    background:#fff;border:1px solid var(--line);border-radius:4px;
+    padding:clamp(1.4rem,3vw,2rem);margin:1.6rem 0;
+    box-shadow:0 10px 34px -24px rgba(21,32,43,.55);
+  }
+  .quiz .tag{font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
+  .quiz .tag::before{content:"Q";display:inline-flex;width:22px;height:22px;background:var(--gold);color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:.8rem;letter-spacing:0}
+  .quiz .question{font-family:'Gowun Batang',serif;font-size:clamp(1.12rem,2.1vw,1.45rem);font-weight:700;line-height:1.5;margin-bottom:1.1rem;color:var(--ink)}
+  .quiz .opts{display:grid;gap:.6rem}
+  .quiz .opt{
+    text-align:left;font-family:inherit;font-size:.98rem;color:var(--ink);
+    background:var(--paper);border:1px solid var(--line);border-radius:3px;
+    padding:.85rem 1.1rem;cursor:pointer;transition:.18s;display:flex;gap:.7rem;align-items:center;
+  }
+  .quiz .opt .mk{font-weight:700;color:var(--accent);font-family:'Gowun Batang',serif;flex-shrink:0}
+  .quiz .opt:hover{background:var(--accent-soft);border-color:var(--accent)}
+  .quiz .opt.correct{background:#e2f0e4;border-color:#2f8f4e;color:#1d5e32}
+  .quiz .opt.correct .mk{color:#2f8f4e}
+  .quiz .opt.wrong{background:#f7e3df;border-color:var(--rise);color:#8a3322}
+  .quiz .opt.wrong .mk{color:var(--rise)}
+  .quiz .opt:disabled{cursor:default}
+  .quiz .explain{
+    margin-top:1.1rem;padding:1rem 1.2rem;background:var(--accent);color:#fff;border-radius:3px;
+    font-size:.96rem;line-height:1.6;display:none;
+  }
+  .quiz .explain.show{display:block;animation:fade .4s ease}
+  .quiz .explain b{color:#f3d9a0}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  @media(max-width:680px){
+    .g2,.g3,.seesaw{grid-template-columns:1fr}
+    .cover .meta{gap:1.2rem}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  /* 등장 애니메이션 */
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div class="progress" id="bar"></div>
+
+<!-- ========== 표지 ========== -->
+<section class="slide cover">
+  <div class="kicker">스터디 발표자료 · 기초부터 전망까지</div>
+  <h1 class="display">돈에도 <span class="pct">가격</span>이<br>있습니다</h1>
+  <p class="sub">그 가격의 이름이 바로 <strong>금리</strong>입니다. 금리를 알면 대출·예금·집값·환율이 왜 움직이는지 보이기 시작합니다.</p>
+  <div class="meta">
+    <div>대상<b>금리를 처음 접하는 분</b></div>
+    <div>다루는 범위<b>개념 · 한국 결정구조 · 은행원 시점 · 국제 전망</b></div>
+    <div>기준 시점<b>2026년 6월</b></div>
+  </div>
+</section>
+
+<!-- ========== 목차 ========== -->
+<section class="slide">
+  <div class="eyebrow reveal">차례</div>
+  <h2 class="display reveal">오늘 함께 볼 내용</h2>
+  <nav class="toc-list reveal">
+    <a href="#s1"><span class="t">금리란 무엇인가</span><span class="d">돈을 빌리는 값</span></a>
+    <a href="#s2"><span class="t">금리는 왜, 어떻게 움직이나</span><span class="d">올리면 / 내리면</span></a>
+    <a href="#s3"><span class="t">한국의 금리는 누가 정하나</span><span class="d">한국은행 · 금통위</span></a>
+    <a href="#s4"><span class="t">기준금리가 내 통장까지 오는 길</span><span class="d">파급 경로</span></a>
+    <a href="#s5"><span class="t">은행원의 눈으로 본 금리</span><span class="d">예대마진의 세계</span></a>
+    <a href="#s6"><span class="t">세계 금리 지도와 전망</span><span class="d">한국 · 미국 · 일본</span></a>
+    <a href="#s7"><span class="t">엔 캐리 트레이드</span><span class="d">세계를 흔드는 돈의 흐름</span></a>
+    <a href="#s8"><span class="t">금리가 바꾸는 자산시장</span><span class="d">주식 · 부동산</span></a>
+    <a href="#s9"><span class="t">새 선장, 신현송 총재</span><span class="d">이력과 성향</span></a>
+    <a href="#s10"><span class="t">한국은행의 앞으로</span><span class="d">예상 시나리오</span></a>
+    <a href="#s11"><span class="t">핵심 정리</span><span class="d">오늘 기억할 것</span></a>
+  </nav>
+</section>
+
+<!-- ========== 1. 금리란 ========== -->
+<section class="slide" id="s1">
+  <div class="eyebrow reveal">01 — 개념</div>
+  <h2 class="display reveal">금리란 무엇인가</h2>
+
+  <div class="ask reveal">
+    <span class="bubble">🙋</span>
+    <div>
+      <div class="q-label">먼저 생각해볼까요</div>
+      <p>친구한테 10만 원 빌려주면서 “나중에 11만 원으로 갚아”라고 한 적 있나요? 그럼 여러분은 이미 ‘금리’를 매겨본 겁니다. 그 1만 원, 정체가 뭘까요?</p>
+    </div>
+  </div>
+
+  <p class="lead reveal">한 문장으로 줄이면, 금리는 <strong>“돈을 빌리는 데 드는 값”</strong>입니다. 우리가 물건을 빌리면 사용료를 내듯, 돈을 빌려도 사용료를 냅니다.</p>
+
+  <div class="def reveal">
+    <div class="label">정의</div>
+    <div class="body">금리 = 빌린 돈(<em>원금</em>)에 대해 일정 기간 동안 내는 <em>사용료</em>를, 원금의 <em>백분율(%)</em>로 나타낸 것</div>
+  </div>
+
+  <div class="analogy reveal">
+    <div class="tag">쉽게 말하면</div>
+    <p>친구에게 100만 원을 빌려주고 1년 뒤 105만 원을 돌려받기로 했다면, 더 받은 5만 원이 ‘이자’이고, 원금 대비 비율인 <strong>5%</strong>가 ‘금리’입니다. 돈에도 가격표가 붙어 있는 셈이죠.</p>
+  </div>
+
+  <p class="reveal">금리는 보는 방향에 따라 두 얼굴을 가집니다. 같은 숫자라도 누구에게는 비용이고 누구에게는 수익입니다.</p>
+  <div class="grid g2 reveal">
+    <div class="card">
+      <span class="ico">🏦</span>
+      <h3><span class="num">예금</span> 금리</h3>
+      <p>내가 은행에 돈을 맡길 때 <strong>받는</strong> 이자율. 은행 입장에서는 돈을 빌려오는 비용입니다.</p>
+    </div>
+    <div class="card">
+      <span class="ico">💳</span>
+      <h3><span class="num">대출</span> 금리</h3>
+      <p>내가 은행에서 돈을 빌릴 때 <strong>내는</strong> 이자율. 보통 예금금리보다 높게 책정됩니다.</p>
+    </div>
+  </div>
+
+  <p class="reveal" style="margin-top:1.4rem">금리가 중요한 이유는 단순합니다. <strong>돈의 값이 바뀌면 사람들의 행동이 바뀌기 때문</strong>입니다. 빌리는 게 비싸지면 덜 빌리고 더 저축하며, 싸지면 더 빌리고 더 씁니다. 이 작은 변화가 모이면 집값, 물가, 일자리, 환율까지 움직입니다.</p>
+</section>
+
+<!-- ========== 2. 금리는 왜 움직이나 ========== -->
+<section class="slide" id="s2">
+  <div class="eyebrow reveal">02 — 작동 원리</div>
+  <h2 class="display reveal">올리면 식고, 내리면 데워진다</h2>
+  <p class="lead reveal">금리는 경제의 <strong>온도 조절 장치</strong>입니다. 경기가 과열되어 물가가 너무 오르면 금리를 올려 식히고, 경기가 침체되면 금리를 내려 데웁니다.</p>
+
+  <div class="seesaw reveal">
+    <div class="col up">
+      <h3>▲ 금리를 올리면</h3>
+      <ul>
+        <li>대출이자가 비싸져 빌리기를 꺼린다</li>
+        <li>저축이 늘고 소비·투자가 줄어든다</li>
+        <li>시중에 도는 돈이 줄어 물가 상승이 둔화된다</li>
+        <li>경기가 식는다 — “긴축”</li>
+      </ul>
+    </div>
+    <div class="col down">
+      <h3>▼ 금리를 내리면</h3>
+      <ul>
+        <li>대출이자가 싸져 빌리기 쉬워진다</li>
+        <li>소비·투자가 늘고 저축 매력은 줄어든다</li>
+        <li>시중에 돈이 풀려 경기가 살아난다</li>
+        <li>경기가 데워진다 — “완화”</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="analogy reveal">
+    <div class="tag">한눈에</div>
+    <p>금리는 <strong>물가</strong>를 잡는 가장 강력한 도구입니다. 물가가 치솟으면(인플레이션) 중앙은행은 금리를 올려 “돈을 비싸게” 만들고, 그러면 사람들이 지출을 줄여 물가 상승 압력이 가라앉습니다. 다만 너무 세게 올리면 경기가 얼어붙을 수 있어, 가속페달과 브레이크를 번갈아 밟듯 신중하게 조절합니다.</p>
+  </div>
+
+  <div class="quiz reveal">
+    <div class="tag">퀴즈</div>
+    <div class="question">물가가 너무 빠르게 오르고 있습니다. 중앙은행은 보통 어떻게 할까요?</div>
+    <div class="opts">
+      <button class="opt"><span class="mk">A</span> 금리를 내려서 사람들이 돈을 더 쓰게 한다</button>
+      <button class="opt" data-correct="1"><span class="mk">B</span> 금리를 올려서 소비·대출을 줄이고 과열을 식힌다</button>
+      <button class="opt"><span class="mk">C</span> 금리는 물가와 아무 상관이 없다</button>
+    </div>
+    <div class="explain"><b>정답은 B.</b> 물가가 과열되면 금리를 올려 ‘돈을 비싸게’ 만듭니다. 그러면 사람들이 덜 빌리고 덜 써서 물가 상승 압력이 가라앉습니다. 반대로 경기가 침체되면 금리를 내려 데우죠.</div>
+  </div>
+</section>
+
+<!-- ========== 3. 한국의 금리 결정 ========== -->
+<section class="slide" id="s3">
+  <div class="eyebrow reveal">03 — 한국의 구조</div>
+  <h2 class="display reveal">한국의 금리는 누가 정하나</h2>
+  <p class="lead reveal">한국에서 모든 금리의 출발점이 되는 <strong>‘기준금리’</strong>는 시장이 아니라 <strong>한국은행</strong>이 결정합니다. 한국은행은 우리나라의 중앙은행입니다.</p>
+
+  <div class="grid g3 reveal">
+    <div class="card">
+      <span class="ico">🏛️</span>
+      <h3><span class="num">누가</span></h3>
+      <p>한국은행 안의 <strong>금융통화위원회(금통위)</strong>. 총재를 포함한 7명의 위원이 표결로 결정합니다.</p>
+    </div>
+    <div class="card">
+      <span class="ico">📅</span>
+      <h3><span class="num">언제</span></h3>
+      <p>1년에 <strong>8번</strong> 열리는 ‘통화정책방향 결정회의’에서 정합니다. (1·2·4·5·7·8·10·11월)</p>
+    </div>
+    <div class="card">
+      <span class="ico">🎯</span>
+      <h3><span class="num">왜</span></h3>
+      <p>가장 큰 목표는 <strong>물가 안정</strong>(목표 2%)과 <strong>금융 안정</strong>입니다.</p>
+    </div>
+  </div>
+
+  <div class="bok-quote reveal">
+    “금통위는 다음 회의 때까지 한국은행 기준금리를 현재의 <strong>2.50%</strong> 수준에서 유지하기로 한다.”
+    <div style="font-family:'IBM Plex Sans KR';font-size:.82rem;color:var(--muted);font-weight:300;margin-top:.6rem">— 2026년 5월 통화정책방향 의결문 (현재 한국 기준금리 2.50%)</div>
+  </div>
+
+  <p class="reveal">위원들은 무엇을 보고 결정할까요? 한 가지가 아니라 여러 지표를 종합합니다.</p>
+  <div class="grid g2 reveal">
+    <div class="card"><h3><span class="num">①</span> 물가</h3><p>소비자물가 상승률이 목표(2%)보다 높은가 낮은가.</p></div>
+    <div class="card"><h3><span class="num">②</span> 경기·고용</h3><p>성장세가 둔화되는가, 일자리는 늘고 있는가.</p></div>
+    <div class="card"><h3><span class="num">③</span> 가계부채·집값</h3><p>대출이 과하게 늘어 부동산이 과열되는가.</p></div>
+    <div class="card"><h3><span class="num">④</span> 환율·해외금리</h3><p>특히 미국 금리와의 격차, 원/달러 환율 흐름.</p></div>
+  </div>
+  <p class="note reveal">즉, 한국 금리는 ‘한국 사정’만으로 정해지지 않습니다. 미국 등 주요국 금리, 환율, 국제 정세가 모두 영향을 줍니다. 그래서 뒤에서 국제 금리를 함께 봅니다.</p>
+
+  <div class="quiz reveal">
+    <div class="tag">퀴즈</div>
+    <div class="question">우리나라 기준금리는 누가 결정할까요?</div>
+    <div class="opts">
+      <button class="opt"><span class="mk">A</span> 대통령이 직접 정한다</button>
+      <button class="opt"><span class="mk">B</span> 시중은행들이 모여서 투표한다</button>
+      <button class="opt" data-correct="1"><span class="mk">C</span> 한국은행 ‘금융통화위원회’ 7명이 표결로 정한다</button>
+    </div>
+    <div class="explain"><b>정답은 C.</b> 한국은행 안의 금융통화위원회(금통위)가 1년에 8번 회의를 열어 표결로 결정합니다. 정부나 시중은행이 마음대로 정하는 게 아니라, 중앙은행이 독립적으로 정하는 것이 핵심이에요. 현재는 <b>2.50%</b>입니다.</div>
+  </div>
+</section>
+
+<!-- ========== 4. 파급 경로 ========== -->
+<section class="slide" id="s4">
+  <div class="eyebrow reveal">04 — 파급 경로</div>
+  <h2 class="display reveal">기준금리가 내 통장까지 오는 길</h2>
+  <p class="lead reveal">한국은행이 정하는 건 <strong>딱 하나, 기준금리</strong>뿐입니다. 그런데 이 하나가 도미노처럼 모든 금리를 움직입니다.</p>
+
+  <div class="flow reveal">
+    <div class="step"><div class="n">START</div><div class="h">한국은행</div><div class="x">기준금리 결정 2.50%</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">전달</div><div class="h">은행 간 시장</div><div class="x">은행이 돈을 빌리는 비용 변화</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">반영</div><div class="h">시중은행</div><div class="x">예금·대출 금리 조정</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">END</div><div class="h">우리 생활</div><div class="x">이자·소비·집값·투자</div></div>
+  </div>
+
+  <div class="analogy reveal">
+    <div class="tag">비유</div>
+    <p>기준금리는 강의 <strong>가장 윗물(상류)</strong>입니다. 상류의 수문을 조금만 열거나 닫아도, 하류에 있는 주택담보대출 금리, 신용대출 금리, 예금 금리가 차례로 따라 움직입니다. 그래서 뉴스에서 “기준금리 동결/인상”이 그렇게 중요하게 다뤄지는 것입니다.</p>
+  </div>
+</section>
+
+<!-- ========== 5. 은행원의 시선 ========== -->
+<section class="slide" id="s5">
+  <div class="eyebrow reveal">05 — 현장의 시선</div>
+  <h2 class="display reveal">은행원의 눈으로 본 금리</h2>
+
+  <div class="ask reveal">
+    <span class="bubble">🤔</span>
+    <div>
+      <div class="q-label">질문</div>
+      <p>은행은 도대체 어떻게 돈을 벌까요? 우리가 맡긴 예금에 이자를 주고, 대출에도 이자를 받는데… 그 사이 어디서 이익이 생기는 걸까요?</p>
+    </div>
+  </div>
+
+  <p class="lead reveal">일반인에게 금리가 ‘비용 또는 수익’이라면, 은행원에게 금리는 <strong>회사의 밥줄이자 영업 그 자체</strong>입니다. 은행은 ‘돈을 싸게 빌려와 비싸게 빌려주는’ 사업이기 때문입니다.</p>
+
+  <div class="banker reveal">
+    <div class="eyebrow">은행 수익의 핵심</div>
+    <h3>예대마진 — 은행이 먹고사는 차이</h3>
+    <div class="spread">
+      <div class="box"><small>대출금리 (받는다)</small><b>예: 5.0%</b></div>
+      <div class="op">−</div>
+      <div class="box"><small>예금금리 (준다)</small><b>예: 3.0%</b></div>
+      <div class="op">=</div>
+      <div class="box"><small>예대마진</small><b>2.0%p</b></div>
+    </div>
+    <p>이 <strong>예대마진(대출금리 − 예금금리)</strong>이 은행의 가장 기본적인 이익원입니다. 금리 자체보다 ‘대출금리와 예금금리의 격차’가 은행 수익을 좌우합니다.</p>
+  </div>
+
+  <p class="reveal">그래서 은행원은 같은 금리 뉴스를 일반 고객과는 다른 각도로 읽습니다.</p>
+  <div class="banker reveal">
+    <div class="eyebrow">은행원이 금리에서 보는 것</div>
+    <ul>
+      <li><strong>금리 인상기</strong> — 대출금리가 예금금리보다 빠르게 오르면 예대마진이 커져 수익에 유리합니다. 다만 이자 부담이 커진 고객의 <strong>연체·부실(건전성)</strong> 위험도 함께 커집니다.</li>
+      <li><strong>금리 인하기</strong> — 마진이 줄기 쉬워, 비이자 수익(수수료·자산관리)이나 대출 규모 확대로 만회하려 합니다.</li>
+      <li><strong>조달비용 관리</strong> — 고객 예금, 은행채 발행 등으로 ‘얼마나 싸게 돈을 구하느냐’가 핵심 경쟁력입니다.</li>
+      <li><strong>리스크 관리</strong> — 변동금리 대출이 많으면, 금리가 급변할 때 고객 상환능력과 은행 손익이 동시에 흔들립니다.</li>
+      <li><strong>영업 타이밍</strong> — 금리 방향 전망에 따라 고정·변동금리 상품, 예적금 특판 시점을 설계합니다.</li>
+    </ul>
+  </div>
+  <p class="note reveal">정리하면, 은행원에게 금리는 단순한 숫자가 아니라 <strong>‘마진 · 건전성 · 조달 · 영업 전략’이 한꺼번에 걸린 경영 변수</strong>입니다. 고객의 이익과 은행의 이익이 정확히 반대 방향일 때가 많다는 점이 핵심입니다.</p>
+</section>
+
+<!-- ========== 6. 국제 금리 ========== -->
+<section class="slide" id="s6">
+  <div class="eyebrow reveal">06 — 세계 지도</div>
+  <h2 class="display reveal">세계 금리 지도와 전망</h2>
+  <p class="lead reveal">금리는 나라마다 다르고, 서로 영향을 줍니다. 2026년 6월 현재 한국·미국·일본의 상황과 앞으로의 방향을 살펴봅니다.</p>
+
+  <table class="reveal">
+    <caption>2026년 6월 기준 주요국 기준금리 현황 (자료: 각국 중앙은행)</caption>
+    <thead>
+      <tr><th>국가 (중앙은행)</th><th>현재 기준금리</th><th>최근 흐름</th><th>방향</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>🇰🇷 한국 (한국은행)</td><td><span class="rate">2.50%</span></td><td>여러 차례 동결 유지</td><td><span class="pill hold">동결 우세</span></td></tr>
+      <tr><td>🇺🇸 미국 (연준·Fed)</td><td><span class="rate">3.50–3.75%</span></td><td>2025년 말 인하 후 장기 정지</td><td><span class="pill hold">동결 / 인하 논쟁</span></td></tr>
+      <tr><td>🇯🇵 일본 (BOJ)</td><td><span class="rate">0.75%</span></td><td>마이너스 금리 졸업 후 인상기</td><td><span class="pill up">인상 흐름</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="display reveal" style="font-size:clamp(1.4rem,3vw,2rem);margin-top:2rem">앞으로의 전망</h2>
+
+  <div class="country kr reveal">
+    <div class="head"><span class="flag">🇰🇷 한국</span><span class="now"><b>2.50%</b> <span>현재 기준금리</span></span></div>
+    <div class="dir" style="color:var(--hold)">전망 · 신중한 동결, 인하 여지 탐색</div>
+    <p>물가는 대체로 안정세이지만, <strong>수도권 집값과 가계부채</strong>가 발목을 잡고 있습니다. 금리를 내리면 대출이 늘어 부동산이 다시 과열될 수 있어 한국은행은 인하에 신중합니다. 또한 미국과의 금리 차가 벌어지면 원화 약세·자본 유출 우려가 있어, <strong>미국의 움직임을 보며 따라가는 형국</strong>입니다. 당분간 동결 기조 속에 경기 둔화가 뚜렷해지면 점진적 인하 가능성이 열려 있습니다.</p>
+  </div>
+
+  <div class="country us reveal">
+    <div class="head"><span class="flag">🇺🇸 미국</span><span class="now"><b>3.50–3.75%</b> <span>현재 기준금리</span></span></div>
+    <div class="dir" style="color:var(--hold)">전망 · 인하 vs 동결, 시장 의견 팽팽</div>
+    <p>미국은 2025년 말 금리를 내린 뒤 여러 차례 <strong>동결</strong>하며 멈춰 있습니다. 에너지·지정학 리스크(중동 정세)로 물가가 다시 들썩일 위험과, 견조한 고용 사이에서 저울질 중입니다. 시장 일부는 <strong>연내 추가 인하</strong>를 기대하지만, 차기 의장 인선 등 정책 불확실성으로 ‘더 높게 더 오래’ 유지될 수 있다는 시각도 큽니다. 미국 금리는 전 세계 금리의 ‘기준점’이라 한국·신흥국이 가장 주목하는 변수입니다.</p>
+  </div>
+
+  <div class="country jp reveal">
+    <div class="head"><span class="flag">🇯🇵 일본</span><span class="now"><b>0.75%</b> <span>현재 기준금리</span></span></div>
+    <div class="dir" style="color:var(--rise)">전망 · 점진적 인상(정상화) 지속</div>
+    <p>일본은 오랜 <strong>초저금리·마이너스 금리</strong> 시대를 끝내고 천천히 금리를 올리는 ‘정상화’ 국면입니다. 물가가 목표(2%)를 웃돌고 있어, 시장은 <strong>1% 수준으로의 인상</strong>과 연내 추가 인상을 전망합니다. 다만 실질금리가 여전히 낮아 인상 속도는 완만할 전망입니다. 한국·미국이 ‘내릴까 말까’를 고민하는 사이, 일본은 반대로 ‘올리는’ 흐름이라는 점이 흥미로운 대비입니다.</p>
+  </div>
+
+  <div class="analogy reveal">
+    <div class="tag">왜 같이 봐야 하나</div>
+    <p>나라 간 금리 차이는 <strong>돈의 이동과 환율</strong>을 만듭니다. 금리가 높은 나라로 돈이 몰리는 경향이 있어, 미국 금리가 한국보다 높으면 원화가 약해지기 쉽습니다. 그래서 한국은행은 국내 경기뿐 아니라 <strong>미국·일본의 금리 방향까지 함께 계산</strong>해야 합니다. 금리는 한 나라 안의 문제가 아니라 ‘세계가 연결된 게임’입니다.</p>
+  </div>
+  <p class="note reveal">※ 위 전망은 2026년 6월 시점의 시장 분석과 중앙은행 발표를 바탕으로 한 ‘가능성’이며, 실제 결정은 향후 물가·경기·국제정세에 따라 달라질 수 있습니다. 전망은 사실이 아닌 시나리오로 받아들이는 것이 안전합니다.</p>
+</section>
+
+<!-- ========== 7. 엔 캐리 트레이드 ========== -->
+<section class="slide" id="s7">
+  <div class="eyebrow reveal">07 — 심화</div>
+  <h2 class="display reveal">엔 캐리 트레이드</h2>
+  <p class="lead reveal">국가 간 금리 차이가 만들어내는 가장 유명한 돈의 흐름입니다. 이름은 어렵지만 원리는 <strong>“싸게 빌려서 비싸게 굴린다”</strong> 한 줄입니다.</p>
+
+  <div class="def reveal">
+    <div class="label">정의</div>
+    <div class="body">금리가 <em>낮은</em> 일본에서 엔화를 빌려, 이를 환전해 금리가 <em>높은</em> 나라(미국 등)의 자산에 투자하고 <em>금리 차익</em>을 먹는 전략</div>
+  </div>
+
+  <div class="analogy reveal">
+    <div class="tag">예시로 이해하기</div>
+    <p>일본에서 연 <strong>0.75%</strong>로 1억 원어치 엔화를 빌립니다. 이를 달러로 바꿔 미국 자산(예: 4% 수익)에 넣으면, 가만히 앉아 <strong>약 3%p의 차익</strong>을 법니다. 여기에 미국 주식이 오르거나 엔화가 약해지면 수익은 더 커집니다. 전 세계 헤지펀드와 기관이 수십 년간 애용해온 ‘공짜처럼 보이는 돈’이었습니다.</p>
+  </div>
+
+  <h2 class="display reveal" style="font-size:clamp(1.4rem,3vw,2rem);margin-top:1.8rem">문제는 ‘청산’될 때입니다</h2>
+  <p class="reveal">이 전략은 <strong>두 가지 전제</strong>가 유지될 때만 안전합니다 — ① 일본 금리가 계속 낮고, ② 엔화가 약할 것. 그런데 지금처럼 <strong>일본이 금리를 올리기 시작</strong>하면 두 전제가 동시에 무너집니다.</p>
+
+  <div class="flow reveal">
+    <div class="step"><div class="n">방아쇠</div><div class="h">일본 금리 인상</div><div class="x">차익 축소 + 엔화 강세</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">반응</div><div class="h">서둘러 청산</div><div class="x">해외자산 팔아 엔화 상환</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">연쇄</div><div class="h">글로벌 자산 매도</div><div class="x">미국·신흥국 주식 하락</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">파장</div><div class="h">변동성 폭발</div><div class="x">환율 급변·증시 출렁</div></div>
+  </div>
+
+  <div class="card reveal" style="border-left:3px solid var(--rise)">
+    <h3><span class="num">📉</span> 실제 사례 — 2024년 8월 ‘블랙 먼데이’</h3>
+    <p>2024년 7~8월 일본은행이 금리를 올리고 엔화가 급등하자, 엔 캐리 자금이 한꺼번에 청산되며 일본 닛케이 지수가 <strong>하루 만에 12% 폭락</strong>(역대 최대 낙폭)했고, 그 충격이 미국·한국 증시까지 번졌습니다. ‘일본 금리 한 번 올린 것’이 전 세계 투자자의 계좌를 흔든 대표적 장면입니다.</p>
+  </div>
+
+  <p class="reveal" style="margin-top:1.3rem">2026년 현재도 일본이 금리를 <strong>1% 수준으로 올리려는 움직임</strong>을 보이면서 청산 우려가 다시 고개를 들고 있습니다. <span style="color:var(--rise);font-weight:600">미·일 금리 격차가 줄어들수록</span> 엔 캐리의 매력은 떨어지고, 자금이 일본으로 되돌아갈 압력은 커집니다. 다만 전문가들은 “2024년 같은 대형 충격보다는 점진적 조정”에 무게를 두는 분위기입니다.</p>
+  <p class="note reveal">한국에 주는 의미: 엔 캐리가 청산되면 글로벌 유동성이 회수되며 <strong>외국인의 한국 주식 매도·원화 약세(환율 급등)</strong>로 이어질 수 있습니다. 일본 금리가 ‘남의 나라 일’이 아닌 이유입니다.</p>
+
+  <div class="quiz reveal">
+    <div class="tag">퀴즈</div>
+    <div class="question">일본이 금리를 올리면, 왜 한국이나 미국 주식까지 출렁일까요?</div>
+    <div class="opts">
+      <button class="opt"><span class="mk">A</span> 일본이 한국·미국 주식을 직접 사고팔기 때문</button>
+      <button class="opt" data-correct="1"><span class="mk">B</span> 싸게 빌린 엔화로 해외에 투자했던 돈이 일본으로 회수되기 때문</button>
+      <button class="opt"><span class="mk">C</span> 일본 금리는 다른 나라와 전혀 관계없다</button>
+    </div>
+    <div class="explain"><b>정답은 B.</b> 일본 금리가 오르면 ‘싸게 빌린다’는 전제가 깨져, 엔 캐리 자금이 해외 자산을 팔고 엔화를 갚으러 돌아갑니다. 이 매도 물결이 전 세계 증시를 흔들죠. <b>2024년 8월 닛케이 하루 12% 폭락</b>이 바로 그 장면이었습니다.</div>
+  </div>
+</section>
+
+<!-- ========== 8. 금리와 자산시장 ========== -->
+<section class="slide" id="s8">
+  <div class="eyebrow reveal">08 — 내 자산에 미치는 영향</div>
+  <h2 class="display reveal">금리가 바꾸는 자산시장</h2>
+
+  <div class="ask reveal">
+    <span class="bubble">💸</span>
+    <div>
+      <div class="q-label">솔직하게</div>
+      <p>지금 가장 궁금한 건 이거 아닐까요 — “그래서 금리 내리면 내 주식이랑 집값은 오르는 거야, 마는 거야?” 같이 풀어봅시다.</p>
+    </div>
+  </div>
+
+  <p class="lead reveal">금리 전망이 중요한 진짜 이유는 결국 <strong>내 주식과 부동산</strong>에 닿기 때문입니다. 큰 원칙은 하나입니다 — <strong>“금리와 자산가격은 보통 반대로 움직인다.”</strong></p>
+
+  <div class="analogy reveal">
+    <div class="tag">왜 반대인가</div>
+    <p>금리가 오르면 ① 안전한 예금·채권 이자가 좋아져 굳이 위험한 주식·부동산에 둘 이유가 줄고, ② 대출이자가 비싸져 빚내서 투자하기 어려워지며, ③ 기업의 미래 이익을 ‘현재 가치’로 calc할 때 할인율이 커져 주가가 눌립니다. 내리면 정반대입니다.</p>
+  </div>
+
+  <h2 class="display reveal" style="font-size:clamp(1.35rem,3vw,1.9rem);margin-top:1.6rem">① 주식 — 국내</h2>
+  <div class="seesaw reveal">
+    <div class="col up">
+      <h3>▲ 금리 인상기</h3>
+      <ul>
+        <li>성장주·기술주에 부담 (미래이익 할인 ↑)</li>
+        <li>빚투·신용거래 위축</li>
+        <li>은행·보험 등 금융주는 상대적 수혜</li>
+      </ul>
+    </div>
+    <div class="col down">
+      <h3>▼ 금리 인하기</h3>
+      <ul>
+        <li>성장주·코스닥에 유리한 환경</li>
+        <li>유동성 유입으로 거래 활발</li>
+        <li>배당주 매력은 상대적으로 감소</li>
+      </ul>
+    </div>
+  </div>
+  <p class="reveal" style="font-size:.96rem;color:var(--muted)">단, 한국 증시는 금리만큼이나 <strong>환율·외국인 수급·반도체 업황</strong>에 크게 좌우됩니다. “금리 내리면 무조건 오른다”는 공식은 위험합니다.</p>
+
+  <h2 class="display reveal" style="font-size:clamp(1.35rem,3vw,1.9rem);margin-top:1.6rem">② 주식 — 해외(미국 중심)</h2>
+  <p class="reveal">미국 금리는 전 세계 자산의 ‘기준 할인율’입니다. <strong>연준이 금리를 내리면</strong> 나스닥 기술주·성장주에 훈풍이 불고 신흥국으로 자금이 흘러듭니다. 반대로 <strong>‘더 높게 더 오래’ 유지하면</strong> 빅테크의 밸류에이션 부담과 달러 강세로 신흥국(한국 포함) 증시에서 자금이 빠질 수 있습니다.</p>
+  <div class="card reveal">
+    <h3><span class="num">💡</span> 사례 — 2020년 vs 2022년</h3>
+    <p><strong>2020년</strong> 코로나로 미국이 금리를 0%로 내리자 풀린 돈이 주식·코인으로 몰리며 ‘유동성 장세’가 펼쳐졌습니다. 반대로 <strong>2022년</strong> 인플레이션을 잡으려 금리를 급격히 올리자 나스닥이 30% 넘게 하락했습니다. 같은 빅테크라도 ‘돈의 값’에 따라 운명이 갈린 셈입니다.</p>
+  </div>
+
+  <h2 class="display reveal" style="font-size:clamp(1.35rem,3vw,1.9rem);margin-top:1.6rem">③ 부동산</h2>
+  <p class="reveal">부동산은 대부분 <strong>대출(레버리지)</strong>로 사기 때문에 금리에 특히 민감합니다. 주택담보대출 금리가 오르면 매달 갚을 이자가 늘어 매수 여력이 줄고, 내리면 반대가 됩니다.</p>
+  <div class="analogy reveal">
+    <div class="tag">체감 예시</div>
+    <p>3억 원을 30년 만기로 빌렸을 때, 금리가 <strong>3% → 5%</strong>로 오르면 매달 이자 부담이 수십만 원 늘어납니다. 이 부담이 매수 심리를 직접 누르기 때문에, 금리 방향은 집값의 가장 중요한 변수 중 하나입니다.</p>
+  </div>
+  <p class="reveal">바로 이 점이 <strong>한국은행의 딜레마</strong>입니다. 경기를 위해 금리를 내리고 싶어도, 내리는 순간 대출이 늘어 <strong>수도권 집값과 가계부채가 다시 과열</strong>될 수 있어 함부로 못 내립니다. 현재 한국 기준금리(2.50%)가 동결을 이어가는 핵심 이유가 여기 있습니다.</p>
+  <p class="note reveal">※ 자산시장은 금리 ‘하나’로 결정되지 않습니다. 금리는 가장 큰 배경음악일 뿐, 정책·수급·심리가 함께 작용합니다. 투자 판단은 본인 책임이며 본 자료는 교육용 설명입니다.</p>
+
+  <div class="quiz reveal">
+    <div class="tag">퀴즈</div>
+    <div class="question">한국은행이 경기를 살리려고 금리를 ‘확’ 내리고 싶어도 망설이는 가장 큰 이유는?</div>
+    <div class="opts">
+      <button class="opt"><span class="mk">A</span> 금리를 내리면 은행이 망하니까</button>
+      <button class="opt" data-correct="1"><span class="mk">B</span> 대출이 늘어 집값·가계부채가 다시 과열될까 봐</button>
+      <button class="opt"><span class="mk">C</span> 금리를 내리는 건 법으로 금지돼 있어서</button>
+    </div>
+    <div class="explain"><b>정답은 B.</b> 금리를 내리면 대출이 싸져 부동산으로 돈이 몰립니다. 수도권 집값과 가계부채가 이미 부담인 상황이라, 한국은행은 ‘내리고 싶어도 못 내리는’ 딜레마에 빠져 있어요. 현재 2.50% 동결의 핵심 이유입니다.</div>
+  </div>
+</section>
+
+<!-- ========== 9. 신임 총재 ========== -->
+<section class="slide" id="s9">
+  <div class="eyebrow reveal">09 — 인물</div>
+  <h2 class="display reveal">새 선장 — 신현송 총재</h2>
+  <p class="lead reveal">2026년 4월 21일, <strong>제28대 한국은행 총재</strong>로 신현송 총재가 취임했습니다. 한국 금리의 키를 누가 쥐고 있는지 아는 것은, 앞으로의 방향을 읽는 첫걸음입니다.</p>
+
+  <div class="grid g2 reveal">
+    <div class="card">
+      <span class="ico">🎓</span>
+      <h3><span class="num">학력</span> 세계적 석학</h3>
+      <p>1959년 대구 출생. 영국 <strong>옥스퍼드대</strong>에서 정치경제학·철학을 전공하고 경제학 석·박사를 받았습니다.</p>
+    </div>
+    <div class="card">
+      <span class="ico">🏫</span>
+      <h3><span class="num">경력</span> 학계의 정점</h3>
+      <p>런던정경대(LSE)·<strong>프린스턴대 교수</strong>를 지낸 국제금융·거시경제 분야의 세계적 권위자입니다.</p>
+    </div>
+    <div class="card">
+      <span class="ico">🌐</span>
+      <h3><span class="num">국제</span> BIS 핵심 보직</h3>
+      <p>‘중앙은행들의 중앙은행’이라 불리는 <strong>국제결제은행(BIS) 통화경제국장</strong>을 10년 넘게 역임했습니다.</p>
+    </div>
+    <div class="card">
+      <span class="ico">🔮</span>
+      <h3><span class="num">명성</span> 위기 예언자</h3>
+      <p>2008년 <strong>글로벌 금융위기를 미리 경고</strong>한 것으로 유명합니다. ‘글로벌 게임 이론’으로 학계에 큰 족적을 남겼습니다.</p>
+    </div>
+  </div>
+
+  <div class="banker reveal">
+    <div class="eyebrow">정책 성향 읽기</div>
+    <h3>“실용적 매파(hawk)”</h3>
+    <p>물가 위험에는 선제적 금리 인상도 마다하지 않는 <strong>매파적</strong> 성향으로 분류되지만, 동시에 현실을 중시하는 <strong>실용주의</strong>도 갖췄다는 평가입니다. 본인 스스로 “현재 금리가 중립 수준의 중간쯤”이라며 <strong>급격한 전환보다 균형</strong>을 예고했습니다.</p>
+    <ul>
+      <li><strong>금융안정 중시</strong> — 거시건전성(가계부채·자산버블)을 특히 중요하게 봅니다.</li>
+      <li><strong>대외 변수에 민감</strong> — BIS 네트워크를 바탕으로 환율·국제정세에 전략적으로 대응할 인물로 평가됩니다.</li>
+      <li><strong>취임 일성</strong> — “중동 전쟁발 공급 충격으로 불확실성이 커졌다. 신중하고 유연한 통화정책이 필요하다.”</li>
+    </ul>
+  </div>
+  <p class="note reveal">참고로 미국 차기 연준 의장으로 거론되는 케빈 워시(매파)와 비슷한 시기에 임기를 함께하게 되어, 두 ‘매파’가 한·미 통화정책을 동시에 이끌 가능성이 주목받고 있습니다.</p>
+
+  <div class="quiz reveal">
+    <div class="tag">퀴즈</div>
+    <div class="question">신현송 총재는 ‘실용적 매파’로 분류됩니다. 여기서 ‘매파(hawk)’란?</div>
+    <div class="opts">
+      <button class="opt"><span class="mk">A</span> 금리를 최대한 낮게 유지하려는 성향</button>
+      <button class="opt" data-correct="1"><span class="mk">B</span> 물가를 잡기 위해 금리 인상에 적극적인 성향</button>
+      <button class="opt"><span class="mk">C</span> 금리 결정을 시장에 맡기자는 성향</button>
+    </div>
+    <div class="explain"><b>정답은 B.</b> ‘매파’는 물가 안정을 위해 금리를 올리는 데 적극적인 쪽, 반대로 경기 부양을 위해 금리를 내리려는 쪽은 ‘비둘기파(dove)’라고 불러요. 신 총재는 매파이되 현실을 함께 본다는 의미에서 ‘실용적 매파’로 평가됩니다.</div>
+  </div>
+</section>
+
+<!-- ========== 10. 한국은행의 앞으로 ========== -->
+<section class="slide" id="s10">
+  <div class="eyebrow reveal">10 — 전망</div>
+  <h2 class="display reveal">한국은행의 앞으로</h2>
+  <p class="lead reveal">신현송 총재 체제의 한국은행은 <strong>세 마리 토끼</strong>를 동시에 잡아야 하는 어려운 길에 서 있습니다 — 물가, 성장(경기), 금융안정.</p>
+
+  <div class="grid g3 reveal">
+    <div class="card"><h3><span class="num">🎯</span> 물가</h3><p>중동발 유가·공급 충격으로 물가가 다시 들썩일 위험을 경계.</p></div>
+    <div class="card"><h3><span class="num">📉</span> 경기</h3><p>내수 부진·성장 둔화 → 금리를 ‘내리고 싶은’ 압력.</p></div>
+    <div class="card"><h3><span class="num">🏠</span> 금융안정</h3><p>집값·가계부채 → 금리를 ‘못 내리게’ 막는 족쇄.</p></div>
+  </div>
+
+  <p class="reveal" style="margin-top:1.4rem">이 셋이 서로 반대 방향을 가리키기 때문에, 시장은 <strong>세 가지 시나리오</strong>로 앞날을 그립니다.</p>
+
+  <table class="reveal">
+    <caption>신현송 체제 한국은행 — 향후 시나리오 (2026년 6월 기준 시장 관측)</caption>
+    <thead><tr><th>시나리오</th><th>전제</th><th>금리 방향</th><th>가능성</th></tr></thead>
+    <tbody>
+      <tr><td><strong>신중한 동결</strong> (기본)</td><td>물가·집값 부담 지속, 미국도 동결</td><td><span class="pill hold">2.50% 유지</span></td><td>가장 유력</td></tr>
+      <tr><td><strong>점진적 인하</strong></td><td>경기 둔화 뚜렷 + 집값 안정 확인</td><td><span class="pill down">완만한 인하</span></td><td>조건부 가능</td></tr>
+      <tr><td><strong>인상 전환</strong></td><td>유가 급등으로 물가 재점화</td><td><span class="pill up">인상</span></td><td>낮지만 배제 못함</td></tr>
+    </tbody>
+  </table>
+
+  <div class="bok-quote reveal">
+    핵심은 <strong>‘방향’보다 ‘속도와 타이밍’</strong>입니다. 매파 성향의 총재인 만큼 섣부른 인하보다는, 데이터를 확인하며 <strong>신중하고 유연하게</strong> 움직일 가능성이 높습니다.
+  </div>
+  <p class="reveal">특히 신 총재의 이력상 <strong>환율과 가계부채(금융안정)</strong>를 중시할 것으로 보여, 미국 금리가 높게 유지되는 한 한국도 쉽게 금리를 내리기 어렵습니다. ‘미국을 보며, 집값을 보며, 천천히’가 당분간의 기조로 예상됩니다.</p>
+  <p class="note reveal">※ 모든 전망은 시나리오이며 확정이 아닙니다. 실제 결정은 향후 물가·경기·국제정세와 금통위 표결에 따라 달라집니다.</p>
+</section>
+
+<!-- ========== 11. 핵심 정리 ========== -->
+<section class="slide" id="s11">
+  <div class="eyebrow reveal">11 — 마무리</div>
+  <h2 class="display reveal">오늘 기억할 일곱 가지</h2>
+  <div class="takeaways reveal">
+    <div class="item"><p><b>금리는 ‘돈의 가격’이다.</b> 빌리는 데 드는 사용료를 비율로 나타낸 것. 같은 숫자가 누구에겐 비용, 누구에겐 수익이다.</p></div>
+    <div class="item"><p><b>금리는 경기의 온도조절기다.</b> 올리면 식히고(긴축), 내리면 데운다(완화). 핵심 목적은 물가 안정.</p></div>
+    <div class="item"><p><b>한국은 한국은행 금통위가 기준금리를 정한다.</b> 연 8회 회의, 현재 2.50%. 물가·경기·집값·환율을 종합 판단한다.</p></div>
+    <div class="item"><p><b>은행원에게 금리는 ‘예대마진’이다.</b> 대출금리−예금금리가 은행의 밥줄. 고객 이익과 은행 이익이 반대일 때가 많다.</p></div>
+    <div class="item"><p><b>금리는 세계가 연결된 게임이다.</b> 한국(2.50%·동결)·미국(3.50–3.75%·동결논쟁)·일본(0.75%·인상)은 서로 다르게 움직이며 환율로 연결된다. <b>엔 캐리 트레이드</b>가 그 연결고리의 대표 사례.</p></div>
+    <div class="item"><p><b>금리와 자산가격은 대체로 반대다.</b> 금리가 오르면 주식·부동산엔 역풍, 내리면 순풍. 단 환율·수급·심리도 함께 본다.</p></div>
+    <div class="item"><p><b>새 선장은 ‘실용적 매파’ 신현송 총재.</b> 금융안정·환율을 중시 → 당분간 ‘미국 보며, 집값 보며, 천천히’ 기조가 유력.</p></div>
+  </div>
+  <div class="def reveal" style="margin-top:2rem">
+    <div class="label">한 문장 결론</div>
+    <div class="body">금리를 이해한다는 것은 곧 <em>돈이 어디로, 왜 흐르는지</em>를 읽는 능력을 갖는 것이다.</div>
+  </div>
+
+  <div class="ask reveal" style="margin-top:1.8rem">
+    <span class="bubble">💬</span>
+    <div>
+      <div class="q-label">함께 이야기해봐요</div>
+      <p>여러분이 한국은행 총재라면, 지금 금리를 <strong>내릴까요, 유지할까요, 올릴까요?</strong> 그 이유는요? 오늘 배운 ‘물가·경기·집값·환율’을 근거로 자유롭게 이야기해봅시다!</p>
+    </div>
+  </div>
+</section>
+
+<div class="footer">금리 스터디 발표자료 · 기준 시점 2026년 6월 · 수치 출처: 한국은행, 미 연준(Fed), 일본은행(BOJ) · 발표 분량 약 20분</div>
+
+<script>
+  // 진행 막대
+  const bar=document.getElementById('bar');
+  const onScroll=()=>{const h=document.documentElement;const sc=h.scrollTop/(h.scrollHeight-h.clientHeight);bar.style.width=(sc*100)+'%';};
+  document.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  // 등장 애니메이션
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(Math.min(i%6,5)*40)+'ms';io.observe(el);});
+
+  // 퀴즈: 보기 클릭 → 정답/오답 표시 + 해설 공개
+  document.querySelectorAll('.quiz').forEach(q=>{
+    const opts=q.querySelectorAll('.opt');
+    const explain=q.querySelector('.explain');
+    opts.forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        if(q.dataset.done) return;
+        q.dataset.done='1';
+        const correct=opt.dataset.correct==='1';
+        opt.classList.add(correct?'correct':'wrong');
+        if(!correct){
+          const ans=q.querySelector('.opt[data-correct="1"]');
+          if(ans) ans.classList.add('correct');
+        }
+        opts.forEach(o=>o.disabled=true);
+        if(explain) explain.classList.add('show');
+      });
+    });
+  });
+</script>
+</body>
+</html>

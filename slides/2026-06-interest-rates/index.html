@@ -238,6 +238,23 @@
 <body>
 <div class="progress" id="bar"></div>
 
+<!-- ▼ 목록으로 돌아가기 버튼 -->
+<a href="../../" aria-label="발표 목록으로 돌아가기" style="
+  position:fixed; top:14px; left:16px; z-index:9999;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:9px 15px 9px 12px; border-radius:999px;
+  background:rgba(10,93,87,.9); color:#fff;
+  font:600 14px/1 'IBM Plex Sans KR',sans-serif;
+  text-decoration:none; backdrop-filter:blur(6px);
+  box-shadow:0 4px 16px rgba(21,32,43,.2); transition:transform .18s,background .18s;"
+  onmouseover="this.style.transform='translateX(-2px)';this.style.background='rgba(181,72,46,.95)'"
+  onmouseout="this.style.transform='none';this.style.background='rgba(10,93,87,.9)'">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+  목록으로
+</a>
+<!-- ▲ -->
+
+
 <!-- ========== 표지 ========== -->
 <section class="slide cover">
   <div class="kicker">스터디 발표자료 · 기초부터 전망까지</div>

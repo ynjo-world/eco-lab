@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스테이블코인 — 디지털 시대의 '안 흔들리는 돈'</title>
+<style>
+  :root{
+    --ink:#0e1726;        /* deep ledger navy */
+    --ink-2:#16223a;
+    --paper:#f7f4ec;      /* mint-paper cream */
+    --paper-2:#fffdf8;
+    --gold:#d4a23a;       /* minted gold */
+    --gold-soft:#f0d79a;
+    --mint:#2fae8e;       /* peg / stability green */
+    --mint-soft:#bfe9dd;
+    --red:#d65a4a;        /* de-peg / warning */
+    --line:rgba(14,23,38,.12);
+    --shadow:0 10px 30px rgba(14,23,38,.12);
+    --maxw:880px;
+    --mono:"DM Mono","SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+    --sans:"Pretendard","Inter","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;font-family:var(--sans);background:var(--paper);color:var(--ink);
+    line-height:1.7;font-size:17px;-webkit-font-smoothing:antialiased;
+  }
+  @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
+  /* progress bar */
+  #progress{position:fixed;top:0;left:0;height:4px;width:0;background:linear-gradient(90deg,var(--gold),var(--mint));z-index:200;transition:width .1s linear}
+
+  /* back-to-hub button (inline-styled in markup, but base here too) */
+  .hub-btn{position:fixed;top:14px;left:14px;z-index:210;
+    background:#0e1726;color:#f0d79a;text-decoration:none;font-family:var(--mono);
+    font-size:13px;padding:9px 14px;border-radius:10px;border:1px solid rgba(240,215,154,.35);
+    box-shadow:0 6px 18px rgba(0,0,0,.25);min-height:44px;display:inline-flex;align-items:center;gap:6px}
+  .hub-btn:hover{background:#16223a}
+  .hub-btn:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+
+  /* layout */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  section{padding:70px 0;border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:none}
+
+  /* hero */
+  #hero{background:
+      radial-gradient(120% 120% at 80% -10%,rgba(47,174,142,.18),transparent 55%),
+      radial-gradient(120% 120% at 0% 0%,rgba(212,162,58,.16),transparent 50%),
+      var(--ink);
+    color:var(--paper);padding:120px 0 80px;border-bottom:none;position:relative;overflow:hidden}
+  #hero .wrap{position:relative;z-index:2}
+  .eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:18px}
+  #hero h1{font-size:clamp(34px,6vw,60px);line-height:1.08;margin:0 0 18px;font-weight:800;letter-spacing:-.02em}
+  #hero h1 .peg{color:var(--mint);position:relative;white-space:nowrap}
+  #hero p.lead{font-size:clamp(17px,2.4vw,21px);color:#d8dee9;max-width:620px;margin:0 0 14px}
+  .pegline{font-family:var(--mono);font-size:14px;color:var(--gold-soft);margin-top:26px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .tick{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 0 rgba(47,174,142,.6);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,174,142,.6)}70%{box-shadow:0 0 0 12px rgba(47,174,142,0)}100%{box-shadow:0 0 0 0 rgba(47,174,142,0)}}
+
+  /* faint $1 ledger grid in hero */
+  .ledger{position:absolute;inset:0;z-index:1;opacity:.06;font-family:var(--mono);font-size:13px;color:#fff;
+    line-height:2.1;letter-spacing:.05em;white-space:pre;pointer-events:none;user-select:none;
+    transform:rotate(-4deg) translateY(-20px)}
+
+  /* headings */
+  h2{font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0 0 8px;font-weight:800;letter-spacing:-.01em}
+  .sec-eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+  .sec-eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+  h3{font-size:20px;margin:34px 0 10px;font-weight:700}
+  p{margin:0 0 16px}
+  a{color:#1a6f5c}
+
+  /* boxes */
+  .def{background:var(--ink);color:var(--paper-2);border-radius:16px;padding:26px 28px;margin:22px 0;box-shadow:var(--shadow);border-left:5px solid var(--mint)}
+  .def .tag{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mint-soft)}
+  .def .body{font-size:20px;font-weight:600;line-height:1.5;margin-top:8px}
+
+  .analogy{background:linear-gradient(180deg,var(--paper-2),#fff);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:22px 0;position:relative}
+  .analogy::before{content:"🪙 비유";position:absolute;top:-12px;left:18px;background:var(--gold);color:#3a2c08;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;padding:4px 12px;border-radius:20px}
+  .analogy p:last-child{margin-bottom:0}
+
+  .note{background:#fff7e9;border:1px solid var(--gold-soft);border-radius:12px;padding:14px 18px;font-size:15px;margin:18px 0}
+  .warn{background:#fdeceA;border:1px solid #f0b6ac;border-left:5px solid var(--red);border-radius:12px;padding:16px 18px;margin:18px 0}
+  .warn b{color:var(--red)}
+
+  /* flow diagram */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:26px 0}
+  .flow .step{flex:1;min-width:150px;background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;position:relative}
+  .flow .step .n{font-family:var(--mono);font-size:12px;color:var(--gold);font-weight:700}
+  .flow .step .t{font-weight:700;margin:6px 0 4px}
+  .flow .step .d{font-size:14px;color:#42506a}
+  .flow .arrow{display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:24px;padding:0 6px}
+  @media(max-width:640px){.flow{flex-direction:column}.flow .arrow{transform:rotate(90deg);padding:6px 0}}
+
+  /* compare table */
+  .tbl-wrap{overflow-x:auto;margin:24px 0;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;min-width:520px;background:#fff;font-size:15px}
+  th,td{padding:13px 15px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:13px;letter-spacing:.04em;font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:nth-child(even){background:#faf8f2}
+  td b{color:var(--ink)}
+
+  /* card grid */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:24px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .card .ic{font-size:24px}
+  .card h4{margin:8px 0 6px;font-size:17px}
+  .card p{font-size:14.5px;color:#42506a;margin:0}
+
+  /* stat row */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:24px 0}
+  .stat{background:var(--ink);color:#fff;border-radius:14px;padding:18px 20px}
+  .stat .v{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--gold-soft);line-height:1}
+  .stat .l{font-size:13px;color:#aebbcf;margin-top:8px}
+
+  /* quiz */
+  .quiz{background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:24px;margin:30px 0;box-shadow:var(--shadow)}
+  .quiz .q-tag{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mint);font-weight:700}
+  .quiz h4{margin:8px 0 16px;font-size:18px;line-height:1.4}
+  .opt{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin:9px 0;font-size:15.5px;cursor:pointer;font-family:inherit;color:var(--ink);
+    transition:border-color .15s,background .15s;min-height:48px}
+  .opt:hover{border-color:var(--gold)}
+  .opt:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+  .opt.correct{border-color:var(--mint);background:#e6f6f0}
+  .opt.wrong{border-color:var(--red);background:#fbe9e6}
+  .opt:disabled{cursor:default}
+  .opt .mk{font-family:var(--mono);font-weight:700;margin-left:8px;float:right}
+  .explain{display:none;margin-top:14px;padding:14px 16px;border-radius:12px;background:#fff;border-left:4px solid var(--mint);font-size:15px}
+  .explain.show{display:block;animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* audience question */
+  .ask{background:linear-gradient(135deg,#16223a,#0e1726);color:#fff;border-radius:18px;padding:24px 26px;margin:30px 0;position:relative;overflow:hidden}
+  .ask::after{content:"?";position:absolute;right:-10px;bottom:-30px;font-size:140px;font-weight:800;color:rgba(240,215,154,.08);font-family:var(--mono)}
+  .ask .a-tag{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-soft);font-weight:700}
+  .ask p{font-size:18px;font-weight:600;margin:10px 0 0;position:relative;z-index:2}
+
+  /* TOC */
+  #toc{position:sticky;top:0;background:rgba(247,244,236,.96);backdrop-filter:blur(8px);z-index:120;border-bottom:1px solid var(--line)}
+  #toc .wrap{display:flex;align-items:center;gap:12px;padding:10px 22px}
+  #toc-toggle{background:none;border:1px solid var(--line);border-radius:10px;font-family:var(--mono);font-size:13px;
+    padding:8px 12px;cursor:pointer;color:var(--ink);min-height:40px}
+  #toc-toggle:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+  #toc-list{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+  #toc-list a{font-family:var(--mono);font-size:12.5px;text-decoration:none;color:#42506a;padding:7px 11px;border-radius:8px;white-space:nowrap}
+  #toc-list a:hover{background:#fff;color:var(--ink)}
+  #toc-list a.active{background:var(--ink);color:var(--gold-soft)}
+  #toc-list a:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+  @media(max-width:760px){
+    #toc-list{display:none;width:100%;flex-direction:column;padding:8px 0 12px}
+    #toc-list.open{display:flex}
+    #toc .wrap{flex-wrap:wrap}
+  }
+
+  /* back to top */
+  #totop{position:fixed;right:18px;bottom:18px;z-index:150;background:var(--ink);color:var(--gold-soft);
+    border:none;border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;box-shadow:var(--shadow);
+    opacity:0;pointer-events:none;transition:opacity .25s}
+  #totop.show{opacity:1;pointer-events:auto}
+  #totop:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+
+  /* reveal animation */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  footer{background:var(--ink);color:#aebbcf;padding:40px 0 60px;font-size:13.5px;border-bottom:none}
+  footer a{color:var(--gold-soft)}
+  footer .wrap{line-height:1.6}
+  footer h4{color:#fff;font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 10px}
+
+  .takeaway{counter-reset:ta;list-style:none;padding:0;margin:24px 0}
+  .takeaway li{position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px 18px 64px;margin:12px 0;box-shadow:var(--shadow)}
+  .takeaway li::before{counter-increment:ta;content:counter(ta);position:absolute;left:18px;top:50%;transform:translateY(-50%);
+    width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--mint));color:#0e1726;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:16px}
+  .takeaway li b{display:block;margin-bottom:2px}
+
+  .person{display:flex;gap:18px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:20px 0;box-shadow:var(--shadow)}
+  .person .av{flex-shrink:0;width:56px;height:56px;border-radius:14px;background:var(--ink);color:var(--gold-soft);
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:20px}
+  .person h4{margin:0 0 2px}
+  .person .role{font-family:var(--mono);font-size:12.5px;color:var(--gold);margin-bottom:8px}
+  .person p{font-size:15px;margin:0}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- Back to hub: inline-styled, theme-independent -->
+<a href="../../" class="hub-btn" style="position:fixed;top:14px;left:14px;z-index:210;background:#0e1726;color:#f0d79a;text-decoration:none;font-family:monospace;font-size:13px;padding:9px 14px;border-radius:10px;border:1px solid rgba(240,215,154,.35);box-shadow:0 6px 18px rgba(0,0,0,.25);min-height:44px;display:inline-flex;align-items:center;gap:6px;">← 목록으로</a>
+
+<!-- HERO -->
+<header id="hero">
+  <div class="ledger">$1.00  $1.00  $1.00  $1.00  $1.00  $1.00
+$0.99  $1.00  $1.00  $1.01  $1.00  $1.00
+$1.00  $1.00  $1.00  $1.00  $0.99  $1.00
+$1.00  $1.00  $1.01  $1.00  $1.00  $1.00
+$1.00  $1.00  $1.00  $1.00  $1.00  $1.00
+$1.00  $0.99  $1.00  $1.00  $1.00  $1.00
+$1.00  $1.00  $1.00  $1.00  $1.00  $1.01</div>
+  <div class="wrap">
+    <div class="eyebrow">스터디 모임 · 약 20분 · 쉽게 보는 디지털 금융</div>
+    <h1>스테이블코인<br>디지털 시대의 <span class="peg">'안 흔들리는 돈'</span></h1>
+    <p class="lead">코인은 코인인데, 가격이 안 움직이는 코인이 있습니다. 비트코인이 롤러코스터라면 이건 '디지털 만원짜리'에 가깝죠. 왜 만들었고, 왜 지금 전 세계가 여기에 뛰어드는지 같이 봅시다.</p>
+    <div class="pegline"><span class="tick"></span> 전 세계 스테이블코인 시가총액 약 <b>$321B</b> (2026년 5월 기준) — 한국 돈으로 440조 원이 넘습니다</div>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav id="toc" aria-label="목차">
+  <div class="wrap">
+    <button id="toc-toggle" aria-expanded="false" aria-controls="toc-list">☰ 목차</button>
+    <div id="toc-list">
+      <a href="#s1">1 · 무엇인가</a>
+      <a href="#s2">2 · 작동원리</a>
+      <a href="#s3">3 · 종류</a>
+      <a href="#s4">4 · 한국</a>
+      <a href="#s5">5 · 실무자 시각</a>
+      <a href="#s6">6 · 국제비교</a>
+      <a href="#s7">7 · 내 자산</a>
+      <a href="#s8">8 · 인물</a>
+      <a href="#s9">9 · 정리</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<!-- 1. 무엇인가 -->
+<section id="s1">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">01 — 한 문장으로</div>
+    <h2 class="reveal">스테이블코인이란 무엇인가?</h2>
+
+    <div class="def reveal">
+      <div class="tag">핵심 정의</div>
+      <div class="body">스테이블코인은 <b>달러·원화 같은 '진짜 돈'의 가치에 1:1로 묶어둔 디지털 화폐</b>입니다. 블록체인 위에서 움직이지만, 1개의 값이 항상 1달러(또는 1원)에 머물도록 설계돼 있죠.</div>
+    </div>
+
+    <div class="analogy reveal">
+      <p><b>놀이공원 자유이용권 팔찌</b>를 떠올려 보세요. 입구에서 1만 원을 내면 '1만 원짜리 팔찌'를 받습니다. 공원 안에서는 이 팔찌로 결제하고, 나갈 때 도로 1만 원으로 바꿀 수 있죠.</p>
+      <p>팔찌 자체는 종이·플라스틱이지만 <b>"언제든 1만 원으로 바꿔준다"</b>는 약속 덕분에 1만 원의 가치를 가집니다. 스테이블코인이 딱 이겁니다. 코인 자체는 디지털 데이터지만, 발행사가 진짜 달러를 금고에 쌓아두고 "언제든 1달러로 바꿔줄게"라고 약속하기 때문에 1달러가 됩니다.</p>
+    </div>
+
+    <p class="reveal">비트코인이나 이더리움은 하루에도 5~10%씩 출렁입니다. 결제 수단으로 쓰기엔 너무 위험하죠. 점심값으로 0.0003비트코인을 보냈는데 도착할 때쯤 값이 변하면 곤란하니까요. 스테이블코인은 이 변동성 문제를 "값을 고정한다"는 단순한 발상으로 해결했습니다.</p>
+
+    <div class="ask reveal">
+      <div class="a-tag">🙋 함께 생각해 볼까요</div>
+      <p>여러분은 "가격이 절대 안 변하는 코인"이라는 말을 들으면 가장 먼저 어떤 의심이 드나요? "그게 어떻게 가능하지?" 아니면 "그럼 코인을 왜 써?"</p>
+    </div>
+
+    <div class="quiz reveal" data-answer="1">
+      <div class="q-tag">Quiz 1</div>
+      <h4>스테이블코인의 가장 큰 특징은 무엇일까요?</h4>
+      <button class="opt" data-i="0">가격이 계속 오르도록 설계되어 있다 <span class="mk"></span></button>
+      <button class="opt" data-i="1">특정 화폐 가치에 묶여 값이 거의 변하지 않는다 <span class="mk"></span></button>
+      <button class="opt" data-i="2">정부가 직접 발행하는 디지털 화폐다 <span class="mk"></span></button>
+      <button class="opt" data-i="3">채굴을 통해 새로 만들어진다 <span class="mk"></span></button>
+      <div class="explain">정답은 ②입니다. 스테이블코인의 'stable(안정)'은 가격이 1달러·1원 등에 고정돼 거의 안 움직인다는 뜻이에요. 정부가 발행하는 건 CBDC(중앙은행 디지털화폐)로 다른 개념이고, 채굴로 만드는 비트코인과도 다릅니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 작동원리 -->
+<section id="s2">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">02 — 어떻게 1달러를 유지할까</div>
+    <h2 class="reveal">작동 원리와 '왜 중요한가'</h2>
+
+    <p class="reveal">핵심은 <b>준비금(reserve)</b>입니다. 가장 흔한 방식은 이렇게 돌아갑니다.</p>
+
+    <div class="flow reveal">
+      <div class="step"><div class="n">STEP 1</div><div class="t">달러 입금</div><div class="d">사용자가 발행사에 100달러를 보냅니다</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">STEP 2</div><div class="t">코인 발행</div><div class="d">발행사가 100개의 코인을 새로 찍어 줍니다</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">STEP 3</div><div class="t">준비금 보관</div><div class="d">받은 100달러는 현금·국채로 금고에 쌓아둡니다</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">STEP 4</div><div class="t">상환</div><div class="d">코인을 반납하면 100달러로 돌려줍니다</div></div>
+    </div>
+
+    <div class="analogy reveal">
+      <p><b>전당포의 보관증</b>과 똑같습니다. 금괴를 맡기면 "금괴 1개 보관 중"이라는 증서를 받고, 증서를 가져오면 금괴를 돌려받죠. 금고에 진짜 금괴가 있으니 증서는 신뢰받습니다.</p>
+      <p>스테이블코인이 무너지는 건 대부분 <b>"증서는 잔뜩 발행했는데 금고가 비어 있을 때"</b>입니다. 그래서 '준비금을 진짜 1:1로 갖고 있느냐'가 이 산업 전체의 생명선이에요.</p>
+    </div>
+
+    <h3 class="reveal">왜 중요한가 — 그냥 '코인 한 종류'가 아닙니다</h3>
+    <div class="cards reveal">
+      <div class="card"><div class="ic">⚡</div><h4>빠르고 싼 송금</h4><p>해외 송금이 며칠·수수료 수만 원에서, 몇 초·몇백 원으로. 은행 영업시간도 주말도 상관없습니다.</p></div>
+      <div class="card"><div class="ic">🌍</div><h4>달러가 없는 곳의 달러</h4><p>인플레이션이 심한 나라(아르헨티나·터키 등) 사람들이 자국 화폐 대신 달러를 '보관'하는 수단으로 씁니다.</p></div>
+      <div class="card"><div class="ic">🔗</div><h4>코인 거래의 기축통화</h4><p>전체 코인 거래의 상당수가 스테이블코인을 기준으로 이뤄집니다. 코인판의 '현금'인 셈이죠.</p></div>
+      <div class="card"><div class="ic">🏦</div><h4>미국 국채의 큰손</h4><p>준비금으로 미국 국채를 대량 매입해, 이제 웬만한 국가만큼 국채를 보유한 큰손이 됐습니다.</p></div>
+    </div>
+
+    <div class="stats reveal">
+      <div class="stat"><div class="v">$321B</div><div class="l">전 세계 스테이블코인 시총 (2026.5)</div></div>
+      <div class="stat"><div class="v">$28T</div><div class="l">2026년 1분기 송금 규모 — Visa 연간에 육박</div></div>
+      <div class="stat"><div class="v">75%</div><div class="l">전체 코인 거래량 중 스테이블코인 비중</div></div>
+    </div>
+
+    <div class="ask reveal">
+      <div class="a-tag">🙋 함께 생각해 볼까요</div>
+      <p>만약 한국에서도 송금이 '카톡 보내듯' 24시간 즉시·무료로 가능해진다면, 여러분의 어떤 습관이 가장 먼저 바뀔까요?</p>
+    </div>
+
+    <div class="quiz reveal" data-answer="2">
+      <div class="q-tag">Quiz 2</div>
+      <h4>스테이블코인이 1달러를 유지하는 가장 핵심적인 비결은?</h4>
+      <button class="opt" data-i="0">정부가 가격을 법으로 정해주기 때문 <span class="mk"></span></button>
+      <button class="opt" data-i="1">컴퓨터가 가격을 계속 조정하기 때문 <span class="mk"></span></button>
+      <button class="opt" data-i="2">발행한 만큼 진짜 현금·국채를 준비금으로 갖고 있기 때문 <span class="mk"></span></button>
+      <button class="opt" data-i="3">사용자가 많아서 가격이 안정되기 때문 <span class="mk"></span></button>
+      <div class="explain">정답은 ③입니다. "발행량 = 금고에 든 진짜 자산"이라는 1:1 백업이 신뢰의 핵심이에요. 이 준비금이 부실하면 곧바로 가치가 흔들립니다. (참고로 ②처럼 알고리즘으로만 유지하려던 방식이 바로 다음 섹션의 '테라·루나' 사태였습니다.)</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 종류 -->
+<section id="s3">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">03 — 다 같은 게 아니다</div>
+    <h2 class="reveal">스테이블코인의 세 가지 종류</h2>
+
+    <p class="reveal">"1달러를 어떻게 보장하느냐"에 따라 크게 셋으로 나뉩니다. 신뢰도와 위험이 완전히 다릅니다.</p>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead><tr><th>유형</th><th>1달러 유지 방법</th><th>비유</th><th>대표 사례 / 위험</th></tr></thead>
+        <tbody>
+          <tr><td><b>① 법정화폐 담보형</b></td><td>금고에 진짜 달러·국채를 쌓아둠 (가장 일반적)</td><td>전당포 보관증</td><td>USDT, USDC · 가장 안전하지만 "정말 다 있나?" 신뢰가 관건</td></tr>
+          <tr><td><b>② 가상자산 담보형</b></td><td>이더리움 등 코인을 담보로 잡되, <b>넉넉히 더</b> 잡아둠</td><td>집값보다 적게 빌려주는 담보대출</td><td>DAI · 담보 코인이 폭락하면 위험</td></tr>
+          <tr><td><b>③ 알고리즘형</b></td><td>실물 담보 없이 프로그램으로 수요·공급만 조절</td><td>담보 없이 "믿어줘"로 버티는 약속어음</td><td>테라USD · <b>2022년 붕괴</b>, 사실상 퇴출</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn reveal">
+      <p style="margin:0"><b>⚠️ 실제 사례 — 테라·루나 붕괴 (2022.5)</b><br>한국인 권도형이 만든 '테라USD'는 담보 없이 알고리즘만으로 1달러를 유지하려 했습니다. 신뢰가 흔들리자 며칠 만에 1달러 → 몇 센트로 폭락, <b>약 60조 원이 증발</b>하고 전 세계 코인 시장을 흔들었죠. "담보 없는 안정은 안정이 아니다"라는 교훈을 남긴, 스테이블코인 역사상 가장 큰 사고입니다.</p>
+    </div>
+
+    <p class="reveal">그래서 현재 시장은 ①번 담보형이 압도적입니다. 실제로 <b>USDT와 USDC 두 개가 전체의 95% 이상</b>을 차지합니다.</p>
+
+    <div class="quiz reveal" data-answer="2">
+      <div class="q-tag">Quiz 3</div>
+      <h4>2022년 약 60조 원이 증발하며 붕괴한 '테라·루나'는 어떤 유형이었을까요?</h4>
+      <button class="opt" data-i="0">진짜 달러를 금고에 쌓아둔 법정화폐 담보형 <span class="mk"></span></button>
+      <button class="opt" data-i="1">이더리움을 넉넉히 담보로 잡은 가상자산 담보형 <span class="mk"></span></button>
+      <button class="opt" data-i="2">실물 담보 없이 프로그램으로만 버틴 알고리즘형 <span class="mk"></span></button>
+      <button class="opt" data-i="3">정부가 보증한 공식 디지털화폐 <span class="mk"></span></button>
+      <div class="explain">정답은 ③입니다. 테라는 담보 자산 없이 자매 코인 '루나'와의 알고리즘 연동만으로 1달러를 유지하려 했어요. 신뢰가 깨지자 둘이 함께 무너지는 '죽음의 소용돌이'에 빠졌습니다. 이 사건 이후 알고리즘형은 사실상 시장에서 퇴출됐습니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 한국 -->
+<section id="s4">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">04 — 우리 이야기</div>
+    <h2 class="reveal">한국의 상황 — '원화 스테이블코인'을 둘러싼 줄다리기</h2>
+
+    <p class="reveal">지금 전 세계 스테이블코인은 거의 다 '달러' 기반입니다. 그래서 한국에서는 <b>"원화 스테이블코인을 우리가 직접 만들어야 한다"</b>는 논의가 뜨겁습니다. 안 만들면 디지털 결제 영역에서 달러에 안방을 내준다는 위기감이죠. 그 그릇이 바로 <b>'디지털자산기본법'</b>입니다.</p>
+
+    <div class="note reveal">📌 2026년 6월 현재, 디지털자산기본법은 <b>아직 국회를 통과하지 못한 상태</b>입니다. 여러 의원안과 정부안이 발의됐지만, 핵심 쟁점에서 부처 간 입장차가 커서 논의가 길어지고 있습니다.</div>
+
+    <h3 class="reveal">누가 발행할 수 있게 할 것인가 — 핵심 쟁점</h3>
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead><tr><th>입장</th><th>주장</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td><b>한국은행</b></td><td>은행이 지분 51% 이상 가진 곳만 발행 허용</td><td>통화 주권·지급결제 안정성을 지켜야 한다</td></tr>
+          <tr><td><b>금융위원회·여당 일각</b></td><td>핀테크·기술기업도 참여할 수 있게 더 개방</td><td>은행만 허용하면 혁신·경쟁이 위축된다 (EU·일본도 비은행 발행이 많다)</td></tr>
+          <tr><td><b>절충안(거론 중)</b></td><td>초기엔 은행 중심(지분 50%+1주)으로 시작, 점차 확대</td><td>안정성 먼저, 혁신은 단계적으로</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn reveal">
+      <p style="margin:0"><b>⏰ 시간 변수 — 지방선거</b><br>2026년 6월 3일 지방선거를 전후로 정치권의 관심이 쏠리면서, "그 전에 입법을 끝내자"는 쪽과 "선거 이후로 밀릴 것"이라는 관측이 엇갈립니다. 즉 <b>기술은 앞서가는데 제도가 따라오지 못하는 간극</b>이 한국의 현주소입니다.</p>
+    </div>
+
+    <div class="ask reveal">
+      <div class="a-tag">🙋 함께 생각해 볼까요</div>
+      <p>"원화 스테이블코인은 은행만 만들 수 있어야 한다" vs "핀테크도 만들게 열어야 한다." 여러분이 정책 결정자라면 안정성과 혁신 중 어느 쪽에 무게를 두시겠어요?</p>
+    </div>
+
+    <div class="quiz reveal" data-answer="0">
+      <div class="q-tag">Quiz 4</div>
+      <h4>원화 스테이블코인 입법에서 한국은행이 강하게 주장해 온 입장은?</h4>
+      <button class="opt" data-i="0">은행이 지분 과반(51%)을 가진 곳만 발행하게 하자 <span class="mk"></span></button>
+      <button class="opt" data-i="1">누구나 자유롭게 발행하게 완전 개방하자 <span class="mk"></span></button>
+      <button class="opt" data-i="2">스테이블코인을 아예 전면 금지하자 <span class="mk"></span></button>
+      <button class="opt" data-i="3">외국 달러 코인만 쓰고 원화는 만들지 말자 <span class="mk"></span></button>
+      <div class="explain">정답은 ①입니다. 한국은행은 통화 주권과 지급결제 안정성을 이유로 '은행 51% 룰'을 주장해 왔어요. 반면 금융위와 여당 일각은 그러면 핀테크 혁신이 막힌다며 더 개방적인 구조를 요구하고 있습니다. 이 견해차가 입법 지연의 핵심 원인입니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 실무자 시각 -->
+<section id="s5">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">05 — 현장의 눈</div>
+    <h2 class="reveal">실무자는 이걸 어떻게 볼까</h2>
+
+    <p class="reveal">개념만으로는 와닿지 않으니, 실제 이 시장에서 일하는 사람들의 시선으로 정리해 봤습니다.</p>
+
+    <div class="person reveal">
+      <div class="av">🏦</div>
+      <div><h4>은행 담당자</h4><div class="role">기회이자 위협</div>
+      <p>"송금·결제 수수료 수익이 줄 수 있어 위협이지만, 우리가 직접 발행하면 24시간 결제망과 새 수익원을 쥘 수 있습니다. 그래서 '은행이 주도하게 해달라'는 입장이 강한 거죠. 다만 준비금 관리·환매 의무가 생기면 사실상 또 하나의 예금을 떠안는 셈입니다."</p></div>
+    </div>
+
+    <div class="person reveal">
+      <div class="av">💳</div>
+      <div><h4>핀테크 / 결제 스타트업</h4><div class="role">새 운동장</div>
+      <p>"국경·영업시간 없는 결제 인프라가 공짜로 깔리는 겁니다. 해외 직구 정산, 크리에이터 글로벌 정산처럼 기존에 느리고 비쌌던 영역을 통째로 바꿀 수 있어요. 그래서 '은행만 발행'에 가장 강하게 반대합니다."</p></div>
+    </div>
+
+    <div class="person reveal">
+      <div class="av">⚖️</div>
+      <div><h4>리스크·컴플라이언스 담당자</h4><div class="role">자금세탁이 진짜 숙제</div>
+      <p>"빠르고 익명에 가깝게 큰돈이 국경을 넘으면 자금세탁·제재 회피 통로가 됩니다. 기술보다 'AML(자금세탁방지)·본인확인'을 어떻게 붙이느냐가 실무의 8할이에요. 화려한 혁신 뒤에 지루한 규제 작업이 산더미입니다."</p></div>
+    </div>
+
+    <div class="note reveal">💡 한 줄 요약: <b>은행은 '주도권'</b>, <b>핀테크는 '운동장'</b>, <b>규제 담당자는 '돈세탁 차단'</b>에 가장 신경 씁니다. 같은 기술을 보는 세 개의 다른 눈이죠.</div>
+  </div>
+</section>
+
+<!-- 6. 국제비교 -->
+<section id="s6">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">06 — 세계는 지금</div>
+    <h2 class="reveal">국제 비교와 향후 전망</h2>
+
+    <p class="reveal">주요국은 이미 '규칙 만들기' 경쟁에 돌입했습니다. 누가 표준을 잡느냐가 곧 디지털 금융의 주도권이기 때문입니다.</p>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead><tr><th>국가/지역</th><th>제도 현황</th><th>특징</th></tr></thead>
+        <tbody>
+          <tr><td><b>🇺🇸 미국</b></td><td>GENIUS Act 제정 — 2026년 7월 18일 시행 규칙 적용 예정</td><td>발행사에 100% 준비금·정기 감사 의무화. 달러 스테이블코인을 사실상 제도권으로</td></tr>
+          <tr><td><b>🇪🇺 유럽연합</b></td><td>MiCA(가상자산시장규제법) 시행 중</td><td>인가받은 발행사 다수가 전통 은행이 아닌 디지털자산 기업</td></tr>
+          <tr><td><b>🇯🇵 일본</b></td><td>핀테크 주도 엔화 스테이블코인 프로젝트 진행</td><td>규제 틀 안에서 비은행 혁신을 허용한 사례로 자주 인용</td></tr>
+          <tr><td><b>🇰🇷 한국</b></td><td>디지털자산기본법 — <b>국회 계류 중</b></td><td>발행 주체(은행 vs 핀테크)를 둘러싼 줄다리기로 지연</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="reveal">시장 지형 — 두 거인의 시대</h3>
+    <div class="cards reveal">
+      <div class="card"><div class="ic">🥇</div><h4>USDT (테더)</h4><p>시총 약 $190B, 점유율 약 59%. 신흥국에서 강세. 단, 전체 자산에 대한 회계법인의 완전 감사는 아직 없다는 점이 약점으로 지적됩니다.</p></div>
+      <div class="card"><div class="ic">🥈</div><h4>USDC (서클)</h4><p>시총 약 $78B. 규제 친화·투명성을 앞세워 '기관 표준'을 노립니다. 미국 제도화의 수혜를 기대받는 쪽.</p></div>
+    </div>
+
+    <div class="note reveal">🔮 <b>향후 전망 (확정이 아닌 시나리오입니다)</b><br>
+    ① <b>제도권 안착</b> — 미국·EU 규제가 자리 잡으며 은행·빅테크가 직접 발행에 뛰어드는 '대기업의 시대'로. ② <b>달러 패권 강화</b> — 달러 스테이블코인이 전 세계로 퍼지며 '디지털 달러화'가 심화. ③ <b>각국의 방어</b> — 한국·일본·EU가 자국 통화 스테이블코인으로 맞대응. 어느 시나리오든 실현 여부·속도는 정치 일정과 규제 결정에 크게 좌우되며, 단정할 수 없습니다.</div>
+
+    <div class="quiz reveal" data-answer="1">
+      <div class="q-tag">Quiz 5</div>
+      <h4>2026년 현재 스테이블코인 시장 1, 2위를 차지하는 두 코인은?</h4>
+      <button class="opt" data-i="0">비트코인과 이더리움 <span class="mk"></span></button>
+      <button class="opt" data-i="1">USDT(테더)와 USDC(서클) <span class="mk"></span></button>
+      <button class="opt" data-i="2">테라USD와 루나 <span class="mk"></span></button>
+      <button class="opt" data-i="3">원화코인과 엔화코인 <span class="mk"></span></button>
+      <div class="explain">정답은 ②입니다. USDT와 USDC 둘이 전체 스테이블코인의 95% 이상을 차지합니다. 비트코인·이더리움은 변동성이 큰 일반 코인이라 스테이블코인이 아니고, 테라·루나는 2022년에 붕괴했습니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 내 자산 -->
+<section id="s7">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">07 — 그래서 나에게는?</div>
+    <h2 class="reveal">내 자산과 실생활에 미치는 영향</h2>
+
+    <p class="reveal">"코인 안 하는데 나랑 무슨 상관?" 싶지만, 의외로 직접 연결됩니다.</p>
+
+    <div class="cards reveal">
+      <div class="card"><div class="ic">✈️</div><h4>해외 송금·유학비</h4><p>자녀 유학비, 해외 가족 송금이 며칠·수만 원 수수료에서 즉시·소액으로 바뀔 수 있습니다. 가장 먼저 체감될 변화.</p></div>
+      <div class="card"><div class="ic">🛒</div><h4>해외 직구·결제</h4><p>국경 결제 정산이 빨라지면 직구 환불·정산 지연 같은 불편이 줄어듭니다.</p></div>
+      <div class="card"><div class="ic">📉</div><h4>미국 국채 시장</h4><p>스테이블코인이 국채를 대량 보유해, 이 시장이 흔들리면 전 세계 금리·채권값에 영향. 간접적으로 내 대출 금리와도 연결됩니다.</p></div>
+      <div class="card"><div class="ic">🏦</div><h4>은행 예금의 미래</h4><p>이자 주는 스테이블코인이 허용되면, 은행 예금에서 돈이 빠져나가 예금·대출 구조가 바뀔 수 있습니다.</p></div>
+    </div>
+
+    <div class="warn reveal">
+      <p style="margin:0"><b>⚠️ 투자 관점에서 꼭 기억할 것</b><br>스테이블코인은 "값이 안 오르도록" 설계된 물건입니다. <b>'오를 자산'이 아니라 '안 흔들리는 보관·결제 수단'</b>이에요. "스테이블코인으로 돈 번다"는 광고(특히 고이자 약속)는 대개 준비금 부실·알고리즘형 같은 숨은 위험을 안고 있을 가능성이 큽니다. 이 발표는 정보 제공이며 투자 권유가 아닙니다.</p>
+    </div>
+
+    <div class="ask reveal">
+      <div class="a-tag">🙋 함께 생각해 볼까요</div>
+      <p>만약 "연 8% 이자를 주는 달러 스테이블코인"이 있다고 광고한다면, 여러분은 어떤 질문을 먼저 던져야 할까요? (힌트: 그 이자는 어디서 나오나요?)</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8. 인물 -->
+<section id="s8">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">08 — 사람으로 보는 흐름</div>
+    <h2 class="reveal">기억할 핵심 인물</h2>
+
+    <div class="person reveal">
+      <div class="av">⚠️</div>
+      <div><h4>권도형 (Do Kwon)</h4><div class="role">테라·루나 창업자 · 한국인</div>
+      <p>스탠퍼드 출신 개발자로, 알고리즘 스테이블코인 '테라USD'를 만들었습니다. 2022년 약 60조 원 규모 붕괴 사태의 중심 인물로, 이후 각국에서 법적 절차가 이어졌습니다. <b>"담보 없는 안정은 환상"</b>이라는 교훈의 상징이 된 인물입니다.</p></div>
+    </div>
+
+    <div class="person reveal">
+      <div class="av">💵</div>
+      <div><h4>제러미 알레어 (Jeremy Allaire)</h4><div class="role">서클(USDC 발행사) 공동창업자·CEO</div>
+      <p>일찍부터 '규제 친화·투명성'을 무기로 USDC를 키웠습니다. 미국 제도화 흐름에서 가장 수혜를 볼 진영의 대표 얼굴로, 향후 '제도권 표준 스테이블코인' 경쟁의 핵심 인물입니다.</p></div>
+    </div>
+
+    <div class="note reveal">💡 두 사람의 대비가 곧 이 산업의 교훈입니다. <b>권도형 = 담보 없는 혁신의 위험</b>, <b>알레어 = 규제 안에서의 신뢰 구축</b>. 시장은 결국 후자 쪽으로 기울고 있습니다.</div>
+  </div>
+</section>
+
+<!-- 9. 정리 -->
+<section id="s9">
+  <div class="wrap">
+    <div class="sec-eyebrow reveal">09 — 마무리</div>
+    <h2 class="reveal">오늘 기억할 5가지</h2>
+
+    <ol class="takeaway reveal">
+      <li><b>스테이블코인 = 값이 안 흔들리는 디지털 화폐</b>달러·원화에 1:1로 묶어둔 코인. '디지털 만원짜리'에 가깝습니다.</li>
+      <li><b>생명선은 '준비금'</b>발행한 만큼 진짜 현금·국채를 갖고 있느냐가 신뢰의 전부. 담보 없는 알고리즘형(테라)은 무너졌습니다.</li>
+      <li><b>두 거인의 시대</b>USDT·USDC 둘이 시장의 95% 이상. 전체 시총은 약 $321B(440조 원 이상)까지 커졌습니다.</li>
+      <li><b>한국은 '제도 따라잡기' 중</b>원화 스테이블코인을 위한 디지털자산기본법이 발행 주체(은행 vs 핀테크) 쟁점으로 국회 계류 중입니다.</li>
+      <li><b>'오를 자산'이 아니라 '인프라'</b>스테이블코인의 가치는 '결제·송금 수단'에 있습니다. 고이자를 약속하면 숨은 위험부터 의심하세요.</li>
+    </ol>
+
+    <div class="ask reveal" style="background:linear-gradient(135deg,#1c3a32,#0e1726)">
+      <div class="a-tag">🗣️ 오늘의 토론 질문</div>
+      <p>"원화 스테이블코인이 상용화돼 모든 송금·결제가 24시간 즉시·무료가 된 세상"을 상상해 봅시다. 이게 우리 일상에 가장 크게 바꿔놓을 한 가지는 무엇이고, 반대로 가장 걱정되는 한 가지는 무엇일까요? 각자 하나씩 말해봅시다.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <h4>출처 및 데이터 기준</h4>
+    <p>본 자료의 수치·정책 현황은 2026년 6월 기준 아래 자료를 참고해 작성했습니다. 시장 데이터와 입법 상황은 수시로 바뀔 수 있으며, 향후 전망은 확정이 아닌 시나리오입니다. 본 자료는 정보 제공 목적이며 투자 권유가 아닙니다.</p>
+    <p>· 시장 규모/점유율: CoinDesk Research(2026.4 리포트), The Motley Fool(2026.5.13), Bitrue·KuCoin(2026.4~5), DefiLlama 집계<br>
+    · 한국 입법 현황: 전자신문·더벨·뉴데일리·ZDNet Korea·CoinDesk Korea(2025.12~2026.4)<br>
+    · 국제 규제(GENIUS Act/MiCA): Bitrue(2026.5), 99bitcoins·CoinDesk(2026)<br>
+    · 학술 참고: BIS Working Paper No.1270 "Stablecoins and safe asset prices"</p>
+    <p style="margin-top:18px;color:#6c7c95">스터디 모임 발표 자료 · 일반인 대상 · 약 20분</p>
+  </div>
+</footer>
+
+<button id="totop" aria-label="맨 위로">↑</button>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // progress bar
+  var prog = document.getElementById('progress');
+  function onScroll(){
+    var h = document.documentElement;
+    var sc = (h.scrollTop)/(h.scrollHeight - h.clientHeight);
+    prog.style.width = (sc*100)+'%';
+    document.getElementById('totop').classList.toggle('show', h.scrollTop>600);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  // back to top
+  document.getElementById('totop').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior: reduce?'auto':'smooth'});
+  });
+
+  // TOC toggle (mobile)
+  var toggle = document.getElementById('toc-toggle');
+  var list = document.getElementById('toc-list');
+  toggle.addEventListener('click', function(){
+    var open = list.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open);
+  });
+  list.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', function(){ list.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); });
+  });
+
+  // active section in TOC (scrollspy)
+  var sections = Array.prototype.slice.call(document.querySelectorAll('main section'));
+  var links = {};
+  list.querySelectorAll('a').forEach(function(a){ links[a.getAttribute('href').slice(1)] = a; });
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        Object.values(links).forEach(function(l){ l.classList.remove('active'); });
+        if(links[e.target.id]) links[e.target.id].classList.add('active');
+      }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px'});
+  sections.forEach(function(s){ spy.observe(s); });
+
+  // reveal on scroll
+  var revs = document.querySelectorAll('.reveal');
+  if(reduce){ revs.forEach(function(r){ r.classList.add('in'); }); }
+  else {
+    var ro = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); ro.unobserve(e.target);} });
+    }, {threshold:0.12});
+    revs.forEach(function(r){ ro.observe(r); });
+  }
+
+  // quizzes
+  document.querySelectorAll('.quiz').forEach(function(q){
+    var ans = parseInt(q.getAttribute('data-answer'),10);
+    var opts = q.querySelectorAll('.opt');
+    var exp = q.querySelector('.explain');
+    opts.forEach(function(opt){
+      opt.addEventListener('click', function(){
+        if(opt.disabled) return;
+        var i = parseInt(opt.getAttribute('data-i'),10);
+        opts.forEach(function(o){
+          o.disabled = true;
+          var oi = parseInt(o.getAttribute('data-i'),10);
+          if(oi===ans){ o.classList.add('correct'); o.querySelector('.mk').textContent='✓ 정답'; }
+        });
+        if(i!==ans){ opt.classList.add('wrong'); opt.querySelector('.mk').textContent='✗'; }
+        exp.classList.add('show');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -207,32 +207,74 @@
     return d.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
   }
 
-  function render(){
-    const list = DATA
-      .filter(p => !activeTag || (p.tags||[]).includes(activeTag))
-      .filter(p => {
-        if (!query) return true;
-        const hay = (p.title + ' ' + (p.summary||'') + ' ' + (p.tags||[]).join(' ')).toLowerCase();
-        return hay.includes(query.toLowerCase());
-      })
-      .sort((a,b) => new Date(b.date) - new Date(a.date));
-
-    countEl.textContent = `발표 ${list.length}개`;
-
-    if (!list.length){
-      grid.innerHTML = '<div class="empty">조건에 맞는 발표가 없어요.</div>';
-      return;
+  function matches(p){
+    if (activeTag && !(p.tags||[]).includes(activeTag)) return false;
+    if (query){
+      const hay = (p.title + ' ' + (p.summary||'') + ' ' + (p.tags||[]).join(' ')).toLowerCase();
+      if (!hay.includes(query.toLowerCase())) return false;
     }
+    return true;
+  }
 
-    grid.innerHTML = list.map((p, i) => `
-      <a class="card" href="slides/${p.slug}/" style="animation-delay:${i*60}ms">
+  function cardHTML(p, depth, i){
+    const indent = depth > 0
+      ? `margin-left:${Math.min(depth,3)*22}px;border-left:3px solid var(--accent-soft);`
+      : '';
+    const childMark = depth > 0
+      ? '<span style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px;display:inline-block">↳ 이어지는 글</span>'
+      : '';
+    return `
+      <a class="card" href="slides/${p.slug}/" style="${indent}animation-delay:${i*55}ms">
+        ${childMark}
         <span class="date">${fmtDate(p.date)}</span>
         <h2>${p.title}</h2>
         <p>${p.summary || ''}</p>
         <div class="cardtags">${(p.tags||[]).map(t=>`<span>${t}</span>`).join('')}</div>
         <span class="go">자료 보기 ${arrow}</span>
-      </a>
-    `).join('');
+      </a>`;
+  }
+
+  // 계층 구조를 깊이우선으로 펼쳐서, 부모 아래 자식이 들여쓰기되어 나오게
+  function flattenTree(){
+    const childrenOf = {};
+    DATA.forEach(p => {
+      const key = p.parent || '__root__';
+      (childrenOf[key] = childrenOf[key] || []).push(p);
+    });
+    Object.values(childrenOf).forEach(arr =>
+      arr.sort((a,b) => new Date(b.date) - new Date(a.date)));
+
+    const out = [];
+    (function walk(parentKey, depth){
+      (childrenOf[parentKey] || []).forEach(p => {
+        out.push({ p, depth });
+        walk(p.slug, depth + 1);
+      });
+    })('__root__', 0);
+    return out;
+  }
+
+  function render(){
+    // 검색·태그가 활성일 때는 계층 대신 평면 목록(걸린 글만)
+    const filtering = !!(activeTag || query);
+    let rows;
+
+    if (filtering){
+      rows = DATA.filter(matches)
+        .sort((a,b) => new Date(b.date) - new Date(a.date))
+        .map(p => ({ p, depth: 0 }));
+    } else {
+      rows = flattenTree();
+    }
+
+    countEl.textContent = `발표 ${rows.length}개`;
+
+    if (!rows.length){
+      grid.innerHTML = '<div class="empty">조건에 맞는 발표가 없어요.</div>';
+      return;
+    }
+
+    grid.innerHTML = rows.map((r, i) => cardHTML(r.p, r.depth, i)).join('');
   }
 
   function buildTags(){

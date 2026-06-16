@@ -238,21 +238,152 @@
 <body>
 <div class="progress" id="bar"></div>
 
-<!-- ▼ 목록으로 돌아가기 버튼 -->
-<a href="../../" aria-label="발표 목록으로 돌아가기" style="
-  position:fixed; top:14px; left:16px; z-index:9999;
-  display:inline-flex; align-items:center; gap:6px;
-  padding:9px 15px 9px 12px; border-radius:999px;
-  background:rgba(10,93,87,.9); color:#fff;
-  font:600 14px/1 'IBM Plex Sans KR',sans-serif;
-  text-decoration:none; backdrop-filter:blur(6px);
-  box-shadow:0 4px 16px rgba(21,32,43,.2); transition:transform .18s,background .18s;"
-  onmouseover="this.style.transform='translateX(-2px)';this.style.background='rgba(181,72,46,.95)'"
-  onmouseout="this.style.transform='none';this.style.background='rgba(10,93,87,.9)'">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-  목록으로
-</a>
-<!-- ▲ -->
+<!-- ▼▼▼ 글 목록 사이드 패널 (마우스+버튼) ▼▼▼ -->
+<style>
+  #ecolab-nav, #ecolab-nav *{box-sizing:border-box}
+  /* 좌측 가장자리 호버 감지 띠 */
+  #ecolab-edge{
+    position:fixed; top:0; left:0; width:14px; height:100vh; z-index:9997;
+  }
+  #ecolab-edge::after{
+    content:""; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:4px; height:64px; border-radius:0 4px 4px 0;
+    background:rgba(10,93,87,.55); transition:background .2s,width .2s;
+  }
+  #ecolab-edge:hover::after{background:rgba(10,93,87,.9); width:6px;}
+  /* 메뉴 버튼 */
+  #ecolab-toggle{
+    position:fixed; top:14px; left:16px; z-index:9999;
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 15px 9px 12px; border:none; border-radius:999px;
+    background:rgba(10,93,87,.9); color:#fff; cursor:pointer;
+    font:600 14px/1 'IBM Plex Sans KR',sans-serif;
+    backdrop-filter:blur(6px); box-shadow:0 4px 16px rgba(21,32,43,.2);
+    transition:transform .18s,background .18s;
+  }
+  #ecolab-toggle:hover{transform:translateX(-1px); background:rgba(181,72,46,.95);}
+  #ecolab-toggle svg{display:block}
+  /* 패널 본체 */
+  #ecolab-nav{
+    position:fixed; top:0; left:0; height:100vh; width:330px; max-width:84vw;
+    background:#fbf8f1; border-right:1px solid #d6cdb8; z-index:10000;
+    transform:translateX(-104%); transition:transform .28s cubic-bezier(.2,.7,.3,1);
+    display:flex; flex-direction:column;
+    font-family:'IBM Plex Sans KR',sans-serif; color:#15202b;
+    box-shadow:8px 0 40px rgba(21,32,43,.14);
+  }
+  #ecolab-nav.open{transform:none}
+  #ecolab-nav .hd{
+    padding:20px 20px 14px; border-bottom:1px solid #e6dfcd;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  #ecolab-nav .hd b{font-family:'Gowun Batang',serif; font-size:18px}
+  #ecolab-nav .hd a{font-size:12.5px; color:#0a5d57; text-decoration:none; font-weight:600}
+  #ecolab-nav .srch{padding:12px 16px}
+  #ecolab-nav .srch input{
+    width:100%; padding:9px 13px; font:inherit; font-size:14px;
+    border:1px solid #d6cdb8; border-radius:10px; background:#fff; color:#15202b;
+  }
+  #ecolab-nav .srch input:focus{outline:none; border-color:#0a5d57; box-shadow:0 0 0 3px #e3efed}
+  #ecolab-nav .list{flex:1; overflow-y:auto; padding:4px 10px 24px}
+  #ecolab-nav .item{
+    display:block; text-decoration:none; color:#15202b;
+    padding:9px 12px; border-radius:9px; margin:2px 0;
+    font-size:14px; line-height:1.4; transition:background .15s;
+  }
+  #ecolab-nav .item:hover{background:#efe9dc}
+  #ecolab-nav .item.current{background:#e3efed; color:#0a5d57; font-weight:600}
+  #ecolab-nav .item .d{display:block; font-size:11.5px; color:#8a7a52; margin-top:2px}
+  #ecolab-nav .item.child{position:relative}
+  #ecolab-nav .item.child::before{
+    content:"↳"; position:absolute; left:-2px; color:#0a5d57; opacity:.6;
+  }
+  #ecolab-nav .msg{padding:18px 16px; font-size:13px; color:#6a6353}
+  #ecolab-backdrop{
+    position:fixed; inset:0; background:rgba(21,32,43,.32); z-index:9998;
+    opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  #ecolab-backdrop.open{opacity:1; pointer-events:auto}
+  @media (prefers-reduced-motion: reduce){
+    #ecolab-nav,#ecolab-backdrop,#ecolab-toggle{transition:none}
+  }
+</style>
+
+<div id="ecolab-edge" aria-hidden="true"></div>
+<button id="ecolab-toggle" aria-label="글 목록 열기" aria-expanded="false">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  글 목록
+</button>
+<div id="ecolab-backdrop"></div>
+<nav id="ecolab-nav" aria-label="발표 글 목록">
+  <div class="hd"><b>eco-lab</b><a href="../../">홈으로 →</a></div>
+  <div class="srch"><input id="ecolab-q" type="text" placeholder="글 검색…" aria-label="글 검색"></div>
+  <div class="list" id="ecolab-list"><div class="msg">불러오는 중…</div></div>
+</nav>
+
+<script>
+(function(){
+  // 이 페이지의 슬러그 = 폴더명 (slides/<slug>/index.html)
+  var CURRENT = location.pathname.replace(/\/index\.html?$/,'').split('/').filter(Boolean).pop();
+  var nav = document.getElementById('ecolab-nav');
+  var backdrop = document.getElementById('ecolab-backdrop');
+  var toggle = document.getElementById('ecolab-toggle');
+  var edge = document.getElementById('ecolab-edge');
+  var listEl = document.getElementById('ecolab-list');
+  var qEl = document.getElementById('ecolab-q');
+  var DATA = [], hoverTimer;
+
+  function open(){ nav.classList.add('open'); backdrop.classList.add('open'); toggle.setAttribute('aria-expanded','true'); }
+  function close(){ nav.classList.remove('open'); backdrop.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }
+
+  toggle.addEventListener('click', function(){ nav.classList.contains('open') ? close() : open(); });
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
+  // 왼쪽 가장자리에 마우스를 올리면 열림
+  edge.addEventListener('mouseenter', function(){ hoverTimer = setTimeout(open, 120); });
+  edge.addEventListener('mouseleave', function(){ clearTimeout(hoverTimer); });
+  // 패널 밖으로 마우스가 충분히 나가면 닫힘
+  nav.addEventListener('mouseleave', function(e){ if(e.clientX < 1) return; close(); });
+
+  function fmt(s){ var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'}); }
+
+  function flatten(rows){
+    var byParent = {};
+    rows.forEach(function(p){ var k=p.parent||'__root__'; (byParent[k]=byParent[k]||[]).push(p); });
+    Object.keys(byParent).forEach(function(k){ byParent[k].sort(function(a,b){return new Date(b.date)-new Date(a.date);}); });
+    var out=[];
+    (function walk(key,depth){ (byParent[key]||[]).forEach(function(p){ out.push({p:p,depth:depth}); walk(p.slug,depth+1); }); })('__root__',0);
+    return out;
+  }
+
+  function draw(filter){
+    var rows;
+    if(filter){
+      var q=filter.toLowerCase();
+      rows = DATA.filter(function(p){ return (p.title+' '+(p.summary||'')+' '+(p.tags||[]).join(' ')).toLowerCase().indexOf(q)>-1; })
+                 .map(function(p){return {p:p,depth:0};});
+    } else {
+      rows = flatten(DATA);
+    }
+    if(!rows.length){ listEl.innerHTML='<div class="msg">결과가 없어요.</div>'; return; }
+    listEl.innerHTML = rows.map(function(r){
+      var p=r.p, cur = p.slug===CURRENT ? ' current' : '';
+      var child = r.depth>0 ? ' child' : '';
+      var pad = r.depth>0 ? 'margin-left:'+Math.min(r.depth,3)*16+'px;' : '';
+      return '<a class="item'+cur+child+'" style="'+pad+'" href="../'+p.slug+'/">'+
+             p.title+'<span class="d">'+fmt(p.date)+'</span></a>';
+    }).join('');
+  }
+
+  qEl.addEventListener('input', function(e){ draw(e.target.value.trim()); });
+
+  fetch('../../presentations.json',{cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){ DATA = Array.isArray(d)?d:[]; draw(''); })
+    .catch(function(){ listEl.innerHTML='<div class="msg">목록을 불러오지 못했어요. (로컬에서 직접 열면 보안상 막힐 수 있어요 — 배포본에서는 정상 작동합니다.)</div>'; });
+})();
+</script>
+<!-- ▲▲▲ 사이드 패널 끝 ▲▲▲ -->
 
 
 <!-- ========== 표지 ========== -->

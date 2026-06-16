@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일본의 금리인상과 세계 증시 — 과거·현재·미래</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1714;
+  --paper:#f7f3ec;
+  --paper2:#efe8db;
+  --crimson:#b81d24;      /* 일장기 레드 */
+  --crimson-dk:#8c121a;
+  --indigo:#1c2b4a;       /* 남색 */
+  --indigo-lt:#3a517d;
+  --gold:#c69b4a;
+  --line:#ddd2bf;
+  --good:#1d7a52;
+  --bad:#b81d24;
+  --shadow:rgba(26,23,20,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:'IBM Plex Sans KR',sans-serif;font-weight:400;line-height:1.75;
+  -webkit-font-smoothing:antialiased;font-size:17px;
+  overflow-x:hidden;
+}
+h1,h2,h3,.serif{font-family:'Gowun Batang',serif}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* progress bar */
+#progress{position:fixed;top:0;left:0;height:4px;width:0;
+  background:linear-gradient(90deg,var(--crimson),var(--gold));z-index:9996;transition:width .1s linear}
+
+/* layout */
+.wrap{max-width:920px;margin:0 auto;padding:0 22px}
+section{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:none}
+.eyebrow{display:inline-block;font-size:13px;letter-spacing:.18em;font-weight:600;
+  color:var(--crimson);text-transform:uppercase;margin-bottom:10px}
+h2{font-size:30px;line-height:1.3;margin:0 0 8px;color:var(--indigo)}
+h3{font-size:21px;color:var(--indigo);margin:34px 0 10px}
+p{margin:14px 0}
+.lead{font-size:18.5px;color:#3a342c}
+strong{font-weight:600;color:var(--crimson-dk)}
+a{color:var(--indigo-lt)}
+
+/* hero */
+#hero{
+  min-height:88vh;display:flex;flex-direction:column;justify-content:center;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(184,29,36,.10), transparent 38%),
+    linear-gradient(160deg,#fbf8f2,#efe7d8);
+  border-bottom:none;text-align:center;position:relative;padding:80px 0 60px;
+}
+#hero .dot{width:118px;height:118px;border-radius:50%;background:var(--crimson);
+  margin:0 auto 30px;box-shadow:0 12px 48px rgba(184,29,36,.32);
+  position:relative;animation:pulse 3.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){#hero .dot{animation:none}}
+#hero h1{font-size:clamp(30px,6vw,52px);line-height:1.22;margin:0 0 16px;color:var(--ink)}
+#hero h1 .hl{color:var(--crimson)}
+#hero .sub{font-size:18px;color:#5a5347;max-width:640px;margin:0 auto}
+#hero .meta{margin-top:30px;font-size:14px;color:#8a8170}
+.scrollcue{margin-top:46px;font-size:13px;color:#a59a86;letter-spacing:.1em}
+.scrollcue span{display:block;font-size:22px;animation:bob 1.8s infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+@media (prefers-reduced-motion:reduce){.scrollcue span{animation:none}}
+
+/* TOC */
+#toc{background:var(--paper2);border-bottom:1px solid var(--line);position:relative}
+#toc .wrap{padding-top:40px;padding-bottom:40px}
+#toc h2{font-size:20px;margin-bottom:16px}
+.toc-toggle{display:none}
+.toc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.toc-list a{display:block;text-decoration:none;color:var(--ink);padding:9px 13px;border-radius:9px;
+  font-size:15px;border:1px solid transparent;transition:background .15s,border-color .15s}
+.toc-list a:hover{background:#fff}
+.toc-list a.active{background:#fff;border-color:var(--crimson);color:var(--crimson-dk);font-weight:600}
+.toc-list a .n{display:inline-block;width:26px;color:var(--gold);font-weight:600;font-family:'IBM Plex Mono',monospace}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+/* boxes */
+.defbox{background:linear-gradient(135deg,var(--indigo),var(--indigo-lt));color:#fff;
+  border-radius:16px;padding:26px 28px;margin:24px 0;box-shadow:0 10px 30px var(--shadow)}
+.defbox .tag{font-size:12px;letter-spacing:.16em;color:var(--gold);font-weight:600;text-transform:uppercase}
+.defbox p{margin:8px 0 0;font-size:19px;line-height:1.7;color:#fff}
+.defbox .serif{font-weight:700}
+
+.analogy{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);
+  border-radius:0 14px 14px 0;padding:20px 24px;margin:22px 0}
+.analogy .tag{font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.12em}
+.analogy p{margin:6px 0 0}
+
+.callout{background:#fdf0f0;border:1px solid #f0c9cc;border-radius:14px;padding:18px 22px;margin:22px 0}
+.callout.indigo{background:#eef1f7;border-color:#cdd6e8}
+
+/* question box */
+.qbox{background:linear-gradient(135deg,#fff7ea,#fdeecf);border:1px dashed var(--gold);
+  border-radius:14px;padding:20px 24px;margin:26px 0}
+.qbox .tag{font-size:12px;font-weight:600;color:var(--crimson);letter-spacing:.12em}
+.qbox p{margin:6px 0 0;font-size:17px;color:#5a4a28;font-style:italic}
+
+/* flow diagram */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin:26px 0}
+.flow .step{flex:1;min-width:140px;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:16px 14px;text-align:center;position:relative}
+.flow .step .ico{font-size:26px;display:block;margin-bottom:6px}
+.flow .step b{display:block;font-size:15px;color:var(--indigo);margin-bottom:4px}
+.flow .step small{font-size:13px;color:#6a6253;line-height:1.5}
+.flow .arrow{display:flex;align-items:center;color:var(--crimson);font-size:22px;font-weight:700}
+@media(max-width:680px){.flow{flex-direction:column}.flow .arrow{transform:rotate(90deg);justify-content:center;height:18px}}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;margin:24px 0;font-size:15.5px;background:#fff;
+  border-radius:12px;overflow:hidden;box-shadow:0 6px 20px var(--shadow)}
+.tbl th,.tbl td{padding:13px 15px;text-align:left;border-bottom:1px solid var(--line)}
+.tbl th{background:var(--indigo);color:#fff;font-weight:600;font-size:14px}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:nth-child(even) td{background:#faf6ef}
+.tbl .hi{color:var(--crimson-dk);font-weight:600}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:24px 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 6px 18px var(--shadow)}
+.card .emoji{font-size:28px}
+.card h4{margin:10px 0 6px;color:var(--indigo);font-size:17px}
+.card p{margin:0;font-size:14.5px;color:#5a5347;line-height:1.6}
+
+/* timeline */
+.tl{position:relative;margin:30px 0 10px;padding-left:30px}
+.tl::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl .ev{position:relative;margin-bottom:22px}
+.tl .ev::before{content:"";position:absolute;left:-26px;top:5px;width:13px;height:13px;border-radius:50%;
+  background:var(--crimson);border:3px solid var(--paper);box-shadow:0 0 0 1px var(--crimson)}
+.tl .ev .date{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--crimson);font-weight:600}
+.tl .ev b{display:block;color:var(--indigo);margin:2px 0}
+.tl .ev p{margin:2px 0 0;font-size:14.5px;color:#5a5347}
+
+/* person card */
+.person{display:flex;gap:20px;align-items:flex-start;background:#fff;border:1px solid var(--line);
+  border-radius:16px;padding:22px;margin:22px 0;box-shadow:0 6px 20px var(--shadow)}
+.person .avatar{width:74px;height:74px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle at 40% 35%,#3a517d,#1c2b4a);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:'Gowun Batang',serif;font-size:30px}
+.person h4{margin:0 0 2px;color:var(--indigo);font-size:19px}
+.person .role{font-size:13.5px;color:var(--gold);font-weight:600;margin-bottom:8px}
+.person p{margin:6px 0 0;font-size:14.5px;color:#5a5347}
+
+/* quiz */
+.quiz{background:#fff;border:2px solid var(--indigo);border-radius:16px;padding:24px;margin:30px 0;
+  box-shadow:0 8px 26px var(--shadow)}
+.quiz .qhd{font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--crimson);text-transform:uppercase}
+.quiz .qtext{font-size:18px;font-weight:600;color:var(--indigo);margin:8px 0 16px;line-height:1.5}
+.quiz .opt{display:block;width:100%;text-align:left;background:var(--paper);border:1.5px solid var(--line);
+  border-radius:11px;padding:14px 16px;margin:9px 0;font:inherit;font-size:16px;color:var(--ink);
+  cursor:pointer;transition:background .15s,border-color .15s;min-height:50px}
+.quiz .opt:hover{background:#fff;border-color:var(--indigo-lt)}
+.quiz .opt:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.quiz .opt.correct{background:#e4f4ec;border-color:var(--good);color:#155c3d;font-weight:600}
+.quiz .opt.wrong{background:#fbe6e7;border-color:var(--bad);color:var(--crimson-dk)}
+.quiz .opt .mk{float:right;font-weight:700}
+.quiz .explain{display:none;margin-top:14px;padding:15px 17px;background:var(--paper2);
+  border-radius:11px;font-size:15px;line-height:1.65;border-left:4px solid var(--gold)}
+.quiz .explain.show{display:block;animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.quiz .explain.show{animation:none}}
+
+/* takeaways */
+#summary{background:linear-gradient(160deg,#1c2b4a,#101a30);color:#fff;border-bottom:none}
+#summary h2{color:#fff}
+#summary .eyebrow{color:var(--gold)}
+.takeaways{list-style:none;padding:0;margin:24px 0;counter-reset:t}
+.takeaways li{counter-increment:t;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  border-radius:13px;padding:18px 20px 18px 64px;margin:13px 0;position:relative;font-size:16.5px;line-height:1.6}
+.takeaways li::before{content:counter(t);position:absolute;left:18px;top:50%;transform:translateY(-50%);
+  width:32px;height:32px;border-radius:50%;background:var(--crimson);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.takeaways li b{color:var(--gold)}
+
+.discuss{background:rgba(198,155,74,.14);border:1px solid var(--gold);border-radius:14px;
+  padding:22px 24px;margin:30px 0 6px}
+.discuss .tag{color:var(--gold);font-weight:600;letter-spacing:.12em;font-size:12px}
+.discuss p{font-size:18px;color:#fff;font-style:italic;margin:8px 0 0;line-height:1.6}
+
+/* footer */
+footer{background:#15110d;color:#b3aa99;padding:40px 0 60px;font-size:13px;line-height:1.7}
+footer .wrap{max-width:920px}
+footer a{color:#cbb98f;word-break:break-all}
+footer h4{color:#fff;font-size:14px;margin:0 0 10px}
+footer .src{margin:4px 0}
+.disc{margin-top:20px;padding:14px 16px;background:rgba(184,29,36,.16);border-radius:10px;color:#e8d6c0}
+
+/* back to top */
+#totop{position:fixed;right:20px;bottom:20px;width:48px;height:48px;border-radius:50%;
+  background:var(--indigo);color:#fff;border:none;cursor:pointer;font-size:22px;z-index:9995;
+  box-shadow:0 6px 20px var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s,transform .2s}
+#totop.show{opacity:1;pointer-events:auto}
+#totop:hover{transform:translateY(-3px);background:var(--crimson)}
+#totop:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.backlink{position:fixed;top:14px;right:16px;z-index:9994;background:rgba(28,43,74,.9);color:#fff;
+  text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;
+  backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(26,23,20,.2)}
+
+@media(max-width:680px){
+  body{font-size:16px}
+  .toc-list{grid-template-columns:1fr}
+  .toc-toggle{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
+    border-radius:10px;padding:10px 14px;font:inherit;font-weight:600;color:var(--indigo);cursor:pointer;width:100%}
+  .toc-list.collapsed{display:none}
+  h2{font-size:25px}
+  .person{flex-direction:column}
+  .backlink{top:auto;bottom:20px;right:78px}
+}
+</style>
+</head>
+<body>
+
+<!-- 글 목록 사이드 패널: 테마색 적용(28,43,74 = indigo / 184,29,36 = crimson) -->
+<style>
+#ecolab-nav,#ecolab-nav *{box-sizing:border-box}
+#ecolab-edge{position:fixed;top:0;left:0;width:14px;height:100vh;z-index:9997}
+#ecolab-edge::after{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:64px;border-radius:0 4px 4px 0;background:rgba(28,43,74,.55);transition:background .2s,width .2s}
+#ecolab-edge:hover::after{background:rgba(28,43,74,.9);width:6px}
+#ecolab-toggle{position:fixed;top:14px;left:16px;z-index:9999;display:inline-flex;align-items:center;gap:7px;padding:9px 15px 9px 12px;border:none;border-radius:999px;background:rgba(28,43,74,.92);color:#fff;cursor:pointer;font:600 14px/1 'IBM Plex Sans KR',sans-serif;backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(26,23,20,.2);transition:transform .18s,background .18s}
+#ecolab-toggle:hover{transform:translateX(-1px);background:rgba(184,29,36,.95)}
+#ecolab-toggle svg{display:block}
+#ecolab-nav{position:fixed;top:0;left:0;height:100vh;width:330px;max-width:84vw;background:#fbf8f1;border-right:1px solid #d6cdb8;z-index:10000;transform:translateX(-104%);transition:transform .28s cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column;font-family:'IBM Plex Sans KR',sans-serif;color:#15202b;box-shadow:8px 0 40px rgba(26,23,20,.14)}
+#ecolab-nav.open{transform:none}
+#ecolab-nav .hd{padding:20px 20px 14px;border-bottom:1px solid #e6dfcd;display:flex;align-items:center;justify-content:space-between}
+#ecolab-nav .hd b{font-family:'Gowun Batang',serif;font-size:18px}
+#ecolab-nav .hd a{font-size:12.5px;color:#1c2b4a;text-decoration:none;font-weight:600}
+#ecolab-nav .srch{padding:12px 16px}
+#ecolab-nav .srch input{width:100%;padding:9px 13px;font:inherit;font-size:14px;border:1px solid #d6cdb8;border-radius:10px;background:#fff;color:#15202b}
+#ecolab-nav .srch input:focus{outline:none;border-color:#1c2b4a;box-shadow:0 0 0 3px #e3e8f1}
+#ecolab-nav .list{flex:1;overflow-y:auto;padding:4px 10px 24px}
+#ecolab-nav .item{display:block;text-decoration:none;color:#15202b;padding:9px 12px;border-radius:9px;margin:2px 0;font-size:14px;line-height:1.4;transition:background .15s}
+#ecolab-nav .item:hover{background:#efe9dc}
+#ecolab-nav .item.current{background:#e3e8f1;color:#1c2b4a;font-weight:600}
+#ecolab-nav .item .d{display:block;font-size:11.5px;color:#8a7a52;margin-top:2px}
+#ecolab-nav .item.child{position:relative}
+#ecolab-nav .item.child::before{content:"↳";position:absolute;left:-2px;color:#1c2b4a;opacity:.6}
+#ecolab-nav .msg{padding:18px 16px;font-size:13px;color:#6a6353}
+#ecolab-backdrop{position:fixed;inset:0;background:rgba(26,23,20,.32);z-index:9998;opacity:0;pointer-events:none;transition:opacity .25s}
+#ecolab-backdrop.open{opacity:1;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){#ecolab-nav,#ecolab-backdrop,#ecolab-toggle{transition:none}}
+</style>
+<div id="ecolab-edge" aria-hidden="true"></div>
+<button id="ecolab-toggle" aria-label="글 목록 열기" aria-expanded="false">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+글 목록
+</button>
+<div id="ecolab-backdrop"></div>
+<nav id="ecolab-nav" aria-label="발표 글 목록">
+<div class="hd"><b>eco-lab</b><a href="../../">홈으로 →</a></div>
+<div class="srch"><input id="ecolab-q" type="text" placeholder="글 검색…" aria-label="글 검색"></div>
+<div class="list" id="ecolab-list"><div class="msg">불러오는 중…</div></div>
+</nav>
+<script>
+(function(){
+var CURRENT = location.pathname.replace(/\/index\.html?$/,'').split('/').filter(Boolean).pop();
+var nav=document.getElementById('ecolab-nav'),backdrop=document.getElementById('ecolab-backdrop'),
+toggle=document.getElementById('ecolab-toggle'),edge=document.getElementById('ecolab-edge'),
+listEl=document.getElementById('ecolab-list'),qEl=document.getElementById('ecolab-q'),DATA=[],hoverTimer;
+function open(){nav.classList.add('open');backdrop.classList.add('open');toggle.setAttribute('aria-expanded','true');}
+function close(){nav.classList.remove('open');backdrop.classList.remove('open');toggle.setAttribute('aria-expanded','false');}
+toggle.addEventListener('click',function(){nav.classList.contains('open')?close():open();});
+backdrop.addEventListener('click',close);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+edge.addEventListener('mouseenter',function(){hoverTimer=setTimeout(open,120);});
+edge.addEventListener('mouseleave',function(){clearTimeout(hoverTimer);});
+nav.addEventListener('mouseleave',function(e){if(e.clientX<1)return;close();});
+function fmt(s){var d=new Date(s);return isNaN(d)?s:d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});}
+function flatten(rows){var byParent={};rows.forEach(function(p){var k=p.parent||'__root__';(byParent[k]=byParent[k]||[]).push(p);});
+Object.keys(byParent).forEach(function(k){byParent[k].sort(function(a,b){return new Date(b.date)-new Date(a.date);});});
+var out=[];(function walk(key,depth){(byParent[key]||[]).forEach(function(p){out.push({p:p,depth:depth});walk(p.slug,depth+1);});})('__root__',0);return out;}
+function draw(filter){var rows;
+if(filter){var q=filter.toLowerCase();rows=DATA.filter(function(p){return (p.title+' '+(p.summary||'')+' '+(p.tags||[]).join(' ')).toLowerCase().indexOf(q)>-1;}).map(function(p){return {p:p,depth:0};});}
+else{rows=flatten(DATA);}
+if(!rows.length){listEl.innerHTML='<div class="msg">결과가 없어요.</div>';return;}
+listEl.innerHTML=rows.map(function(r){var p=r.p,cur=p.slug===CURRENT?' current':'',child=r.depth>0?' child':'',pad=r.depth>0?'margin-left:'+Math.min(r.depth,3)*16+'px;':'';
+return '<a class="item'+cur+child+'" style="'+pad+'" href="../'+p.slug+'/">'+p.title+'<span class="d">'+fmt(p.date)+'</span></a>';}).join('');}
+qEl.addEventListener('input',function(e){draw(e.target.value.trim());});
+fetch('../../presentations.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();})
+.then(function(d){DATA=Array.isArray(d)?d:[];draw('');})
+.catch(function(){listEl.innerHTML='<div class="msg">목록을 불러오지 못했어요. (배포본에서는 정상 작동합니다.)</div>';});
+})();
+</script>
+<!-- 사이드 패널 끝 -->
+
+<div id="progress"></div>
+<a href="../../" class="backlink">← 목록으로</a>
+<button id="totop" aria-label="맨 위로">↑</button>
+
+<!-- HERO -->
+<header id="hero">
+  <div class="wrap">
+    <div class="dot" aria-hidden="true"></div>
+    <h1>일본이 금리를 올리면<br>왜 <span class="hl">서울·뉴욕 증시</span>가 출렁일까?</h1>
+    <p class="sub">30년 만에 깨어난 일본의 금리, 그리고 전 세계 돈의 흐름을 바꾸는 '엔 캐리 트레이드' — 과거의 폭락, 현재의 1% 시대, 그리고 다가올 미래를 20분에 풀어봅니다.</p>
+    <div class="meta">eco-lab 스터디 모임 · 2026년 6월 · 발표 약 20분</div>
+    <div class="scrollcue">스크롤해서 시작하기<span aria-hidden="true">↓</span></div>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav id="toc" aria-label="목차">
+  <div class="wrap">
+    <h2>오늘의 흐름</h2>
+    <button class="toc-toggle" aria-expanded="false">목차 펼치기 ▾</button>
+    <ul class="toc-list">
+      <li><a href="#s1"><span class="n">01</span>왜 갑자기 일본 금리?</a></li>
+      <li><a href="#s2"><span class="n">02</span>엔 캐리 트레이드란?</a></li>
+      <li><a href="#s3"><span class="n">03</span>작동 원리: 돈의 강물</a></li>
+      <li><a href="#s4"><span class="n">04</span>과거 — 2024년 8월의 악몽</a></li>
+      <li><a href="#s5"><span class="n">05</span>누가 결정하나 (일본은행)</a></li>
+      <li><a href="#s6"><span class="n">06</span>현재 — 1% 시대의 개막</a></li>
+      <li><a href="#s7"><span class="n">07</span>실무자의 시선</a></li>
+      <li><a href="#s8"><span class="n">08</span>한국에 미치는 영향</a></li>
+      <li><a href="#s9"><span class="n">09</span>핵심 인물 — 우에다 총재</a></li>
+      <li><a href="#s10"><span class="n">10</span>미래 — 세 갈래 시나리오</a></li>
+      <li><a href="#summary"><span class="n">11</span>오늘 기억할 7가지</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- S1 -->
+<section id="s1">
+  <div class="wrap reveal">
+    <span class="eyebrow">도입 · Hook</span>
+    <h2>"바다 건너 일본 금리가 내 주식이랑 무슨 상관이지?"</h2>
+    <p class="lead">2024년 8월 5일 월요일 아침, 코스피는 개장하자마자 폭락했습니다. 사이드카가 걸리고, 결국 <strong>8.77% 하락</strong>하며 사상 최대 하루 낙폭을 기록했죠. 같은 날 일본 닛케이는 <strong>12.4% 폭락</strong> — 1987년 '블랙 먼데이' 이후 최악의 하루였습니다.</p>
+    <p>특별한 한국 악재가 있었던 게 아닙니다. 미국 고용지표가 살짝 부진했고, 며칠 전 <strong>일본은행(BOJ)이 금리를 0.25%로 올렸을 뿐</strong>입니다. 고작 0.15%p 인상. 그런데 그 작은 움직임이 도쿄에서 서울, 뉴욕, 비트코인 시장까지 도미노처럼 무너뜨렸습니다.</p>
+    <p>오늘 우리는 이 미스터리를 풀어봅니다. 핵심 열쇠는 딱 하나, <strong>'엔 캐리 트레이드(Yen Carry Trade)'</strong>라는 거대한 돈의 흐름입니다.</p>
+
+    <div class="qbox">
+      <span class="tag">🤔 생각해볼까요</span>
+      <p>"세계에서 가장 금리가 낮은 나라"라고 하면 어디가 떠오르나요? 그 나라가 금리를 올리면, 그 나라 안에서만 일이 끝날까요, 아니면 전 세계로 퍼질까요?</p>
+    </div>
+  </div>
+</section>
+
+<!-- S2 -->
+<section id="s2">
+  <div class="wrap reveal">
+    <span class="eyebrow">개념 정의</span>
+    <h2>엔 캐리 트레이드, 한 문장으로</h2>
+
+    <div class="defbox">
+      <span class="tag">Definition</span>
+      <p><span class="serif">엔 캐리 트레이드란,</span> 금리가 거의 0%에 가까운 <strong style="color:#fff">일본 엔화를 싸게 빌려서</strong>, 그 돈을 미국 주식·채권·신흥국 자산 등 <strong style="color:#fff">금리가 높은 곳에 투자해 그 차이(이자 차익)를 먹는</strong> 거대한 글로벌 투자 전략입니다.</p>
+    </div>
+
+    <div class="analogy">
+      <span class="tag">🏠 일상 비유 — "0% 카드론으로 예금 들기"</span>
+      <p>친구가 "연 0% 이자로 1억을 빌려줄게"라고 합니다. 당신은 그 1억을 받아서 연 5% 이자를 주는 예금에 넣습니다. 가만히 있어도 매년 500만 원이 공짜로 들어오죠. 이게 바로 캐리 트레이드의 본질입니다. <strong>'빌리는 비용'보다 '굴려서 버는 수익'이 크면</strong> 차익이 남습니다.</p>
+    </div>
+
+    <p>일본은 지난 <strong>20여 년간 금리가 0%, 심지어 마이너스</strong>였습니다. 전 세계 투자자에게 일본은 '돈을 거의 공짜로 빌릴 수 있는 거대한 ATM'이었던 셈이죠. 헤지펀드, 연기금, 투자은행이 엔화를 빌려 미국 빅테크 주식과 비트코인까지 사들였습니다.</p>
+
+    <p>그런데 이 달콤한 거래에는 숨은 함정이 있습니다. 바로 <strong>'환율'</strong>입니다. 빌린 건 엔화이니 언젠가 엔화로 갚아야 하는데, 만약 엔화 가치가 갑자기 확 오르면(엔고) 갚아야 할 돈이 불어납니다.</p>
+
+    <div class="callout">
+      💡 <strong>핵심:</strong> 이 거래가 굴러가려면 두 가지 조건이 필요합니다 — ① 일본 금리는 낮게 유지되고 ② 엔화는 약하거나 안정적이어야 합니다. <strong>일본은행이 금리를 올리면 이 두 조건이 동시에 흔들립니다.</strong>
+    </div>
+
+    <!-- QUIZ 1 -->
+    <div class="quiz" data-answer="1">
+      <div class="qhd">QUIZ 01</div>
+      <div class="qtext">엔 캐리 트레이드 투자자가 가장 무서워하는 상황은?</div>
+      <button class="opt" data-i="0">일본 물가가 떨어지는 것</button>
+      <button class="opt" data-i="1">엔화 가치가 갑자기 급등하는 것 (엔고)</button>
+      <button class="opt" data-i="2">미국 주식이 천천히 오르는 것</button>
+      <div class="explain">
+        <strong>정답: ②</strong> 엔화를 빌려 투자했기 때문에, 결국 엔화로 갚아야 합니다. 엔화가 급등하면 갚을 돈이 불어나 환손실이 발생하고, 동시에 이자 차익도 줄어듭니다. 그래서 엔고가 시작되면 너도나도 서둘러 자산을 팔아 빚을 갚으려 하고, 이것이 연쇄 매도(청산)로 번집니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- S3 -->
+<section id="s3">
+  <div class="wrap reveal">
+    <span class="eyebrow">작동 원리 · 왜 중요한가</span>
+    <h2>돈은 어떻게 강물처럼 흐르나</h2>
+    <p>캐리 트레이드를 '강물'에 비유해봅시다. 평소에는 일본(고지대, 저금리)에서 세계 곳곳(저지대, 고금리)으로 돈이 콸콸 흘러갑니다. 이 물줄기가 전 세계 주식·코인 시장을 적시며 상승장을 떠받쳤습니다.</p>
+
+    <h3>① 평상시 — 순방향 흐름</h3>
+    <div class="flow">
+      <div class="step"><span class="ico">🇯🇵</span><b>엔화 차입</b><small>0%대 초저금리로 엔화를 빌린다</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="ico">💱</span><b>달러로 환전</b><small>엔→달러로 바꿔 해외로</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="ico">📈</span><b>고수익 투자</b><small>미국 주식·채권·코인 매수</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><span class="ico">💰</span><b>이자 차익</b><small>금리 차이만큼 꾸준히 수익</small></div>
+    </div>
+
+    <h3>② 위기 시 — 역류(청산)</h3>
+    <p>그런데 일본이 금리를 올리거나 엔화가 급등하면, 강물이 거꾸로 흐릅니다. 빚 갚는 비용이 커지자 투자자들이 <strong>일제히 해외 자산을 팔아 엔화로 되돌립니다.</strong> 이걸 '캐리 트레이드 청산(unwinding)'이라 부릅니다.</p>
+    <div class="flow">
+      <div class="step" style="border-color:var(--crimson)"><span class="ico">⚡</span><b>금리 인상·엔고</b><small>거래 조건이 깨진다</small></div>
+      <div class="arrow">→</div>
+      <div class="step" style="border-color:var(--crimson)"><span class="ico">📉</span><b>해외 자산 매도</b><small>주식·코인을 서둘러 판다</small></div>
+      <div class="arrow">→</div>
+      <div class="step" style="border-color:var(--crimson)"><span class="ico">🔁</span><b>엔화 되사기</b><small>빚 갚으려 엔 매수→엔고 가속</small></div>
+      <div class="arrow">→</div>
+      <div class="step" style="border-color:var(--crimson)"><span class="ico">🌊</span><b>연쇄 폭락</b><small>모두 같은 출구로 → 폭락</small></div>
+    </div>
+
+    <div class="analogy">
+      <span class="tag">🚪 비유 — "좁은 문으로 한꺼번에"</span>
+      <p>영화관에서 불이 났다고 칩시다. 한 명씩 나가면 괜찮지만, 모두가 동시에 좁은 출입구로 달려가면 압사 사고가 납니다. 캐리 트레이드 청산도 똑같습니다. 평소엔 조용하지만, 한번 "팔자"가 시작되면 <strong>모두가 같은 출구로 달려가</strong> 시장이 순식간에 무너집니다.</p>
+    </div>
+
+    <p><strong>왜 중요할까요?</strong> 이 거래 규모가 어마어마하기 때문입니다. 추정치는 기관마다 크게 갈리는데, 보수적으로는 <strong>수천억 달러</strong>, 넓게 잡으면 <strong>수조 달러</strong>에 달합니다. 일본 BIS의 신현송 경제자문역은 2024년 당시 장부상 엔화 차입만 약 40조 엔, 장부 외 스왑 시장까지 더하면 14조 달러 규모를 언급하기도 했습니다. 즉, <strong>전 세계 증시 상승을 떠받쳐 온 '숨은 연료'</strong>인 셈입니다.</p>
+
+    <div class="qbox">
+      <span class="tag">🤔 잠깐, 함께 생각해봐요</span>
+      <p>이렇게 큰 위험이 있는데도, 왜 어떤 규제기관도 "엔 캐리 트레이드 전체 규모가 정확히 얼마다"라고 발표하지 못할까요? (힌트: 이 돈은 여러 나라의 은행·헤지펀드·파생상품에 흩어져 있습니다.)</p>
+    </div>
+  </div>
+</section>
+
+<!-- S4 -->
+<section id="s4">
+  <div class="wrap reveal">
+    <span class="eyebrow">과거 · The Past</span>
+    <h2>2024년 8월, 세계가 본 '예고편'</h2>
+    <p>이론은 충분합니다. 이제 실제로 무슨 일이 벌어졌는지 봅시다. 2024년 여름의 사건은 캐리 트레이드의 위력을 전 세계에 각인시킨 '교과서 사례'입니다.</p>
+
+    <div class="tl">
+      <div class="ev">
+        <span class="date">2024.07.11</span>
+        <b>엔화가 꿈틀대기 시작</b>
+        <p>엔화가 달러 대비 한 시간 만에 1.8% 급등. 이후 3주간 약 10% 강세로 돌아서며 캐리 투자자들이 불안해지기 시작.</p>
+      </div>
+      <div class="ev">
+        <span class="date">2024.07.31</span>
+        <b>일본은행, 깜짝 금리 인상</b>
+        <p>금리를 0.1%→0.25%로 인상. 폭은 작았지만 '방향 전환' 신호로 읽히며 거래의 전제가 흔들림.</p>
+      </div>
+      <div class="ev">
+        <span class="date">2024.08.02</span>
+        <b>미국 고용 쇼크</b>
+        <p>미국 7월 신규고용이 예상(17.5만)을 크게 밑돈 11.4만 명. 미·일 금리차가 더 좁혀질 거란 공포가 엔고를 가속.</p>
+      </div>
+      <div class="ev">
+        <span class="date">2024.08.05 (월)</span>
+        <b>'블랙 먼데이' — 동시다발 폭락</b>
+        <p>닛케이 <strong>-12.4%</strong>(1987년 이후 최악, 하루 4,450p 증발), 토픽스 -12%, 코스피 <strong>-8.77%</strong>(사상 최대 낙폭, 사이드카·서킷브레이커 발동), S&P500 -3%, 비트코인 하루 13%↓ 5만 달러 붕괴. 공포지수 VIX는 65 위로 치솟음.</p>
+      </div>
+      <div class="ev">
+        <span class="date">2024.08.06~</span>
+        <b>급반등, 그러나 상처는 남다</b>
+        <p>다음 날 닛케이가 사상 최대폭 반등하며 진정. 하지만 시장은 "일본 금리 한 번에 세계가 흔들릴 수 있다"는 교훈을 얻음.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      📌 <strong>핵심 포인트:</strong> 한국 증시가 폭락한 건 한국 기업이 나빠져서가 아니었습니다. 외국인 투자자들이 <strong>전 세계에서 현금을 확보하려고</strong> 한국 주식(특히 삼성전자·SK하이닉스 같은 우량주)부터 팔았기 때문입니다. 위기 때 가장 먼저 팔리는 게 '잘 팔리는' 자산이라는 역설이죠.</p>
+    </div>
+
+    <!-- QUIZ 2 -->
+    <div class="quiz" data-answer="2">
+      <div class="qhd">QUIZ 02</div>
+      <div class="qtext">2024년 8월 5일 닛케이 지수의 하루 낙폭(-12.4%)은 어느 사건 이후 최악이었을까요?</div>
+      <button class="opt" data-i="0">2008년 글로벌 금융위기</button>
+      <button class="opt" data-i="1">2020년 코로나 팬데믹</button>
+      <button class="opt" data-i="2">1987년 블랙 먼데이</button>
+      <div class="explain">
+        <strong>정답: ③</strong> 1987년 10월 19일 '블랙 먼데이' 이후 가장 큰 하루 낙폭이었습니다. 포인트로는 약 4,450포인트가 증발해 닛케이 역사상 최대 하루 하락이었죠. 작은 금리 인상이 만든 결과치고는 충격적이었기에, 많은 이들이 1987년의 악몽을 떠올렸습니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- S5 -->
+<section id="s5">
+  <div class="wrap reveal">
+    <span class="eyebrow">제도 · 누가 결정하나</span>
+    <h2>이 모든 걸 결정하는 '일본은행(BOJ)'</h2>
+    <p>일본의 금리는 누가, 어떻게 정할까요? 한국의 한국은행 금융통화위원회와 비슷한 구조입니다.</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="emoji">🏛️</span>
+        <h4>일본은행 (BOJ)</h4>
+        <p>일본의 중앙은행. '정책위원회(Policy Board)'가 연 8회 '금융정책결정회의'에서 금리를 결정합니다.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🗳️</span>
+        <h4>9명의 위원</h4>
+        <p>총재 1명 + 부총재 2명 + 심의위원 6명. 다수결로 결정하며, 한 명이 반대표(dissent)를 던지기도 합니다.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🎯</span>
+        <h4>목표: 물가 2%</h4>
+        <p>'물가 안정' 즉 연 2% 인플레이션을 안정적으로 달성하는 게 핵심 임무입니다.</p>
+      </div>
+    </div>
+
+    <h3>왜 일본만 20년간 0% 금리였을까?</h3>
+    <p>다른 나라가 물가 상승(인플레)과 싸우는 동안, 일본은 정반대인 <strong>'디플레이션(물가 하락)'</strong>과 싸웠습니다. 물건값이 계속 떨어지니 사람들이 소비를 미루고, 경제가 활력을 잃는 악순환이었죠. BOJ는 이를 깨려고 금리를 0% 아래로 내리고 돈을 무제한 풀었습니다(양적완화).</p>
+
+    <div class="analogy">
+      <span class="tag">🌡️ 비유 — "저체온증 환자"</span>
+      <p>대부분 나라가 '고열(인플레)'을 식히려 애쓸 때, 일본은 오히려 '저체온증(디플레)'에 시달렸습니다. 그래서 20년간 뜨거운 물주머니(초저금리·돈풀기)를 끌어안고 있었던 거죠. 이제 드디어 체온이 정상으로 돌아오자(물가 상승), 물주머니를 치우기 시작한 겁니다 — 이게 바로 '금리 정상화'입니다.</p>
+    </div>
+
+    <p>2024년 3월, 우에다 총재가 이끄는 BOJ는 <strong>17년 만에 처음으로 금리를 올리며</strong> 마이너스 금리와 수익률곡선제어(YCC)를 종료했습니다. 길고 긴 '0% 시대'의 종언을 알리는 역사적 사건이었습니다.</p>
+  </div>
+</section>
+
+<!-- S6 -->
+<section id="s6">
+  <div class="wrap reveal">
+    <span class="eyebrow">현재 · The Present</span>
+    <h2>2026년 6월 — 마침내 '1% 시대'</h2>
+    <p class="lead">그리고 바로 어제(2026년 6월 16일), 또 하나의 분기점이 찍혔습니다. 일본은행이 <strong>기준금리를 0.75%에서 1.0%로 인상</strong>했습니다.</p>
+
+    <div class="callout indigo">
+      🗓️ <strong>2026년 6월 16일 BOJ 결정 요약</strong><br>
+      • 기준금리 <strong>0.75% → 1.0%</strong> (25bp 인상) — <strong>1995년 이후 31년 만의 최고 수준</strong><br>
+      • 표결 7 대 1 (아사다 위원이 동결 주장하며 반대)<br>
+      • 국채 매입 축소(테이퍼링)는 2027년 4월까지 지속 후 일시 중단 예고<br>
+      • 배경: 약한 엔화(달러당 160엔대), 중동(이란) 사태發 유가 상승에 따른 물가 압력
+    </div>
+
+    <h3>그런데 이번엔 왜 폭락하지 않았을까?</h3>
+    <p>2024년엔 0.25%로 올렸다고 세계가 무너졌는데, 이번엔 1%까지 올렸는데도 닛케이는 오히려 <strong>사상 최고치(종가 약 69,400, 장중 7만 돌파)</strong>를 찍었습니다. 엔화도 거의 움직이지 않았죠(달러당 160엔대 유지). 왜일까요?</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="emoji">📢</span>
+        <h4>① 충분히 예고됨</h4>
+        <p>경제학자 51명 중 49명이 인상을 예상. 시장이 미리 대비해 '서프라이즈'가 없었습니다.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🕊️</span>
+        <h4>② 중동 리스크 완화</h4>
+        <p>미·이란 평화협상 기대로 유가·불확실성이 진정되며 위험자산 선호가 살아남.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🤖</span>
+        <h4>③ AI·반도체 랠리</h4>
+        <p>인공지능·반도체주 강세가 지수를 떠받쳐 금리 인상 충격을 상쇄했습니다.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      💡 <strong>여기서 중요한 교훈:</strong> 시장을 흔드는 건 '금리 인상 자체'가 아니라 <strong>'예상 밖의 충격'</strong>입니다. 똑같은 인상도 미리 알려지면 잔잔하고, 갑자기 닥치면 폭풍이 됩니다. 2024년은 깜짝 인상이었고, 2026년 6월은 예고된 인상이었다는 차이죠.
+    </div>
+
+    <!-- QUIZ 3 -->
+    <div class="quiz" data-answer="0">
+      <div class="qhd">QUIZ 03</div>
+      <div class="qtext">2026년 6월, BOJ가 금리를 1%로 올렸는데도 시장이 차분했던 가장 큰 이유는?</div>
+      <button class="opt" data-i="0">시장이 이미 인상을 예상하고 대비했기 때문</button>
+      <button class="opt" data-i="1">금리를 사실은 내렸기 때문</button>
+      <button class="opt" data-i="2">아무도 일본 금리에 관심이 없어서</button>
+      <div class="explain">
+        <strong>정답: ①</strong> 경제학자 대다수가 인상을 예상했고 시장이 미리 가격에 반영했습니다. 충격은 '인상 여부'가 아니라 '예상과의 격차'에서 나옵니다. 여기에 중동 리스크 완화와 AI·반도체 랠리가 겹치며 닛케이는 오히려 사상 최고치를 기록했습니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- S7 -->
+<section id="s7">
+  <div class="wrap reveal">
+    <span class="eyebrow">실무자의 시선 · Practitioner View</span>
+    <h2>현업 트레이더는 무엇을 볼까?</h2>
+    <p>교과서는 "금리 인상 → 캐리 청산 → 폭락"이라고 단순하게 말하지만, 실제 운용역과 전략가들은 훨씬 입체적으로 봅니다. 핵심은 <strong>'한 가지 지표만으로 판단하지 않는다'</strong>는 것입니다.</p>
+
+    <h3>① "금리의 '수준'보다 '변화 속도'가 중요하다"</h3>
+    <p>2024년 UBS의 한 전략가는 "캐리 청산이 얼마나 갈지는 금리차의 절대 수준이 아니라 <strong>금리차의 변화</strong>에 달렸다"고 지적했습니다. 천천히 올리면 시장이 적응하지만, 급격히 바뀌면 청산이 폭발한다는 뜻이죠.</p>
+
+    <h3>② "규모 추정치는 믿되, 의심하라"</h3>
+    <p>흥미롭게도 전문가들 사이에서도 캐리 트레이드 규모 추정이 크게 갈립니다. JP모건은 "대부분 이미 청산됐다"며 좁게 보고, BIS·일부 리서치(BCA 등)는 "오히려 더 커졌다"며 넓게 봅니다. 2026년 초 한 리서치는 "엔 캐리 청산이 일어난다면 2024년보다 <strong>3배 클 수 있다</strong>"고 경고했고, 반대로 어떤 분석은 "실제 레버리지 부분은 2,600억 달러 수준이며 점진적으로 풀리는 중"이라며 공포가 과장됐다고 봅니다.</p>
+
+    <div class="callout">
+      🔍 <strong>실무 원칙:</strong> 똑같은 데이터를 두고도 결론이 갈리는 이유는 '무엇을 캐리 트레이드로 셀 것인가'의 정의가 다르기 때문입니다. 그래서 노련한 운용역은 한 숫자에 매달리지 않고 <strong>엔/달러 환율, 일본 국채 금리, VIX, 외국인 자금 흐름</strong>을 동시에 봅니다. (단일 지표의 함정 — 우리 스터디의 단골 교훈이죠!)
+    </div>
+
+    <h3>③ "정부 개입은 시간 벌기일 뿐"</h3>
+    <p>일본 정부(재무성)는 엔화가 너무 약해지면 시장에 직접 개입해 엔화를 사들입니다. 2026년 5월에도 약 11.7조 엔(약 735억 달러)을 투입했지만, 엔화는 다시 160엔대로 돌아갔습니다. 실무자들은 "통화정책을 바꾸지 않는 개입은 효과가 일시적"이라고 냉정하게 평가합니다.</p>
+
+    <div class="qbox">
+      <span class="tag">🤔 토론거리</span>
+      <p>전문가들조차 캐리 트레이드 규모를 "2,600억 달러"부터 "14조 달러"까지 다르게 봅니다. 그렇다면 우리 같은 일반 투자자는 이 불확실성을 어떻게 받아들여야 할까요? '모른다'는 것 자체가 하나의 정보일 수 있을까요?</p>
+    </div>
+  </div>
+</section>
+
+<!-- S8 -->
+<section id="s8">
+  <div class="wrap reveal">
+    <span class="eyebrow">내 자산 · 한국에 미치는 영향</span>
+    <h2>그래서, 내 주식·통장은 어떻게 되나?</h2>
+    <p>이론은 멋지지만 결국 궁금한 건 "내 돈"이죠. 일본 금리 인상이 한국과 우리 자산에 닿는 경로를 사례로 살펴봅니다.</p>
+
+    <table class="tbl">
+      <thead>
+        <tr><th>경로</th><th>무슨 일이?</th><th>내 자산에 미치는 영향</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="hi">① 외국인 매도</td><td>캐리 청산 시 외국인이 코스피 우량주부터 매도</td><td>삼성전자·하이닉스 등 보유 시 단기 급락 위험</td></tr>
+        <tr><td class="hi">② 원화 약세</td><td>위기 때 원화도 같이 약해짐(2024년 8월·2026년 6월 1,560원 돌파)</td><td>해외여행·직구 비용↑, 수입물가↑</td></tr>
+        <tr><td class="hi">③ 변동성 확대</td><td>VIX 급등, 서킷브레이커·사이드카 발동</td><td>코인·성장주 등 위험자산이 가장 크게 출렁</td></tr>
+        <tr><td class="hi">④ 수출주 영향</td><td>엔고 시 일본 경쟁사 대비 한국 수출주 가격경쟁력↑</td><td>자동차·조선 등 일부 업종엔 기회 요인</td></tr>
+      </tbody>
+    </table>
+
+    <div class="analogy">
+      <span class="tag">🌊 비유 — "썰물 때 누가 발가벗었나"</span>
+      <p>워런 버핏의 명언처럼, 캐리 청산은 거대한 '썰물'입니다. 평소엔 안 보이던 위험(과도한 레버리지·고평가 종목)이 물이 빠지면서 드러나죠. 그래서 충격은 <strong>가장 많이 오른 자산, 빚을 많이 낀 자산</strong>에 집중됩니다.</p>
+    </div>
+
+    <h3>실전 사례 — 2026년 봄의 연속 충격</h3>
+    <p>참고로 2026년 들어 코스피는 AI·반도체 랠리로 급등해 한때 6,300선을 넘었습니다(과거와 지수 레벨이 크게 다릅니다). 하지만 3월과 6월, 중동發 유가 급등과 미국 반도체주 조정이 겹치며 <strong>하루 7~8%대 급락과 서킷브레이커</strong>가 반복됐습니다. 엔 캐리 청산 우려는 이런 국면마다 '불쏘시개'로 거론됐죠. 즉, 일본 금리는 <strong>단독 원인이라기보다, 여러 악재가 겹칠 때 충격을 증폭시키는 변수</strong >입니다.</p>
+
+    <div class="callout">
+      💡 <strong>개인 투자자를 위한 시사점(투자 권유 아님):</strong> ① 빚내서(레버리지) 투자한 포지션은 이런 국면에 가장 취약합니다. ② 분산과 현금 비중이 '썰물' 때 버티는 힘이 됩니다. ③ 단기 급락이 곧 펀더멘털 악화는 아니므로, 패닉 매도는 종종 최악의 선택이 됩니다. <em>본 내용은 정보 제공일 뿐 투자 조언이 아니며, 판단과 책임은 본인에게 있습니다.</em>
+    </div>
+
+    <!-- QUIZ 4 -->
+    <div class="quiz" data-answer="1">
+      <div class="qhd">QUIZ 04</div>
+      <div class="qtext">캐리 트레이드 청산 같은 글로벌 위기 때, 한국 증시에서 보통 가장 먼저·많이 팔리는 자산은?</div>
+      <button class="opt" data-i="0">아무도 안 사는 소외된 잡주</button>
+      <button class="opt" data-i="1">외국인이 많이 보유한 대형 우량주(삼성전자 등)</button>
+      <button class="opt" data-i="2">안전한 예금</button>
+      <div class="explain">
+        <strong>정답: ②</strong> 위기 때 투자자는 '현금'이 급하므로, 손실 난 종목이 아니라 <strong>잘 팔리고 유동성 좋은 우량주</strong>부터 팝니다. 그래서 2024년 8월에도 삼성전자·SK하이닉스가 가장 크게 하락했죠. 역설적이게도 '좋은 주식'이 먼저 팔리는 겁니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- S9 -->
+<section id="s9">
+  <div class="wrap reveal">
+    <span class="eyebrow">핵심 인물 · Key Figure</span>
+    <h2>이 드라마의 키맨, 우에다 가즈오</h2>
+
+    <div class="person">
+      <div class="avatar">植</div>
+      <div>
+        <h4>우에다 가즈오 (植田 和男)</h4>
+        <div class="role">일본은행 제32대 총재 · 1951년생(74세)</div>
+        <p><strong>이력:</strong> 도쿄대 학사, MIT 경제학 박사. 학자 출신으로는 이례적으로 2023년 4월 총재에 취임(전임 구로다의 뒤를 이음). 임기는 <strong>2028년 4월 8일까지</strong>. 보통 재무성·일본은행 고위 관료가 맡던 자리를 학자가 차지해 당시에도 '의외의 선택'으로 불렸습니다.</p>
+        <p><strong>성향:</strong> 급진적이지 않고 <strong>신중하고 점진적</strong>. "서두르지 않되, 방향은 정상화"라는 균형 노선. 2024년 3월 17년 만의 금리 인상과 마이너스 금리·YCC 종료를 큰 혼란 없이 이끌었다는 평가.</p>
+      </div>
+    </div>
+
+    <h3>지금 우에다를 둘러싼 변수들</h3>
+    <div class="cards">
+      <div class="card">
+        <span class="emoji">🏥</span>
+        <h4>건강 이슈</h4>
+        <p>2026년 6월 약 2주간 입원해 6월 15~16일 회의에 불참(7월 복귀·원격 근무 예상). 일본 법상 총재는 강제 사임시킬 수 없어, 분석가들은 2028년 임기 완주 가능성을 높게 봅니다.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">⚖️</span>
+        <h4>물가 vs 성장</h4>
+        <p>유가·엔저發 물가 압력(인상 압박)과 경기·고용 둔화 우려(동결 압박) 사이에서 줄타기 중. 6월 인상도 7대1로 갈렸습니다.</p>
+      </div>
+      <div class="card">
+        <span class="emoji">🏛️</span>
+        <h4>정치 변수</h4>
+        <p>완화 선호로 알려진 다카이치 총리. 만약 우에다가 물러나면 후임 인선을 통해 <strong>더 비둘기파(완화적)</strong> 방향으로 BOJ를 틀 여지가 있다는 관측.</p>
+      </div>
+    </div>
+
+    <div class="callout indigo">
+      🔭 <strong>향후 행보 전망 (※ 확정이 아닌 시나리오):</strong> 부총재 히미노는 "일본 실질금리가 여전히 매우 낮다"며 추가 인상 의지를 밝혔지만, 중동 정세의 경제·물가 영향을 지켜보겠다며 <strong>시점은 명시하지 않았습니다.</strong> 시장은 연내 추가 인상 여부를 두고 의견이 갈립니다. 우에다의 건강과 정치 지형이 향후 속도를 좌우할 핵심 변수입니다.
+    </div>
+  </div>
+</section>
+
+<!-- S10 -->
+<section id="s10">
+  <div class="wrap reveal">
+    <span class="eyebrow">미래 · The Future</span>
+    <h2>앞으로 펼쳐질 세 갈래 길</h2>
+    <p>미래는 아무도 모릅니다. 하지만 전문가들의 논쟁을 정리하면 크게 세 가지 시나리오로 압축됩니다. <strong>아래는 확정된 예측이 아니라, 가능성의 지도입니다.</strong></p>
+
+    <div class="cards">
+      <div class="card" style="border-top:4px solid var(--good)">
+        <span class="emoji">🌤️</span>
+        <h4>시나리오 A — 연착륙</h4>
+        <p><strong>"천천히, 부드럽게"</strong><br>BOJ가 예고하며 점진적으로 1.0%→1.25%로 올리고, 시장이 미리 적응. 캐리 청산도 분할·완만하게 진행. 2026년 6월처럼 큰 충격 없이 지나가는 그림. JP모건류의 "대부분 이미 청산" 관점과 가까움.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--gold)">
+        <span class="emoji">⛅</span>
+        <h4>시나리오 B — 변동성 반복</h4>
+        <p><strong>"잊을 만하면 출렁"</strong><br>금리 인상·유가·미국 정책이 겹칠 때마다 2024년 8월·2026년 봄 같은 급락이 산발적으로 재현. 폭락은 짧고 반등도 빠르지만, 변동성이 일상이 되는 그림.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--crimson)">
+        <span class="emoji">⛈️</span>
+        <h4>시나리오 C — 대형 청산</h4>
+        <p><strong>"본편은 따로 있다"</strong><br>BCA 등의 경고처럼, 엔화가 한번 본격 강세로 돌아서면 그동안 쌓인 거대 포지션이 2024년의 3배 규모로 풀리는 그림. 가능성은 낮게 보지만 충격은 가장 큼(테일 리스크).</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      ⚠️ <strong>꼭 기억하세요:</strong> 위 세 시나리오는 <strong>'확정된 미래'가 아니라 '가능한 경로'</strong>입니다. 전문가들도 규모와 방향을 두고 첨예하게 갈립니다. 중요한 건 '어느 게 맞나 맞히기'가 아니라, <strong>각 시나리오에서 내 자산이 어떻게 될지 미리 그려보는 것</strong>입니다.
+    </div>
+
+    <!-- QUIZ 5 -->
+    <div class="quiz" data-answer="2">
+      <div class="qhd">QUIZ 05</div>
+      <div class="qtext">미래 시나리오를 대하는 가장 현명한 태도는?</div>
+      <button class="opt" data-i="0">전문가 한 명의 예측을 골라 100% 믿는다</button>
+      <button class="opt" data-i="1">예측은 다 틀리니 아예 무시한다</button>
+      <button class="opt" data-i="2">여러 시나리오를 펼쳐두고 각각에 대비한다</button>
+      <div class="explain">
+        <strong>정답: ③</strong> 전문가들도 의견이 갈리고 캐리 트레이드 규모조차 정확히 모르는 영역입니다. 한 예측에 올인하거나 전부 무시하는 대신, <strong>여러 가능성을 시나리오로 펼쳐두고 각 상황에 어떻게 대응할지 미리 준비</strong>하는 것이 불확실성을 다루는 성숙한 방법입니다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section id="summary">
+  <div class="wrap reveal">
+    <span class="eyebrow">정리 · Wrap-up</span>
+    <h2>오늘 기억할 7가지</h2>
+    <ul class="takeaways">
+      <li><b>엔 캐리 트레이드</b>는 '싼 엔화를 빌려 비싼 곳에 투자'하는 거대한 글로벌 자금 흐름이다. 전 세계 상승장을 떠받친 '숨은 연료'.</li>
+      <li>이 거래는 <b>일본 저금리 + 약한 엔화</b>를 먹고 산다. 일본은행이 금리를 올리면 두 전제가 동시에 흔들린다.</li>
+      <li><b>2024년 8월 5일</b>, 작은 금리 인상(0.25%)이 닛케이 -12.4%, 코스피 -8.77% 폭락을 부른 '예고편'을 보여줬다.</li>
+      <li><b>2026년 6월 16일</b>, BOJ는 금리를 1.0%(31년 만의 최고)로 올렸지만, 예고됐기에 시장은 차분 — 충격은 '인상'이 아니라 <b>'예상 밖'</b>에서 온다.</li>
+      <li>내 자산엔 <b>외국인 매도·원화 약세·변동성 확대</b>로 닿는다. 위기 땐 우량주가 먼저 팔리고, 빚낸 포지션이 가장 위험하다.</li>
+      <li>키맨 <b>우에다 총재</b>(임기 2028년)는 신중·점진 노선. 건강과 정치 변수가 향후 인상 속도의 열쇠다.</li>
+      <li>미래는 <b>연착륙·반복적 변동성·대형 청산</b> 세 갈래. 어느 하나를 맞히기보다 <b>여러 시나리오에 대비</b>하는 게 핵심.</li>
+    </ul>
+
+    <div class="discuss">
+      <span class="tag">💬 마무리 토론</span>
+      <p>"전문가들조차 엔 캐리 트레이드의 규모도, 방향도 정확히 모릅니다. 그렇다면 우리가 뉴스에서 '일본 금리 인상' 헤드라인을 봤을 때, 패닉에 빠지지 않으면서도 무시하지도 않으려면 — 구체적으로 무엇을 확인하고, 무엇을 대비해야 할까요? 오늘 배운 개념으로 각자의 '체크리스트'를 만들어 봅시다."</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <h4>출처 및 참고자료 (2026년 6월 17일 기준 확인)</h4>
+    <div class="src">· 일본은행 6월 금리 결정·시장 반응: Nikkei Asia, CNBC, Reuters(TradingView), Business Standard, IndexBox (2026.06.16)</div>
+    <div class="src">· 2024년 8월 캐리 청산·폭락: CNBC, Reuters/Investing.com, FSG Groningen, Seeking Alpha (2024.08)</div>
+    <div class="src">· 코스피 폭락·서킷브레이커: KED Global (2024.08.05)</div>
+    <div class="src">· 캐리 트레이드 규모 추정: BCA Research / Yahoo Finance, AEI, DL News(BIS·신현송), Seeking Alpha (2025.12~2026.02)</div>
+    <div class="src">· 우에다 총재 이력·건강·정치 변수: Wikipedia, Reuters/Yahoo Finance, Crypto Briefing (2023~2026.06)</div>
+    <div class="src">· 일본 금리 추이: Trading Economics, TradingView (BOJ 자료 기반)</div>
+    <div class="disc">⚠️ <strong>주의:</strong> 본 자료의 '향후 전망·시나리오'는 확정된 예측이 아니라 가능성의 정리입니다. 수치·정책은 발표 시점 기준이며 이후 변동될 수 있습니다. 본 자료는 교육·토론 목적의 정보 제공이며 투자 조언이 아닙니다. 투자 판단과 책임은 전적으로 본인에게 있습니다.</div>
+    <div style="margin-top:18px;color:#7a7263">eco-lab 스터디 모임 · 일본의 금리인상과 세계 증시 · 2026.06</div>
+  </div>
+</footer>
+
+<script>
+// progress bar
+var prog=document.getElementById('progress');
+function onScroll(){
+  var h=document.documentElement;
+  var sc=(h.scrollTop)/(h.scrollHeight-h.clientHeight);
+  prog.style.width=(sc*100)+'%';
+  // back to top
+  var tt=document.getElementById('totop');
+  if(h.scrollTop>600)tt.classList.add('show');else tt.classList.remove('show');
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+onScroll();
+
+// back to top
+document.getElementById('totop').addEventListener('click',function(){
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+// reveal on scroll
+var io=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+
+// scroll-spy TOC
+var secs=Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+var links={};
+document.querySelectorAll('.toc-list a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});
+var spy=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      Object.values(links).forEach(function(l){l.classList.remove('active');});
+      var id=e.target.id;if(links[id])links[id].classList.add('active');
+    }
+  });
+},{rootMargin:'-45% 0px -50% 0px'});
+secs.forEach(function(s){spy.observe(s);});
+
+// mobile TOC toggle
+var tg=document.querySelector('.toc-toggle'),list=document.querySelector('.toc-list');
+if(tg){
+  if(window.matchMedia('(max-width:680px)').matches){list.classList.add('collapsed');}
+  tg.addEventListener('click',function(){
+    var c=list.classList.toggle('collapsed');
+    tg.setAttribute('aria-expanded',String(!c));
+    tg.textContent=c?'목차 펼치기 ▾':'목차 접기 ▴';
+  });
+  document.querySelectorAll('.toc-list a').forEach(function(a){
+    a.addEventListener('click',function(){
+      if(window.matchMedia('(max-width:680px)').matches){
+        list.classList.add('collapsed');tg.setAttribute('aria-expanded','false');tg.textContent='목차 펼치기 ▾';
+      }
+    });
+  });
+}
+
+// quizzes
+document.querySelectorAll('.quiz').forEach(function(q){
+  var ans=parseInt(q.getAttribute('data-answer'),10);
+  var opts=q.querySelectorAll('.opt');
+  var exp=q.querySelector('.explain');
+  var done=false;
+  opts.forEach(function(opt){
+    opt.addEventListener('click',function(){
+      if(done)return;done=true;
+      var i=parseInt(opt.getAttribute('data-i'),10);
+      opts.forEach(function(o){
+        var oi=parseInt(o.getAttribute('data-i'),10);
+        if(oi===ans){o.classList.add('correct');o.insertAdjacentHTML('beforeend','<span class="mk">✓</span>');}
+        else if(oi===i){o.classList.add('wrong');o.insertAdjacentHTML('beforeend','<span class="mk">✗</span>');}
+        o.style.cursor='default';
+      });
+      exp.classList.add('show');
+    });
+  });
+});
+</script>
+</body>
+</html>

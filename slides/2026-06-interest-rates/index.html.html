@@ -225,6 +225,22 @@
   .quiz .explain b{color:#f3d9a0}
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
+  /* ===== 차트 ===== */
+  .chart-box{background:#fff;border:1px solid var(--line);border-radius:4px;padding:1.5rem 1.4rem 1.2rem;margin:1.5rem 0}
+  .chart-box .c-title{font-weight:600;font-size:1.02rem;margin-bottom:.3rem;color:var(--ink)}
+  .chart-box .c-sub{font-size:.82rem;color:var(--muted);margin-bottom:1rem;font-weight:300}
+  .chart-box svg{width:100%;height:auto;display:block;overflow:visible}
+  .legend{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem;font-size:.85rem}
+  .legend .lg{display:flex;align-items:center;gap:.4rem;color:var(--ink)}
+  .legend .lg i{width:22px;height:3px;border-radius:2px;display:inline-block}
+  .legend .lg.dot i{width:11px;height:11px;border-radius:50%}
+  .chart-line{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+  .chart-axis{stroke:var(--line);stroke-width:1}
+  .chart-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4;opacity:.6}
+  .chart-lbl{font-family:'IBM Plex Sans KR',sans-serif;font-size:11px;fill:var(--muted)}
+  .chart-val{font-family:'Gowun Batang',serif;font-size:11px;font-weight:700}
+  .bar-val{font-family:'Gowun Batang',serif;font-size:12px;font-weight:700;fill:#fff}
+
   @media(max-width:680px){
     .g2,.g3,.seesaw{grid-template-columns:1fr}
     .cover .meta{gap:1.2rem}
@@ -237,154 +253,6 @@
 </head>
 <body>
 <div class="progress" id="bar"></div>
-
-<!-- ▼▼▼ 글 목록 사이드 패널 (마우스+버튼) ▼▼▼ -->
-<style>
-  #ecolab-nav, #ecolab-nav *{box-sizing:border-box}
-  /* 좌측 가장자리 호버 감지 띠 */
-  #ecolab-edge{
-    position:fixed; top:0; left:0; width:14px; height:100vh; z-index:9997;
-  }
-  #ecolab-edge::after{
-    content:""; position:absolute; left:0; top:50%; transform:translateY(-50%);
-    width:4px; height:64px; border-radius:0 4px 4px 0;
-    background:rgba(10,93,87,.55); transition:background .2s,width .2s;
-  }
-  #ecolab-edge:hover::after{background:rgba(10,93,87,.9); width:6px;}
-  /* 메뉴 버튼 */
-  #ecolab-toggle{
-    position:fixed; top:14px; left:16px; z-index:9999;
-    display:inline-flex; align-items:center; gap:7px;
-    padding:9px 15px 9px 12px; border:none; border-radius:999px;
-    background:rgba(10,93,87,.9); color:#fff; cursor:pointer;
-    font:600 14px/1 'IBM Plex Sans KR',sans-serif;
-    backdrop-filter:blur(6px); box-shadow:0 4px 16px rgba(21,32,43,.2);
-    transition:transform .18s,background .18s;
-  }
-  #ecolab-toggle:hover{transform:translateX(-1px); background:rgba(181,72,46,.95);}
-  #ecolab-toggle svg{display:block}
-  /* 패널 본체 */
-  #ecolab-nav{
-    position:fixed; top:0; left:0; height:100vh; width:330px; max-width:84vw;
-    background:#fbf8f1; border-right:1px solid #d6cdb8; z-index:10000;
-    transform:translateX(-104%); transition:transform .28s cubic-bezier(.2,.7,.3,1);
-    display:flex; flex-direction:column;
-    font-family:'IBM Plex Sans KR',sans-serif; color:#15202b;
-    box-shadow:8px 0 40px rgba(21,32,43,.14);
-  }
-  #ecolab-nav.open{transform:none}
-  #ecolab-nav .hd{
-    padding:20px 20px 14px; border-bottom:1px solid #e6dfcd;
-    display:flex; align-items:center; justify-content:space-between;
-  }
-  #ecolab-nav .hd b{font-family:'Gowun Batang',serif; font-size:18px}
-  #ecolab-nav .hd a{font-size:12.5px; color:#0a5d57; text-decoration:none; font-weight:600}
-  #ecolab-nav .srch{padding:12px 16px}
-  #ecolab-nav .srch input{
-    width:100%; padding:9px 13px; font:inherit; font-size:14px;
-    border:1px solid #d6cdb8; border-radius:10px; background:#fff; color:#15202b;
-  }
-  #ecolab-nav .srch input:focus{outline:none; border-color:#0a5d57; box-shadow:0 0 0 3px #e3efed}
-  #ecolab-nav .list{flex:1; overflow-y:auto; padding:4px 10px 24px}
-  #ecolab-nav .item{
-    display:block; text-decoration:none; color:#15202b;
-    padding:9px 12px; border-radius:9px; margin:2px 0;
-    font-size:14px; line-height:1.4; transition:background .15s;
-  }
-  #ecolab-nav .item:hover{background:#efe9dc}
-  #ecolab-nav .item.current{background:#e3efed; color:#0a5d57; font-weight:600}
-  #ecolab-nav .item .d{display:block; font-size:11.5px; color:#8a7a52; margin-top:2px}
-  #ecolab-nav .item.child{position:relative}
-  #ecolab-nav .item.child::before{
-    content:"↳"; position:absolute; left:-2px; color:#0a5d57; opacity:.6;
-  }
-  #ecolab-nav .msg{padding:18px 16px; font-size:13px; color:#6a6353}
-  #ecolab-backdrop{
-    position:fixed; inset:0; background:rgba(21,32,43,.32); z-index:9998;
-    opacity:0; pointer-events:none; transition:opacity .25s;
-  }
-  #ecolab-backdrop.open{opacity:1; pointer-events:auto}
-  @media (prefers-reduced-motion: reduce){
-    #ecolab-nav,#ecolab-backdrop,#ecolab-toggle{transition:none}
-  }
-</style>
-
-<div id="ecolab-edge" aria-hidden="true"></div>
-<button id="ecolab-toggle" aria-label="글 목록 열기" aria-expanded="false">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-  글 목록
-</button>
-<div id="ecolab-backdrop"></div>
-<nav id="ecolab-nav" aria-label="발표 글 목록">
-  <div class="hd"><b>eco-lab</b><a href="../../">홈으로 →</a></div>
-  <div class="srch"><input id="ecolab-q" type="text" placeholder="글 검색…" aria-label="글 검색"></div>
-  <div class="list" id="ecolab-list"><div class="msg">불러오는 중…</div></div>
-</nav>
-
-<script>
-(function(){
-  // 이 페이지의 슬러그 = 폴더명 (slides/<slug>/index.html)
-  var CURRENT = location.pathname.replace(/\/index\.html?$/,'').split('/').filter(Boolean).pop();
-  var nav = document.getElementById('ecolab-nav');
-  var backdrop = document.getElementById('ecolab-backdrop');
-  var toggle = document.getElementById('ecolab-toggle');
-  var edge = document.getElementById('ecolab-edge');
-  var listEl = document.getElementById('ecolab-list');
-  var qEl = document.getElementById('ecolab-q');
-  var DATA = [], hoverTimer;
-
-  function open(){ nav.classList.add('open'); backdrop.classList.add('open'); toggle.setAttribute('aria-expanded','true'); }
-  function close(){ nav.classList.remove('open'); backdrop.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); }
-
-  toggle.addEventListener('click', function(){ nav.classList.contains('open') ? close() : open(); });
-  backdrop.addEventListener('click', close);
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape') close(); });
-  // 왼쪽 가장자리에 마우스를 올리면 열림
-  edge.addEventListener('mouseenter', function(){ hoverTimer = setTimeout(open, 120); });
-  edge.addEventListener('mouseleave', function(){ clearTimeout(hoverTimer); });
-  // 패널 밖으로 마우스가 충분히 나가면 닫힘
-  nav.addEventListener('mouseleave', function(e){ if(e.clientX < 1) return; close(); });
-
-  function fmt(s){ var d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'}); }
-
-  function flatten(rows){
-    var byParent = {};
-    rows.forEach(function(p){ var k=p.parent||'__root__'; (byParent[k]=byParent[k]||[]).push(p); });
-    Object.keys(byParent).forEach(function(k){ byParent[k].sort(function(a,b){return new Date(b.date)-new Date(a.date);}); });
-    var out=[];
-    (function walk(key,depth){ (byParent[key]||[]).forEach(function(p){ out.push({p:p,depth:depth}); walk(p.slug,depth+1); }); })('__root__',0);
-    return out;
-  }
-
-  function draw(filter){
-    var rows;
-    if(filter){
-      var q=filter.toLowerCase();
-      rows = DATA.filter(function(p){ return (p.title+' '+(p.summary||'')+' '+(p.tags||[]).join(' ')).toLowerCase().indexOf(q)>-1; })
-                 .map(function(p){return {p:p,depth:0};});
-    } else {
-      rows = flatten(DATA);
-    }
-    if(!rows.length){ listEl.innerHTML='<div class="msg">결과가 없어요.</div>'; return; }
-    listEl.innerHTML = rows.map(function(r){
-      var p=r.p, cur = p.slug===CURRENT ? ' current' : '';
-      var child = r.depth>0 ? ' child' : '';
-      var pad = r.depth>0 ? 'margin-left:'+Math.min(r.depth,3)*16+'px;' : '';
-      return '<a class="item'+cur+child+'" style="'+pad+'" href="../'+p.slug+'/">'+
-             p.title+'<span class="d">'+fmt(p.date)+'</span></a>';
-    }).join('');
-  }
-
-  qEl.addEventListener('input', function(e){ draw(e.target.value.trim()); });
-
-  fetch('../../presentations.json',{cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){ DATA = Array.isArray(d)?d:[]; draw(''); })
-    .catch(function(){ listEl.innerHTML='<div class="msg">목록을 불러오지 못했어요. (로컬에서 직접 열면 보안상 막힐 수 있어요 — 배포본에서는 정상 작동합니다.)</div>'; });
-})();
-</script>
-<!-- ▲▲▲ 사이드 패널 끝 ▲▲▲ -->
-
 
 <!-- ========== 표지 ========== -->
 <section class="slide cover">
@@ -539,6 +407,13 @@
     <div class="card"><h3><span class="num">③</span> 가계부채·집값</h3><p>대출이 과하게 늘어 부동산이 과열되는가.</p></div>
     <div class="card"><h3><span class="num">④</span> 환율·해외금리</h3><p>특히 미국 금리와의 격차, 원/달러 환율 흐름.</p></div>
   </div>
+
+  <div class="analogy reveal">
+    <div class="tag">잠깐, 왜 하필 ‘2%’일까?</div>
+    <p>거의 모든 나라가 물가 목표를 <strong>2%</strong>로 잡습니다. 그런데 이 숫자는 대단한 경제 이론에서 나온 게 아니라, <strong>1990년 뉴질랜드</strong>에서 처음 시작됐습니다. 당시 재무장관이 TV 인터뷰에서 “물가를 0~1% 정도로 낮추고 싶다”고 무심코 말한 게 계기가 되어, 뉴질랜드 중앙은행이 세계 최초로 ‘0~2% 물가목표제’를 공식 도입했죠. 측정 오차(실제보다 약간 높게 잡히는 편향)와 디플레이션 방어 여유를 고려하니 ‘2%’가 적당했던 겁니다.</p>
+  </div>
+  <p class="reveal">이 방식이 의외로 잘 작동하자 <strong>캐나다(1991)·영국(1992)</strong> 등이 줄줄이 따라 했고, 미국 연준은 한참 뒤인 <strong>2012년 벤 버냉키 의장 때</strong> 공식 2% 목표를 채택했습니다. 한국은행도 현재 물가안정목표를 <strong>2%</strong>로 두고 있습니다. 즉 ‘2%’는 전 세계가 공유하는 일종의 <strong>약속이자 신뢰의 기준점</strong>인 셈입니다. (0%가 아닌 이유: 물가가 마이너스로 가는 디플레이션이 경기침체엔 더 위험하기 때문에, 약간의 플러스 여유를 둡니다.)</p>
+
   <p class="note reveal">즉, 한국 금리는 ‘한국 사정’만으로 정해지지 않습니다. 미국 등 주요국 금리, 환율, 국제 정세가 모두 영향을 줍니다. 그래서 뒤에서 국제 금리를 함께 봅니다.</p>
 
   <div class="quiz reveal">
@@ -551,6 +426,74 @@
     </div>
     <div class="explain"><b>정답은 C.</b> 한국은행 안의 금융통화위원회(금통위)가 1년에 8번 회의를 열어 표결로 결정합니다. 정부나 시중은행이 마음대로 정하는 게 아니라, 중앙은행이 독립적으로 정하는 것이 핵심이에요. 현재는 <b>2.50%</b>입니다.</div>
   </div>
+
+  <h2 class="display reveal" style="font-size:clamp(1.35rem,3vw,1.9rem);margin-top:2rem">한국 기준금리, 어떻게 움직여 왔나</h2>
+  <p class="reveal">최근 몇 년의 흐름을 보면 금리가 ‘경기 온도조절기’라는 말이 실감 납니다. 코로나 때 0.5%까지 내렸다가, 물가가 치솟자 3.50%까지 빠르게 올렸고, 물가가 잡히자 다시 천천히 내리는 중입니다.</p>
+
+  <div class="chart-box reveal">
+    <div class="c-title">한국은행 기준금리 추이 (2020 → 2026)</div>
+    <div class="c-sub">자료: 한국은행 · 단위 %</div>
+    <svg viewBox="0 0 720 300" role="img" aria-label="한국 기준금리 추이 그래프">
+      <!-- y 그리드 + 라벨 (0 ~ 4%) -->
+      <g class="chart-grid">
+        <line x1="48" y1="40" x2="700" y2="40"/>
+        <line x1="48" y1="100" x2="700" y2="100"/>
+        <line x1="48" y1="160" x2="700" y2="160"/>
+        <line x1="48" y1="220" x2="700" y2="220"/>
+      </g>
+      <g class="chart-lbl" text-anchor="end">
+        <text x="42" y="44">4%</text>
+        <text x="42" y="104">3%</text>
+        <text x="42" y="164">2%</text>
+        <text x="42" y="224">1%</text>
+        <text x="42" y="264">0%</text>
+      </g>
+      <line class="chart-axis" x1="48" y1="260" x2="700" y2="260"/>
+      <!-- 데이터: 0.5,0.5,1.0,1.75,3.0,3.5,3.5,3.25,2.75,2.5,2.5 →  y=260-(v*60) -->
+      <!-- 좌표 계산: x 48~690 균등 11점 -->
+      <polyline class="chart-line" stroke="#0a5d57" points="
+        48,230 112,230 176,200 240,155 304,80 368,50 432,50 496,65 560,95 624,110 688,110"/>
+      <!-- 점 + 값 -->
+      <g fill="#0a5d57">
+        <circle cx="48" cy="230" r="3.5"/><circle cx="112" cy="230" r="3.5"/>
+        <circle cx="176" cy="200" r="3.5"/><circle cx="240" cy="155" r="3.5"/>
+        <circle cx="304" cy="80" r="3.5"/><circle cx="368" cy="50" r="4.5"/>
+        <circle cx="432" cy="50" r="3.5"/><circle cx="496" cy="65" r="3.5"/>
+        <circle cx="560" cy="95" r="3.5"/><circle cx="624" cy="110" r="4.5"/>
+        <circle cx="688" cy="110" r="4.5"/>
+      </g>
+      <g class="chart-val" fill="#0a5d57" text-anchor="middle">
+        <text x="368" y="40">3.50</text>
+        <text x="688" y="126">2.50</text>
+      </g>
+      <!-- x 라벨 -->
+      <g class="chart-lbl" text-anchor="middle">
+        <text x="48" y="278">'20.5</text>
+        <text x="176" y="278">'21.8</text>
+        <text x="304" y="278">'22.10</text>
+        <text x="368" y="290">'23.1</text>
+        <text x="496" y="278">'24.10</text>
+        <text x="624" y="278">'25.5</text>
+        <text x="688" y="290">'26.6</text>
+      </g>
+    </svg>
+  </div>
+
+  <table class="reveal">
+    <caption>한국은행 기준금리 주요 변동 (자료: 한국은행)</caption>
+    <thead><tr><th>시점</th><th>기준금리</th><th>변동</th><th>배경</th></tr></thead>
+    <tbody>
+      <tr><td>2020. 5</td><td><span class="rate">0.50%</span></td><td><span class="pill down">역대 최저</span></td><td>코로나 경기 방어</td></tr>
+      <tr><td>2023. 1</td><td><span class="rate">3.50%</span></td><td><span class="pill up">고점 도달</span></td><td>고물가 대응 급속 인상</td></tr>
+      <tr><td>2023~2024 상반기</td><td><span class="rate">3.50%</span></td><td><span class="pill hold">장기 동결</span></td><td>13차례 연속 동결</td></tr>
+      <tr><td>2024. 10</td><td><span class="rate">3.25%</span></td><td><span class="pill down">인하 시작</span></td><td>물가 둔화, 완화 전환</td></tr>
+      <tr><td>2024. 11</td><td><span class="rate">3.00%</span></td><td><span class="pill down">−0.25%p</span></td><td>경기 부양</td></tr>
+      <tr><td>2025. 2</td><td><span class="rate">2.75%</span></td><td><span class="pill down">−0.25%p</span></td><td>내수 둔화 대응</td></tr>
+      <tr><td>2025. 5</td><td><span class="rate">2.50%</span></td><td><span class="pill down">−0.25%p</span></td><td>‘중립’ 수준 진입</td></tr>
+      <tr><td>2025. 7 ~ 2026. 6</td><td><span class="rate">2.50%</span></td><td><span class="pill hold">연속 동결</span></td><td>집값·환율 부담에 신중</td></tr>
+    </tbody>
+  </table>
+  <p class="note reveal">2024년 10월부터 2025년 5월까지 네 차례에 걸쳐 1.0%p를 내린 뒤, 수도권 집값과 가계부채, 원화 약세 우려로 다시 동결 기조를 이어가고 있습니다.</p>
 </section>
 
 <!-- ========== 4. 파급 경로 ========== -->
@@ -562,12 +505,52 @@
   <div class="flow reveal">
     <div class="step"><div class="n">START</div><div class="h">한국은행</div><div class="x">기준금리 결정 2.50%</div></div>
     <div class="arrow">→</div>
-    <div class="step"><div class="n">전달</div><div class="h">은행 간 시장</div><div class="x">은행이 돈을 빌리는 비용 변화</div></div>
+    <div class="step"><div class="n">전달</div><div class="h">은행 간 시장<br>(콜시장)</div><div class="x">은행끼리 하루짜리 돈 빌리는 금리가 기준금리를 따라감</div></div>
     <div class="arrow">→</div>
-    <div class="step"><div class="n">반영</div><div class="h">시중은행</div><div class="x">예금·대출 금리 조정</div></div>
+    <div class="step"><div class="n">반영</div><div class="h">시중은행</div><div class="x">조달비용 변화 → 예금·대출 금리 조정</div></div>
     <div class="arrow">→</div>
     <div class="step"><div class="n">END</div><div class="h">우리 생활</div><div class="x">이자·소비·집값·투자</div></div>
   </div>
+
+  <div class="ask reveal">
+    <span class="bubble">❓</span>
+    <div>
+      <div class="q-label">헷갈리는 지점</div>
+      <p>“기준금리가 바뀌면, 은행이 한국은행에서 돈을 빌리는 가격이 바뀌는 건가요?” — 거의 맞지만, 핵심은 ‘한국은행에서 직접’이 아니라 <strong>‘은행끼리’ 빌리는 시장</strong>에 있습니다. 차근차근 보겠습니다.</p>
+    </div>
+  </div>
+
+  <h2 class="display reveal" style="font-size:clamp(1.35rem,3vw,1.9rem);margin-top:1.6rem">‘은행 간 시장’이 대체 뭔가요?</h2>
+  <p class="reveal">은행도 매일 돈이 남기도, 모자라기도 합니다. 예를 들어 A은행은 오늘 고객 인출이 많아 돈이 부족하고, B은행은 남습니다. 이때 은행들끼리 <strong>아주 짧은 기간(보통 하루)</strong> 돈을 빌려주고 빌리는 시장이 있는데, 이를 <strong>콜시장(은행 간 시장)</strong>이라 부르고 그 금리를 <strong>콜금리</strong>라고 합니다.</p>
+
+  <div class="def reveal">
+    <div class="label">핵심 원리</div>
+    <div class="body">한국은행은 대출금리를 직접 명령하지 않습니다. 대신 <em>콜금리가 기준금리에 맞춰지도록</em> 시장의 돈 양을 조절합니다. 그래서 기준금리를 올리면 <em>은행끼리 빌리는 비용</em>부터 오릅니다.</div>
+  </div>
+
+  <p class="reveal">즉 순서는 이렇습니다. 한국은행이 기준금리를 올리면 → 콜시장에서 은행끼리 돈 빌리는 금리(콜금리)가 따라 오르고 → <strong>은행 입장에서 ‘돈을 구해오는 비용(조달비용)’이 전반적으로 비싸집니다.</strong> 은행은 콜시장뿐 아니라 예금, 은행채 발행 등으로 돈을 구하는데, 이 모든 조달비용의 기준이 함께 올라가는 거죠.</p>
+
+  <div class="seesaw reveal">
+    <div class="col up">
+      <h3>▲ 기준금리 인상 시</h3>
+      <ul>
+        <li>은행이 돈 구하는 비용(조달비용) ↑</li>
+        <li>비싸진 비용을 대출금리에 얹음 → 대출금리 ↑</li>
+        <li>예금을 더 끌어오려 예금금리도 ↑</li>
+        <li>결국 내 대출이자·예금이자 모두 오름</li>
+      </ul>
+    </div>
+    <div class="col down">
+      <h3>▼ 기준금리 인하 시</h3>
+      <ul>
+        <li>조달비용 ↓</li>
+        <li>대출금리 ↓ → 빌리기 부담 감소</li>
+        <li>예금금리도 ↓ → 저축 매력 감소</li>
+        <li>소비·투자가 살아남</li>
+      </ul>
+    </div>
+  </div>
+  <p class="reveal" style="font-size:.96rem;color:var(--muted)">참고로 한국은행이 은행에 직접 돈을 빌려주는 창구(대출제도)도 있지만, 평소 금리 전달의 핵심 무대는 이 ‘콜시장’입니다. 그래서 기준금리는 ‘한국은행이 은행에 매기는 가격’이라기보다 <strong>‘은행끼리의 돈값을 끌고 가는 닻’</strong>에 가깝습니다.</p>
 
   <div class="analogy reveal">
     <div class="tag">비유</div>
@@ -629,35 +612,131 @@
       <tr><th>국가 (중앙은행)</th><th>현재 기준금리</th><th>최근 흐름</th><th>방향</th></tr>
     </thead>
     <tbody>
-      <tr><td>🇰🇷 한국 (한국은행)</td><td><span class="rate">2.50%</span></td><td>여러 차례 동결 유지</td><td><span class="pill hold">동결 우세</span></td></tr>
-      <tr><td>🇺🇸 미국 (연준·Fed)</td><td><span class="rate">3.50–3.75%</span></td><td>2025년 말 인하 후 장기 정지</td><td><span class="pill hold">동결 / 인하 논쟁</span></td></tr>
-      <tr><td>🇯🇵 일본 (BOJ)</td><td><span class="rate">0.75%</span></td><td>마이너스 금리 졸업 후 인상기</td><td><span class="pill up">인상 흐름</span></td></tr>
+      <tr><td>🇰🇷 한국 (한국은행)</td><td><span class="rate">2.50%</span></td><td>8차례 연속 동결</td><td><span class="pill hold">동결 우세</span></td></tr>
+      <tr><td>🇺🇸 미국 (연준·Fed)</td><td><span class="rate">3.50–3.75%</span></td><td>워시 신임 의장 첫 회의서 동결</td><td><span class="pill up">인상 쪽 무게</span></td></tr>
+      <tr><td>🇯🇵 일본 (BOJ)</td><td><span class="rate">1.00%</span></td><td>6월 0.75%→1.0% 인상 (1995년 이래 최고)</td><td><span class="pill up">인상 지속</span></td></tr>
     </tbody>
   </table>
+
+  <div class="chart-box reveal">
+    <div class="c-title">한·미·일 기준금리 추이 비교 (2022 → 2026)</div>
+    <div class="c-sub">자료: 한국은행·미 연준·일본은행 · 미국은 목표범위 상단 기준 · 단위 %</div>
+    <svg viewBox="0 0 720 320" role="img" aria-label="한미일 기준금리 추이 비교 그래프">
+      <g class="chart-grid">
+        <line x1="40" y1="30" x2="700" y2="30"/>
+        <line x1="40" y1="86" x2="700" y2="86"/>
+        <line x1="40" y1="142" x2="700" y2="142"/>
+        <line x1="40" y1="198" x2="700" y2="198"/>
+        <line x1="40" y1="254" x2="700" y2="254"/>
+      </g>
+      <g class="chart-lbl" text-anchor="end">
+        <text x="34" y="34">6%</text>
+        <text x="34" y="90">5%</text>
+        <text x="34" y="146">4%</text>
+        <text x="34" y="202">3%</text>
+        <text x="34" y="258">2%</text>
+        <text x="34" y="284">1%</text>
+      </g>
+      <line class="chart-axis" x1="40" y1="282" x2="700" y2="282"/>
+      <!-- y매핑: y = 282 - (v-1)*56 ; 점 6개: '22말,'23말,'24.6,'24말,'25.중,'26.6 -->
+      <!-- 미국: 4.5,5.5,5.5,4.5,3.75,3.75 -->
+      <polyline class="chart-line" stroke="#2b4a8b" points="40,86 172,30 304,30 436,86 568,128 700,128"/>
+      <!-- 한국: 3.25,3.5,3.5,3.0,2.5,2.5 -->
+      <polyline class="chart-line" stroke="#c33" points="40,156 172,142 304,142 436,170 568,198 700,198"/>
+      <!-- 일본: -0.1,-0.1,0.1,0.5,0.75,1.0 (1% 미만은 바닥 근처) y=282-(v-1)*56, v<1이면 282 아래로 → 클램프 290 -->
+      <polyline class="chart-line" stroke="#b5482e" points="40,300 172,300 304,294 436,288 568,296 700,282"/>
+      <g>
+        <circle cx="700" cy="128" r="4" fill="#2b4a8b"/>
+        <circle cx="700" cy="198" r="4" fill="#c33"/>
+        <circle cx="700" cy="282" r="4" fill="#b5482e"/>
+      </g>
+      <g class="chart-val" text-anchor="start">
+        <text x="706" y="132" fill="#2b4a8b">美 3.75</text>
+        <text x="706" y="202" fill="#c33">韓 2.50</text>
+        <text x="706" y="286" fill="#b5482e">日 1.00</text>
+      </g>
+      <g class="chart-lbl" text-anchor="middle">
+        <text x="40" y="300">'22말</text>
+        <text x="172" y="300">'23말</text>
+        <text x="304" y="312">'24.6</text>
+        <text x="436" y="300">'24말</text>
+        <text x="568" y="312">'25중</text>
+        <text x="678" y="312">'26.6</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span class="lg"><i style="background:#2b4a8b"></i>미국 (Fed)</span>
+      <span class="lg"><i style="background:#c33"></i>한국 (BOK)</span>
+      <span class="lg"><i style="background:#b5482e"></i>일본 (BOJ)</span>
+    </div>
+  </div>
+  <p class="reveal" style="font-size:.96rem">한눈에 보이는 그림은 이렇습니다. <strong>미국</strong>은 5.5%까지 올렸다가 내려 3.75%에서 멈췄고, <strong>한국</strong>은 미국보다 낮은 2.50%, <strong>일본</strong>은 바닥에서 천천히 올라와 이제 막 1.0%에 도달했습니다. 세 나라가 각기 다른 위치·방향에 있다는 게 핵심입니다.</p>
 
   <h2 class="display reveal" style="font-size:clamp(1.4rem,3vw,2rem);margin-top:2rem">앞으로의 전망</h2>
 
   <div class="country kr reveal">
     <div class="head"><span class="flag">🇰🇷 한국</span><span class="now"><b>2.50%</b> <span>현재 기준금리</span></span></div>
     <div class="dir" style="color:var(--hold)">전망 · 신중한 동결, 인하 여지 탐색</div>
-    <p>물가는 대체로 안정세이지만, <strong>수도권 집값과 가계부채</strong>가 발목을 잡고 있습니다. 금리를 내리면 대출이 늘어 부동산이 다시 과열될 수 있어 한국은행은 인하에 신중합니다. 또한 미국과의 금리 차가 벌어지면 원화 약세·자본 유출 우려가 있어, <strong>미국의 움직임을 보며 따라가는 형국</strong>입니다. 당분간 동결 기조 속에 경기 둔화가 뚜렷해지면 점진적 인하 가능성이 열려 있습니다.</p>
+    <p>2024년 10월부터 네 차례 내려 2.50%까지 온 뒤 <strong>8차례 연속 동결</strong> 중입니다. 물가는 유가 상승으로 다시 들썩(4월 소비자물가 2.6%)이고, 무엇보다 <strong>수도권 집값(연 10% 안팎 상승)과 가계부채</strong>가 발목을 잡습니다. 금리를 내리면 부동산이 다시 과열될 수 있어 한국은행은 인하에 신중합니다. 미국과의 금리 차(약 1.25%p)도 원화 약세 압력으로 작용해, <strong>미국을 보며 따라가는 형국</strong>입니다.</p>
   </div>
 
   <div class="country us reveal">
     <div class="head"><span class="flag">🇺🇸 미국</span><span class="now"><b>3.50–3.75%</b> <span>현재 기준금리</span></span></div>
-    <div class="dir" style="color:var(--hold)">전망 · 인하 vs 동결, 시장 의견 팽팽</div>
-    <p>미국은 2025년 말 금리를 내린 뒤 여러 차례 <strong>동결</strong>하며 멈춰 있습니다. 에너지·지정학 리스크(중동 정세)로 물가가 다시 들썩일 위험과, 견조한 고용 사이에서 저울질 중입니다. 시장 일부는 <strong>연내 추가 인하</strong>를 기대하지만, 차기 의장 인선 등 정책 불확실성으로 ‘더 높게 더 오래’ 유지될 수 있다는 시각도 큽니다. 미국 금리는 전 세계 금리의 ‘기준점’이라 한국·신흥국이 가장 주목하는 변수입니다.</p>
+    <div class="dir" style="color:var(--rise)">전망 · 동결, 그러나 다음은 ‘인하 아닌 인상’ 신호</div>
+    <p>2026년 5월 취임한 <strong>케빈 워시 신임 의장</strong>이 6월 첫 회의를 주재하며 금리를 동결했습니다. 주목할 점은 방향 전환입니다. 중동발 유가 급등으로 5월 소비자물가가 <strong>4.2%</strong>(약 3년 만의 최고)까지 뛰자, 위원들의 점도표 전망이 ‘연내 인하’에서 <strong>‘연내 0.25%p 인상’</strong>으로 돌아섰습니다. 시장은 회의 직후 10월 인상 가능성을 90% 이상으로 봤습니다.</p>
+  </div>
+
+  <div class="banker reveal" style="margin-top:0">
+    <div class="eyebrow">짚어보기 · 워시 vs 파월, 무엇이 다른가</div>
+    <h3>“새 의장이 왔다는 게 분명히 느껴진다”</h3>
+    <p>워시 의장의 첫 회의는 스타일부터 전임 <strong>파월</strong> 의장과 뚜렷이 달랐습니다.</p>
+    <ul>
+      <li><strong>성명서가 확 짧아졌다</strong> — 기존 300단어 이상이던 FOMC 성명이 약 130단어로 축소됐습니다. “사실만 전한다”는 게 워시의 설명.</li>
+      <li><strong>‘포워드 가이던스’를 없앴다</strong> — 파월 시절엔 앞으로의 금리 방향을 미리 시사했지만, 워시는 “미리 약속하면 중앙은행의 손발을 묶는다”며 이를 폐기했습니다. 본인은 금리 전망 점도표도 제출하지 않았습니다.</li>
+      <li><strong>‘레짐 체인지(체제 전환)’ 예고</strong> — 연준의 소통·물가·데이터 등을 재검토할 5개 태스크포스 신설을 발표했습니다.</li>
+      <li><strong>표결은 만장일치</strong> — 직전 회의의 4명 반대와 대조적으로, 첫 회의는 전원 찬성으로 매끄럽게 마무리됐습니다.</li>
+      <li><strong>물가 2% 목표는 유지</strong> — “목표를 달성하기 전까지 2% 목표를 손대지 않겠다”고 못 박았습니다.</li>
+    </ul>
+    <p>요약하면, 파월이 ‘시장과 자세히 소통하는’ 스타일이었다면 워시는 <strong>‘말을 아끼고 유연성을 지키는’</strong> 스타일입니다. 트럼프 대통령이 금리 인하를 기대하며 지명했지만, 유가발 물가 탓에 오히려 인상을 저울질하는 상황이 된 점도 흥미로운 대목입니다.</p>
   </div>
 
   <div class="country jp reveal">
-    <div class="head"><span class="flag">🇯🇵 일본</span><span class="now"><b>0.75%</b> <span>현재 기준금리</span></span></div>
+    <div class="head"><span class="flag">🇯🇵 일본</span><span class="now"><b>1.00%</b> <span>현재 기준금리</span></span></div>
     <div class="dir" style="color:var(--rise)">전망 · 점진적 인상(정상화) 지속</div>
-    <p>일본은 오랜 <strong>초저금리·마이너스 금리</strong> 시대를 끝내고 천천히 금리를 올리는 ‘정상화’ 국면입니다. 물가가 목표(2%)를 웃돌고 있어, 시장은 <strong>1% 수준으로의 인상</strong>과 연내 추가 인상을 전망합니다. 다만 실질금리가 여전히 낮아 인상 속도는 완만할 전망입니다. 한국·미국이 ‘내릴까 말까’를 고민하는 사이, 일본은 반대로 ‘올리는’ 흐름이라는 점이 흥미로운 대비입니다.</p>
+    <p>일본은 2026년 6월 회의에서 금리를 <strong>0.75%에서 1.0%로 인상</strong>(7-1 표결)했습니다. <strong>1995년 이래 가장 높은 수준</strong>입니다. 중동(이란) 전쟁발 유가 급등과 엔화 약세(달러당 160엔 돌파)로 물가 압력이 커진 게 배경입니다. 5월 생산자물가가 6.3%까지 오른 점도 인상을 뒷받침했습니다. 일본은행은 “실질금리가 여전히 매우 낮다”며 <strong>추가 인상을 이어가겠다</strong>는 입장이라, 한·미가 ‘내릴까’를 고민하는 것과 정반대로 ‘올리는’ 흐름이 계속될 전망입니다.</p>
   </div>
+
+  <h2 class="display reveal" style="font-size:clamp(1.35rem,3vw,1.9rem);margin-top:1.8rem">왜 “미국 금리가 높으면 원화가 약해질까?”</h2>
+  <div class="analogy reveal">
+    <div class="tag">아주 쉽게</div>
+    <p>여러분이 돈을 굴린다고 해봅시다. 한국 예금이 2.5%, 미국 예금이 3.75%라면 어디에 넣고 싶을까요? 당연히 <strong>이자를 더 주는 미국(달러)</strong>입니다. 전 세계 투자자도 똑같이 생각합니다. 그래서 원화를 팔고 달러를 사려는 사람이 많아집니다.</p>
+  </div>
+  <p class="reveal">물건도 사려는 사람이 많으면 값이 오르죠. 돈도 똑같습니다. <strong>달러를 사려는 수요가 늘면 달러 값이 오르고(=원화 값은 떨어지고)</strong>, 이게 바로 “환율 상승, 원화 약세”입니다. 예를 들어 1달러=1,300원이던 게 1,450원이 되는 식입니다.</p>
+  <div class="seesaw reveal">
+    <div class="col up">
+      <h3>미국 금리 ＞ 한국 금리</h3>
+      <ul>
+        <li>달러 예금이 더 매력적</li>
+        <li>원화 팔고 달러 사는 수요 ↑</li>
+        <li>달러 강세 = 원화 약세 (환율 ↑)</li>
+        <li>수입물가 오르고 외국인 자금 유출 우려</li>
+      </ul>
+    </div>
+    <div class="col down">
+      <h3>금리 차가 좁혀지면</h3>
+      <ul>
+        <li>굳이 달러로 옮길 이유 감소</li>
+        <li>원화 수요 회복</li>
+        <li>원화 안정 (환율 ↓ 기대)</li>
+        <li>한국은행이 금리 인하 여유 확보</li>
+      </ul>
+    </div>
+  </div>
+  <p class="reveal">바로 이 때문에 한국은행은 국내 사정만 보고 금리를 못 내립니다. 미국이 높은 금리를 유지하는데 한국만 덜컥 내리면, 금리 차가 더 벌어져 원화가 급격히 약해지고 물가·자본유출 문제가 생길 수 있거든요. <strong>“미국 보며, 집값 보며, 천천히”</strong>가 한국은행의 현재 처지인 이유입니다.</p>
 
   <div class="analogy reveal">
     <div class="tag">왜 같이 봐야 하나</div>
-    <p>나라 간 금리 차이는 <strong>돈의 이동과 환율</strong>을 만듭니다. 금리가 높은 나라로 돈이 몰리는 경향이 있어, 미국 금리가 한국보다 높으면 원화가 약해지기 쉽습니다. 그래서 한국은행은 국내 경기뿐 아니라 <strong>미국·일본의 금리 방향까지 함께 계산</strong>해야 합니다. 금리는 한 나라 안의 문제가 아니라 ‘세계가 연결된 게임’입니다.</p>
+    <p>정리하면, 나라 간 금리 차이는 <strong>돈의 이동과 환율</strong>을 만듭니다. 그래서 한국은행은 국내 경기뿐 아니라 <strong>미국·일본의 금리 방향까지 함께 계산</strong>해야 합니다. 금리는 한 나라 안의 문제가 아니라 ‘세계가 연결된 게임’입니다.</p>
   </div>
   <p class="note reveal">※ 위 전망은 2026년 6월 시점의 시장 분석과 중앙은행 발표를 바탕으로 한 ‘가능성’이며, 실제 결정은 향후 물가·경기·국제정세에 따라 달라질 수 있습니다. 전망은 사실이 아닌 시나리오로 받아들이는 것이 안전합니다.</p>
 </section>
@@ -675,7 +754,7 @@
 
   <div class="analogy reveal">
     <div class="tag">예시로 이해하기</div>
-    <p>일본에서 연 <strong>0.75%</strong>로 1억 원어치 엔화를 빌립니다. 이를 달러로 바꿔 미국 자산(예: 4% 수익)에 넣으면, 가만히 앉아 <strong>약 3%p의 차익</strong>을 법니다. 여기에 미국 주식이 오르거나 엔화가 약해지면 수익은 더 커집니다. 전 세계 헤지펀드와 기관이 수십 년간 애용해온 ‘공짜처럼 보이는 돈’이었습니다.</p>
+    <p>일본에서 연 <strong>1.0%</strong>(과거엔 0%대)로 1억 원어치 엔화를 빌립니다. 이를 달러로 바꿔 미국 자산(예: 4% 수익)에 넣으면, 가만히 앉아 <strong>약 3%p의 차익</strong>을 법니다. 여기에 미국 주식이 오르거나 엔화가 약해지면 수익은 더 커집니다. 전 세계 헤지펀드와 기관이 수십 년간 애용해온 ‘공짜처럼 보이는 돈’이었습니다.</p>
   </div>
 
   <h2 class="display reveal" style="font-size:clamp(1.4rem,3vw,2rem);margin-top:1.8rem">문제는 ‘청산’될 때입니다</h2>
@@ -696,7 +775,7 @@
     <p>2024년 7~8월 일본은행이 금리를 올리고 엔화가 급등하자, 엔 캐리 자금이 한꺼번에 청산되며 일본 닛케이 지수가 <strong>하루 만에 12% 폭락</strong>(역대 최대 낙폭)했고, 그 충격이 미국·한국 증시까지 번졌습니다. ‘일본 금리 한 번 올린 것’이 전 세계 투자자의 계좌를 흔든 대표적 장면입니다.</p>
   </div>
 
-  <p class="reveal" style="margin-top:1.3rem">2026년 현재도 일본이 금리를 <strong>1% 수준으로 올리려는 움직임</strong>을 보이면서 청산 우려가 다시 고개를 들고 있습니다. <span style="color:var(--rise);font-weight:600">미·일 금리 격차가 줄어들수록</span> 엔 캐리의 매력은 떨어지고, 자금이 일본으로 되돌아갈 압력은 커집니다. 다만 전문가들은 “2024년 같은 대형 충격보다는 점진적 조정”에 무게를 두는 분위기입니다.</p>
+  <p class="reveal" style="margin-top:1.3rem">그리고 2026년 6월, 실제로 일본은행이 금리를 <strong>1.0%로 인상</strong>하면서 청산 우려가 다시 고개를 들었습니다. <span style="color:var(--rise);font-weight:600">미·일 금리 격차가 줄어들수록</span> 엔 캐리의 매력은 떨어지고, 자금이 일본으로 되돌아갈 압력은 커집니다. 다만 전문가들은 “2024년 같은 대형 충격보다는 점진적 조정”에 무게를 두는 분위기입니다.</p>
   <p class="note reveal">한국에 주는 의미: 엔 캐리가 청산되면 글로벌 유동성이 회수되며 <strong>외국인의 한국 주식 매도·원화 약세(환율 급등)</strong>로 이어질 수 있습니다. 일본 금리가 ‘남의 나라 일’이 아닌 이유입니다.</p>
 
   <div class="quiz reveal">
@@ -819,7 +898,33 @@
       <li><strong>취임 일성</strong> — “중동 전쟁발 공급 충격으로 불확실성이 커졌다. 신중하고 유연한 통화정책이 필요하다.”</li>
     </ul>
   </div>
-  <p class="note reveal">참고로 미국 차기 연준 의장으로 거론되는 케빈 워시(매파)와 비슷한 시기에 임기를 함께하게 되어, 두 ‘매파’가 한·미 통화정책을 동시에 이끌 가능성이 주목받고 있습니다.</p>
+  <p class="note reveal">참고로 미국 연준도 2026년 5월 매파 성향의 케빈 워시 의장이 취임해, 두 ‘매파’가 한·미 통화정책을 동시에 이끄는 구도가 됐습니다.</p>
+
+  <div class="ask reveal">
+    <span class="bubble">🧐</span>
+    <div>
+      <div class="q-label">잠깐, 헷갈리지 마세요</div>
+      <p>방금 ‘BIS 통화경제국장’이라고 했는데, 은행 뉴스에서 ‘BIS 비율’이란 말도 들어보셨죠? 똑같이 ‘BIS’지만 <strong>완전히 다른 두 가지</strong>입니다. 정리하고 갑시다.</p>
+    </div>
+  </div>
+
+  <div class="grid g2 reveal">
+    <div class="card" style="border-left:3px solid var(--accent)">
+      <span class="ico">🏦</span>
+      <h3><span class="num">①</span> 국제결제은행 (BIS)</h3>
+      <p><strong>기관 이름</strong>입니다. Bank for International Settlements. 1930년 스위스 바젤에 설립된, 각국 중앙은행들이 모여 협력하는 <strong>‘중앙은행들의 중앙은행’</strong>이에요. 신현송 총재가 이곳의 통화경제국장(수석 이코노미스트 격)을 지냈습니다.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--gold)">
+      <span class="ico">📊</span>
+      <h3><span class="num">②</span> BIS 자기자본비율</h3>
+      <p><strong>은행 건전성 지표</strong>입니다. 은행이 위험자산 대비 자기자본을 얼마나 갖췄는지 나타내는 비율로, <strong>보통 8% 이상</strong>을 요구해요. 이 국제 기준을 만든 곳이 바로 ①의 BIS여서 ‘BIS 비율’이라 부릅니다.</p>
+    </div>
+  </div>
+  <p class="reveal" style="font-size:.96rem">한 줄로 정리하면, <strong>‘국제결제은행(BIS)’이라는 기관이 만든 ‘은행 건전성 기준’이 BIS 자기자본비율</strong>입니다. 이름이 같은 건 같은 뿌리에서 나왔기 때문이고, 하나는 ‘기관’, 하나는 ‘비율(규칙)’을 가리킵니다. 신 총재 이력에서 말하는 BIS는 ①, 은행 재무 뉴스의 BIS는 ②라고 보면 됩니다.</p>
+  <div class="analogy reveal">
+    <div class="tag">비유</div>
+    <p>FIFA(국제축구연맹)가 ‘기관’이라면, FIFA가 정한 ‘오프사이드 규칙’은 규정입니다. 둘 다 FIFA라는 이름을 공유하지만 가리키는 건 다르죠. BIS도 똑같습니다 — ‘기관(국제결제은행)’과 그 기관이 만든 ‘규칙(자기자본비율)’의 관계입니다.</p>
+  </div>
 
   <div class="quiz reveal">
     <div class="tag">퀴즈</div>
@@ -845,13 +950,101 @@
     <div class="card"><h3><span class="num">🏠</span> 금융안정</h3><p>집값·가계부채 → 금리를 ‘못 내리게’ 막는 족쇄.</p></div>
   </div>
 
-  <p class="reveal" style="margin-top:1.4rem">이 셋이 서로 반대 방향을 가리키기 때문에, 시장은 <strong>세 가지 시나리오</strong>로 앞날을 그립니다.</p>
+  <p class="reveal" style="margin-top:1.4rem">특히 ‘금융안정’이 왜 족쇄인지는 아래 두 그래프가 잘 보여줍니다. 금리를 내릴 때마다 집값과 빚이 들썩이는 패턴이 반복돼 왔습니다.</p>
+
+  <div class="chart-box reveal">
+    <div class="c-title">수도권 주택가격 상승률 (전년 대비, 개념도)</div>
+    <div class="c-sub">자료: 한국은행·KB 등 종합 · 추세 이해용 단순화 그래프 · 단위 %</div>
+    <svg viewBox="0 0 720 250" role="img" aria-label="수도권 집값 상승률 추이">
+      <g class="chart-grid">
+        <line x1="40" y1="30" x2="700" y2="30"/>
+        <line x1="40" y1="80" x2="700" y2="80"/>
+        <line x1="40" y1="130" x2="700" y2="130"/>
+        <line x1="40" y1="180" x2="700" y2="180"/>
+      </g>
+      <g class="chart-lbl" text-anchor="end">
+        <text x="34" y="34">15</text>
+        <text x="34" y="84">10</text>
+        <text x="34" y="134">5</text>
+        <text x="34" y="184">0</text>
+      </g>
+      <line class="chart-axis" x1="40" y1="180" x2="700" y2="180"/>
+      <!-- 0% = y180, 5%=130,10%=80,15%=30 → y=180-(v*10) -->
+      <!-- 데이터: '21 +14, '22 -2(→0근처 클램프), '23 -3(0), '24상 +3, '24말 +6, '25중 +9, '26.6 +10 -->
+      <polyline class="chart-line" stroke="#b5482e" points="40,40 150,182 260,182 370,150 480,120 590,90 700,80"/>
+      <g fill="#b5482e">
+        <circle cx="40" cy="40" r="3.5"/><circle cx="150" cy="182" r="3.5"/>
+        <circle cx="260" cy="182" r="3.5"/><circle cx="370" cy="150" r="3.5"/>
+        <circle cx="480" cy="120" r="3.5"/><circle cx="590" cy="90" r="3.5"/>
+        <circle cx="700" cy="80" r="4.5"/>
+      </g>
+      <g class="chart-val" fill="#b5482e" text-anchor="middle">
+        <text x="40" y="32">+14%</text>
+        <text x="690" y="72">+10%</text>
+      </g>
+      <g class="chart-lbl" text-anchor="middle">
+        <text x="40" y="200">'21</text>
+        <text x="150" y="200">'22</text>
+        <text x="260" y="200">'23</text>
+        <text x="370" y="200">'24상</text>
+        <text x="480" y="200">'24말</text>
+        <text x="590" y="200">'25중</text>
+        <text x="700" y="200">'26.6</text>
+      </g>
+    </svg>
+    <p style="font-size:.85rem;color:var(--muted);margin:.6rem 0 0">고금리 시기(’22~’23)엔 집값이 주춤했지만, <strong>금리 인하가 시작된 ’24말부터 다시 상승세가 가팔라져</strong> 최근 연 10% 안팎까지 올랐습니다.</p>
+  </div>
+
+  <div class="chart-box reveal">
+    <div class="c-title">가계부채 규모 (GDP 대비, 개념도)</div>
+    <div class="c-sub">자료: 한국은행 등 종합 · 추세 이해용 단순화 그래프 · 단위 % (GDP 대비)</div>
+    <svg viewBox="0 0 720 230" role="img" aria-label="가계부채 GDP 대비 추이">
+      <g class="chart-grid">
+        <line x1="40" y1="30" x2="700" y2="30"/>
+        <line x1="40" y1="90" x2="700" y2="90"/>
+        <line x1="40" y1="150" x2="700" y2="150"/>
+      </g>
+      <g class="chart-lbl" text-anchor="end">
+        <text x="34" y="34">100</text>
+        <text x="34" y="94">95</text>
+        <text x="34" y="154">90</text>
+      </g>
+      <line class="chart-axis" x1="40" y1="180" x2="700" y2="180"/>
+      <!-- 막대: GDP대비 가계부채 대략 '21 98,'22 97,'23 94,'24 92,'25 91,'26 92 → 높이 -->
+      <!-- y기준 90=150,95=90,100=30 → y=150-((v-90)*12); bar top -->
+      <g fill="#0a5d57">
+        <rect x="70" y="54" width="70" height="126"/>
+        <rect x="180" y="66" width="70" height="114"/>
+        <rect x="290" y="102" width="70" height="78"/>
+        <rect x="400" y="126" width="70" height="54"/>
+        <rect x="510" y="138" width="70" height="42"/>
+        <rect x="620" y="126" width="70" height="54"/>
+      </g>
+      <g class="bar-val" text-anchor="middle">
+        <text x="105" y="72">98</text><text x="215" y="84">97</text>
+        <text x="325" y="120">94</text><text x="435" y="144">92</text>
+        <text x="545" y="156">91</text><text x="655" y="144">92</text>
+      </g>
+      <g class="chart-lbl" text-anchor="middle">
+        <text x="105" y="198">'21</text><text x="215" y="198">'22</text>
+        <text x="325" y="198">'23</text><text x="435" y="198">'24</text>
+        <text x="545" y="198">'25</text><text x="655" y="198">'26</text>
+      </g>
+    </svg>
+    <p style="font-size:.85rem;color:var(--muted);margin:.6rem 0 0">고금리로 한때 줄던 가계부채(GDP 대비)가 <strong>금리 인하 이후 다시 고개</strong>를 들고 있습니다. 한국은행이 추가 인하를 망설이는 결정적 이유입니다.</p>
+  </div>
+
+  <p class="reveal">이 두 그래프가 곧 한국은행의 딜레마입니다. 경기만 보면 금리를 내리고 싶지만, 내리는 순간 <strong>집값과 빚이 다시 부풀어 오를</strong> 위험이 크기 때문입니다.</p>
+
+  <p class="reveal" style="margin-top:1rem">한편 대외 환경도 인하를 어렵게 합니다. <strong>일본은 금리를 1.0%로 올렸고, 미국은 오히려 인상을 저울질</strong>하는 상황이라, 한국만 금리를 내리면 금리 차가 벌어져 원화가 약해질 수 있습니다.</p>
+
+  <p class="reveal" style="margin-top:1.4rem">이 모든 압력이 서로 반대 방향을 가리키기 때문에, 시장은 <strong>세 가지 시나리오</strong>로 앞날을 그립니다.</p>
 
   <table class="reveal">
     <caption>신현송 체제 한국은행 — 향후 시나리오 (2026년 6월 기준 시장 관측)</caption>
     <thead><tr><th>시나리오</th><th>전제</th><th>금리 방향</th><th>가능성</th></tr></thead>
     <tbody>
-      <tr><td><strong>신중한 동결</strong> (기본)</td><td>물가·집값 부담 지속, 미국도 동결</td><td><span class="pill hold">2.50% 유지</span></td><td>가장 유력</td></tr>
+      <tr><td><strong>신중한 동결</strong> (기본)</td><td>물가·집값 부담 지속, 미국도 동결~인상</td><td><span class="pill hold">2.50% 유지</span></td><td>가장 유력</td></tr>
       <tr><td><strong>점진적 인하</strong></td><td>경기 둔화 뚜렷 + 집값 안정 확인</td><td><span class="pill down">완만한 인하</span></td><td>조건부 가능</td></tr>
       <tr><td><strong>인상 전환</strong></td><td>유가 급등으로 물가 재점화</td><td><span class="pill up">인상</span></td><td>낮지만 배제 못함</td></tr>
     </tbody>
@@ -861,7 +1054,7 @@
     핵심은 <strong>‘방향’보다 ‘속도와 타이밍’</strong>입니다. 매파 성향의 총재인 만큼 섣부른 인하보다는, 데이터를 확인하며 <strong>신중하고 유연하게</strong> 움직일 가능성이 높습니다.
   </div>
   <p class="reveal">특히 신 총재의 이력상 <strong>환율과 가계부채(금융안정)</strong>를 중시할 것으로 보여, 미국 금리가 높게 유지되는 한 한국도 쉽게 금리를 내리기 어렵습니다. ‘미국을 보며, 집값을 보며, 천천히’가 당분간의 기조로 예상됩니다.</p>
-  <p class="note reveal">※ 모든 전망은 시나리오이며 확정이 아닙니다. 실제 결정은 향후 물가·경기·국제정세와 금통위 표결에 따라 달라집니다.</p>
+  <p class="note reveal">※ 위 집값·가계부채 그래프는 추세 이해를 돕기 위해 단순화한 개념도이며, 정확한 수치는 한국은행·통계청 공식 자료를 참고하세요. 모든 전망은 시나리오이며 확정이 아닙니다.</p>
 </section>
 
 <!-- ========== 11. 핵심 정리 ========== -->
@@ -873,7 +1066,7 @@
     <div class="item"><p><b>금리는 경기의 온도조절기다.</b> 올리면 식히고(긴축), 내리면 데운다(완화). 핵심 목적은 물가 안정.</p></div>
     <div class="item"><p><b>한국은 한국은행 금통위가 기준금리를 정한다.</b> 연 8회 회의, 현재 2.50%. 물가·경기·집값·환율을 종합 판단한다.</p></div>
     <div class="item"><p><b>은행원에게 금리는 ‘예대마진’이다.</b> 대출금리−예금금리가 은행의 밥줄. 고객 이익과 은행 이익이 반대일 때가 많다.</p></div>
-    <div class="item"><p><b>금리는 세계가 연결된 게임이다.</b> 한국(2.50%·동결)·미국(3.50–3.75%·동결논쟁)·일본(0.75%·인상)은 서로 다르게 움직이며 환율로 연결된다. <b>엔 캐리 트레이드</b>가 그 연결고리의 대표 사례.</p></div>
+    <div class="item"><p><b>금리는 세계가 연결된 게임이다.</b> 한국(2.50%·동결)·미국(3.50–3.75%·인상 저울질)·일본(1.0%로 인상)은 서로 다르게 움직이며 환율로 연결된다. <b>엔 캐리 트레이드</b>가 그 연결고리의 대표 사례.</p></div>
     <div class="item"><p><b>금리와 자산가격은 대체로 반대다.</b> 금리가 오르면 주식·부동산엔 역풍, 내리면 순풍. 단 환율·수급·심리도 함께 본다.</p></div>
     <div class="item"><p><b>새 선장은 ‘실용적 매파’ 신현송 총재.</b> 금융안정·환율을 중시 → 당분간 ‘미국 보며, 집값 보며, 천천히’ 기조가 유력.</p></div>
   </div>

@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하이닉스가 뉴욕에 간다 · ADR과 환율 대응법</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0e14;          /* deep night */
+  --ink2:#121823;
+  --panel:#171f2c;
+  --line:#27313f;
+  --fog:#8d9aac;          /* muted slate */
+  --paper:#e9edf2;
+  --silicon:#5ad1c9;      /* HBM teal — the wafer glint */
+  --gold:#f2b134;         /* dollar / capital warm */
+  --won:#7aa2ff;          /* won blue */
+  --alert:#ff6b6b;
+  --green:#4ad991;
+  --maxw:880px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'IBM Plex Sans KR',sans-serif;
+  font-weight:300;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation:none!important;transition:none!important}
+}
+
+/* progress bar */
+#bar{position:fixed;top:0;left:0;height:3px;width:0;
+  background:linear-gradient(90deg,var(--silicon),var(--gold));
+  z-index:200;transition:width .15s ease-out}
+
+/* back button */
+#back{position:fixed;top:14px;left:14px;z-index:160;
+  font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.02em;
+  text-decoration:none;color:#dfe6ee;background:rgba(12,16,22,.82);
+  border:1px solid rgba(120,140,170,.35);border-radius:999px;
+  padding:9px 15px;backdrop-filter:blur(8px);transition:.2s}
+#back:hover,#back:focus-visible{background:rgba(90,209,201,.18);border-color:var(--silicon);color:#fff;outline:none}
+
+/* TOC */
+#tocToggle{position:fixed;top:14px;right:14px;z-index:160;
+  font-family:'IBM Plex Mono',monospace;font-size:13px;
+  color:#dfe6ee;background:rgba(12,16,22,.82);
+  border:1px solid rgba(120,140,170,.35);border-radius:999px;
+  padding:9px 15px;cursor:pointer;backdrop-filter:blur(8px);transition:.2s}
+#tocToggle:hover,#tocToggle:focus-visible{border-color:var(--gold);color:#fff;outline:none}
+#toc{position:fixed;top:58px;right:14px;z-index:155;
+  background:rgba(16,22,32,.96);border:1px solid var(--line);border-radius:14px;
+  padding:12px 8px;width:248px;max-height:72vh;overflow-y:auto;
+  backdrop-filter:blur(12px);transform:translateY(-8px);opacity:0;pointer-events:none;transition:.25s}
+#toc.open{transform:translateY(0);opacity:1;pointer-events:auto}
+#toc a{display:block;text-decoration:none;color:var(--fog);
+  font-size:13.5px;padding:8px 12px;border-radius:8px;line-height:1.4;transition:.15s}
+#toc a:hover,#toc a:focus-visible{background:rgba(90,209,201,.1);color:var(--paper);outline:none}
+#toc a.active{color:var(--silicon);background:rgba(90,209,201,.08);font-weight:500}
+#toc a .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4f5d70;margin-right:8px}
+
+/* top button */
+#top{position:fixed;right:18px;bottom:18px;z-index:150;
+  width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(16,22,32,.9);color:var(--silicon);font-size:20px;cursor:pointer;
+  opacity:0;pointer-events:none;transition:.25s;backdrop-filter:blur(8px)}
+#top.show{opacity:1;pointer-events:auto}
+#top:hover,#top:focus-visible{border-color:var(--silicon);outline:none}
+
+/* layout */
+section{max-width:var(--maxw);margin:0 auto;padding:74px 22px 40px}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--silicon);margin-bottom:14px}
+h1{font-family:'Gowun Batang',serif;font-weight:700;line-height:1.18;
+  font-size:clamp(2.1rem,6.4vw,4rem);letter-spacing:-.01em;margin-bottom:22px}
+h2{font-family:'Gowun Batang',serif;font-weight:700;line-height:1.25;
+  font-size:clamp(1.55rem,4.4vw,2.5rem);margin-bottom:20px;letter-spacing:-.01em}
+h3{font-family:'IBM Plex Sans KR',sans-serif;font-weight:600;font-size:1.15rem;margin:26px 0 10px;color:#fff}
+p{margin-bottom:16px;color:#c3ccd8;font-size:1.04rem}
+p.lead{font-size:1.16rem;color:#dde4ec}
+strong{color:#fff;font-weight:600}
+em{color:var(--silicon);font-style:normal;font-weight:500}
+.dim{color:var(--fog);font-size:.96rem}
+a.inline{color:var(--silicon);text-decoration:underline;text-underline-offset:3px}
+
+/* hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  max-width:var(--maxw);margin:0 auto;padding:90px 22px 60px}
+.hero .ticker{font-family:'IBM Plex Mono',monospace;font-size:clamp(.8rem,2.4vw,1rem);
+  color:var(--gold);letter-spacing:.1em;margin-bottom:26px}
+.hero .ticker b{color:var(--silicon)}
+.hero .sub{font-size:clamp(1rem,2.6vw,1.25rem);color:#aab6c6;max-width:620px;margin-top:8px}
+.hero .meta{margin-top:46px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+  color:#5e6b7d;border-top:1px solid var(--line);padding-top:18px;line-height:2}
+.flash{display:inline-block;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.4);
+  color:#ff9d9d;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+  padding:4px 10px;letter-spacing:.05em;margin-bottom:28px}
+
+/* boxes */
+.box{border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:24px 0;background:var(--ink2)}
+.def{border-left:3px solid var(--silicon);background:linear-gradient(100deg,rgba(90,209,201,.08),rgba(90,209,201,.01))}
+.def .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--silicon);display:block;margin-bottom:8px}
+.def p{font-size:1.12rem;color:#eaf1f8;margin-bottom:0}
+.analogy{border-left:3px solid var(--gold);background:linear-gradient(100deg,rgba(242,177,52,.07),rgba(242,177,52,.01))}
+.analogy .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gold);display:block;margin-bottom:8px}
+.analogy p{margin-bottom:0}
+.warn{border-left:3px solid var(--alert);background:linear-gradient(100deg,rgba(255,107,107,.06),rgba(255,107,107,.01))}
+.warn .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--alert);display:block;margin-bottom:8px}
+
+/* open question */
+.ask{border:1px dashed rgba(122,162,255,.5);border-radius:14px;padding:20px 24px;margin:26px 0;
+  background:rgba(122,162,255,.05)}
+.ask .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;
+  color:var(--won);display:block;margin-bottom:8px}
+.ask p{margin-bottom:0;color:#dbe3f1;font-size:1.06rem}
+
+/* timeline */
+.tl{position:relative;margin:30px 0 10px;padding-left:30px}
+.tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(var(--silicon),var(--gold))}
+.tl .item{position:relative;margin-bottom:26px}
+.tl .item::before{content:"";position:absolute;left:-29px;top:5px;width:11px;height:11px;
+  border-radius:50%;background:var(--ink);border:2px solid var(--silicon)}
+.tl .yr{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);font-weight:600}
+.tl .ti{font-weight:600;color:#fff;display:block;margin:2px 0 4px}
+.tl .item p{font-size:.98rem;margin-bottom:0}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:24px 0}
+.card{border:1px solid var(--line);border-radius:13px;padding:18px 18px;background:var(--ink2)}
+.card .h{font-weight:600;color:#fff;font-size:1.02rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.card .ic{font-family:'IBM Plex Mono',monospace;color:var(--silicon);font-size:.85rem}
+.card p{font-size:.95rem;margin-bottom:0;color:#b6c0ce}
+
+/* table */
+.tw{overflow-x:auto;margin:24px 0}
+table{width:100%;border-collapse:collapse;min-width:520px;font-size:.95rem}
+th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--fog);font-weight:500}
+td{color:#c3ccd8}
+td strong{color:#fff}
+tr:last-child td{border-bottom:none}
+.num{font-family:'IBM Plex Mono',monospace;color:var(--gold)}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:24px 0}
+.stats .s{background:var(--ink2);padding:20px 18px}
+.stats .v{font-family:'IBM Plex Mono',monospace;font-size:1.55rem;color:var(--silicon);font-weight:600;line-height:1.1}
+.stats .v.g{color:var(--gold)}
+.stats .l{font-size:.84rem;color:var(--fog);margin-top:6px;line-height:1.4}
+
+/* quiz */
+.quiz{border:1px solid var(--line);border-radius:16px;padding:24px;margin:30px 0;background:var(--panel)}
+.quiz .q{font-weight:600;color:#fff;font-size:1.08rem;margin-bottom:6px}
+.quiz .qno{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);letter-spacing:.1em;margin-bottom:10px}
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--ink2);
+  color:#d2dae5;border-radius:10px;padding:14px 16px;margin:9px 0;cursor:pointer;
+  font-family:inherit;font-size:.98rem;line-height:1.5;transition:.18s;min-height:48px}
+.opt:hover{border-color:var(--fog)}
+.opt:focus-visible{outline:2px solid var(--silicon);outline-offset:2px}
+.opt.correct{border-color:var(--green);background:rgba(74,217,145,.13);color:#dffaec}
+.opt.wrong{border-color:var(--alert);background:rgba(255,107,107,.12);color:#ffe0e0}
+.opt.disabled{cursor:default;opacity:.6}
+.opt.disabled.correct,.opt.disabled.wrong{opacity:1}
+.exp{margin-top:14px;padding:16px;border-radius:10px;background:rgba(90,209,201,.06);
+  border-left:3px solid var(--silicon);font-size:.96rem;color:#cdd6e2;display:none}
+.exp.show{display:block;animation:fade .4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.exp b{color:var(--silicon)}
+
+/* diagram (flow) */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:26px 0;
+  border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.flow .step{flex:1 1 150px;padding:18px 16px;background:var(--ink2);position:relative;border-right:1px solid var(--line)}
+.flow .step:last-child{border-right:none}
+.flow .step .k{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-bottom:6px}
+.flow .step .t{font-weight:600;color:#fff;font-size:.98rem;margin-bottom:4px}
+.flow .step p{font-size:.86rem;margin-bottom:0;color:#aab4c2}
+
+/* footnote chips */
+.src{font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:#5a6678;
+  background:var(--ink2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;margin:0 2px}
+
+/* footer */
+footer{max-width:var(--maxw);margin:40px auto 0;padding:34px 22px 70px;border-top:1px solid var(--line)}
+footer h3{color:var(--fog);font-size:.9rem;font-weight:500;margin:0 0 12px;
+  font-family:'IBM Plex Mono',monospace;letter-spacing:.06em}
+footer ol{margin:0;padding-left:20px}
+footer li{font-size:.82rem;color:#6b7888;margin-bottom:7px;line-height:1.55;word-break:break-all}
+footer a{color:#7e8ca0;text-decoration:none}
+footer a:hover{color:var(--silicon)}
+.disc{margin-top:22px;font-size:.82rem;color:#5a6678;line-height:1.7}
+
+.big-q{font-family:'Gowun Batang',serif;font-size:clamp(1.4rem,3.6vw,2rem);
+  color:#fff;line-height:1.45;margin:10px 0}
+.recap li{margin-bottom:14px;color:#ccd5e1;font-size:1.05rem}
+.recap li b{color:var(--silicon)}
+ul.clean{list-style:none;padding:0}
+ul.clean li{padding-left:22px;position:relative;margin-bottom:10px;color:#c3ccd8}
+ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
+
+/* tug-of-war balance */
+.tug{display:grid;grid-template-columns:1fr 56px 1fr;align-items:stretch;gap:0;margin:26px 0;
+  border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.tug .side{padding:20px 20px}
+.tug .down{background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(255,107,107,.02))}
+.tug .up{background:linear-gradient(135deg,rgba(74,217,145,.1),rgba(74,217,145,.02))}
+.tug .lab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:flex;align-items:center;gap:7px;margin-bottom:12px;font-weight:600}
+.tug .down .lab{color:var(--alert)}
+.tug .up .lab{color:var(--green)}
+.tug .arr{font-size:1.3rem;line-height:1}
+.tug ul{list-style:none;padding:0;margin:0}
+.tug li{font-size:.93rem;color:#c3ccd8;margin-bottom:12px;padding-left:16px;position:relative;line-height:1.5}
+.tug li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%}
+.tug .down li::before{background:var(--alert)}
+.tug .up li::before{background:var(--green)}
+.tug li b{color:#fff;font-weight:600}
+.tug li span{display:block;color:var(--fog);font-size:.82rem;margin-top:2px}
+.tug .mid{display:flex;align-items:center;justify-content:center;background:var(--ink);
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--gold)}
+.timeframe{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.08em;padding:3px 10px;border-radius:5px;margin-bottom:10px;font-weight:600}
+.timeframe.s{background:rgba(255,107,107,.14);color:#ff9d9d;border:1px solid rgba(255,107,107,.3)}
+.timeframe.l{background:rgba(74,217,145,.13);color:#7df0b6;border:1px solid rgba(74,217,145,.3)}
+.casebar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.casebar .c{flex:1 1 150px;border:1px solid var(--line);border-radius:11px;padding:14px 15px;background:var(--ink2)}
+.casebar .c .nm{font-weight:600;color:#fff;font-size:.95rem;margin-bottom:3px}
+.casebar .c .pc{font-family:'IBM Plex Mono',monospace;font-size:1.2rem;font-weight:600}
+.casebar .c .pc.neg{color:var(--alert)}.casebar .c .pc.pos{color:var(--green)}
+.casebar .c .ds{font-size:.8rem;color:var(--fog);margin-top:3px}
+/* scenario chart */
+.chartwrap{border:1px solid var(--line);border-radius:16px;padding:22px 20px 16px;background:var(--ink2);margin:24px 0}
+.chartwrap svg{width:100%;height:auto;display:block;overflow:visible}
+.scgrid{stroke:var(--line);stroke-width:1}
+.axlab{fill:var(--fog);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.evline{stroke:var(--gold);stroke-width:1;stroke-dasharray:4 4;opacity:.55}
+.evtxt{fill:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:10px}
+.cline{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;
+  transition:opacity .3s,stroke-width .2s}
+.cline.dim{opacity:.16;stroke-width:1.5}
+.cband{transition:opacity .3s}
+.cband.dim{opacity:.04}
+.chiplab{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600}
+.toggles{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+.tog{font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;
+  border:1px solid var(--line);background:var(--ink);color:var(--fog);
+  border-radius:999px;padding:7px 14px;transition:.18s;min-height:40px;display:flex;align-items:center;gap:7px}
+.tog .dot{width:10px;height:10px;border-radius:50%}
+.tog:hover{border-color:var(--fog);color:var(--paper)}
+.tog:focus-visible{outline:2px solid var(--silicon);outline-offset:2px}
+.tog.off{opacity:.4}
+.tog.off .dot{opacity:.3}
+.clegend{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:.85rem;color:var(--fog)}
+.clegend .li{display:flex;align-items:center;gap:7px}
+.clegend .sw{width:18px;height:3px;border-radius:2px}
+
+/* stakeholder playbook */
+.players{display:grid;gap:16px;margin:24px 0}
+.player{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:var(--ink2)}
+.player .top{display:flex;align-items:center;gap:13px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.player .av{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;flex:0 0 auto}
+.player .who{font-weight:600;color:#fff;font-size:1.08rem}
+.player .sub2{font-size:.84rem;color:var(--fog);margin-top:1px}
+.player .body2{padding:6px 20px 18px}
+.player .row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(39,49,63,.6)}
+.player .row:last-child{border-bottom:none}
+.player . rk{flex:0 0 auto}
+.player .k2{flex:0 0 84px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.05em;color:var(--silicon);padding-top:2px;font-weight:600}
+.player .v2{flex:1;font-size:.96rem;color:#c8d1dd;line-height:1.6}
+.player .v2 b{color:#fff;font-weight:600}
+.player.won .av{background:rgba(122,162,255,.15);color:var(--won)}
+.player.usd .av{background:rgba(242,177,52,.15);color:var(--gold)}
+.player.kr .av{background:rgba(90,209,201,.15);color:var(--silicon)}
+.player.none2 .av{background:rgba(141,154,172,.15);color:var(--fog)}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.minitag{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:5px;
+  background:var(--ink);border:1px solid var(--line);color:var(--fog)}
+
+/* case comparison */
+.zeroline{stroke:#5a6678;stroke-width:1.5;stroke-dasharray:2 3}
+.tsmcpath{fill:none;stroke:var(--silicon);stroke-width:2.8;stroke-linejoin:round;stroke-linecap:round}
+.tdot{fill:var(--silicon)}
+.tdotlab{fill:#cfd8e3;font-family:'IBM Plex Mono',monospace;font-size:10px}
+.premlab{fill:var(--green);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600}
+.disclab{fill:var(--alert);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600}
+/* korean ADR bars */
+.kbars{margin:22px 0}
+.kbar{display:grid;grid-template-columns:128px 1fr 64px;align-items:center;gap:12px;margin-bottom:11px}
+.kbar .nm2{font-size:.92rem;color:#dfe6ee}
+.kbar .nm2 .sec{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--fog);letter-spacing:.03em;margin-top:1px}
+.kbar .track{position:relative;height:26px;background:var(--ink);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.kbar .mid0{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#5a6678}
+.kbar .fill{position:absolute;top:3px;bottom:3px;border-radius:4px}
+.kbar .fill.neg{background:linear-gradient(90deg,var(--alert),#b34646);right:50%}
+.kbar .fill.pos{background:linear-gradient(90deg,#3a9e6c,var(--green));left:50%}
+.kbar .val{font-family:'IBM Plex Mono',monospace;font-size:.9rem;font-weight:600;text-align:right}
+.kbar .val.neg{color:var(--alert)}.kbar .val.pos{color:var(--green)}
+.sectag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  padding:2px 8px;border-radius:5px;background:var(--ink);border:1px solid var(--line);color:var(--fog);margin:0 4px 4px 0}
+.firstbadge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(100deg,rgba(90,209,201,.12),rgba(242,177,52,.05));
+  border:1px solid rgba(90,209,201,.4);border-radius:12px;padding:14px 18px;margin:20px 0}
+.firstbadge .em{font-size:1.5rem}
+.firstbadge p{margin:0;font-size:.98rem;color:#dde4ec}
+/* arbitrage two-direction explainer */
+.arb{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.arb .head{display:flex;align-items:center;gap:10px;padding:14px 18px;font-weight:600;font-size:1rem}
+.arb.up .head{background:linear-gradient(100deg,rgba(74,217,145,.12),transparent);color:#bff0d4;border-bottom:1px solid var(--line)}
+.arb.down .head{background:linear-gradient(100deg,rgba(255,107,107,.1),transparent);color:#ffc9c9;border-bottom:1px solid var(--line)}
+.arb .head .pill{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 9px;border-radius:5px;font-weight:600}
+.arb.up .head .pill{background:rgba(74,217,145,.18);color:#7df0b6}
+.arb.down .head .pill{background:rgba(255,107,107,.18);color:#ff9d9d}
+.arb .seq{display:flex;flex-wrap:wrap;align-items:stretch}
+.arb .st{flex:1 1 0;min-width:140px;padding:15px 16px;position:relative;border-right:1px solid var(--line)}
+.arb .st:last-child{border-right:none}
+.arb .st .num{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fog);margin-bottom:5px}
+.arb .st .txt{font-size:.92rem;color:#cfd8e3;line-height:1.5}
+.arb .st .txt b{color:#fff}
+.arb .st .eff{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px}
+.arb.up .st .eff.g{color:var(--green)}
+.arb .st .eff.r{color:var(--alert)}
+.arb .res{padding:13px 18px;font-size:.92rem;background:var(--ink)}
+.arb.up .res{color:#bff0d4}.arb.down .res{color:#ffc9c9}
+.arb .res b{color:#fff}
+/* audience question callout (third-party voice) */
+.audq{border:1px solid var(--line);border-left:3px solid var(--won);border-radius:12px;
+  padding:16px 18px 16px 16px;margin:22px 0;background:rgba(122,162,255,.05);display:flex;gap:13px}
+.audq .face{font-size:1.4rem;flex:0 0 auto;line-height:1.4}
+.audq .qbody{flex:1}
+.audq .who3{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;
+  color:var(--won);margin-bottom:5px;text-transform:uppercase}
+.audq .qtext{font-size:1.02rem;color:#dde4ec;font-style:italic;margin:0;line-height:1.6}
+.audq .qtext b{color:#fff;font-style:normal}
+/* friction cards — why gap persists */
+.fric{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:13px;margin:22px 0}
+.fric .fc{border:1px solid var(--line);border-radius:13px;padding:17px 18px;background:var(--ink2);position:relative}
+.fric .fc .ti2{font-weight:600;color:#fff;font-size:1rem;margin-bottom:7px;display:flex;align-items:center;gap:9px}
+.fric .fc .ti2 .no{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);background:var(--silicon);
+  width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-weight:600}
+.fric .fc p{font-size:.92rem;color:#bcc6d3;margin:0;line-height:1.55}
+.fric .fc .ex2{margin-top:9px;font-size:.82rem;color:var(--fog);border-top:1px solid var(--line);padding-top:8px}
+.fric .fc .ex2 b{color:var(--silicon);font-weight:500}
+.loop{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:22px 0}
+.loop .lc{border:1px solid var(--line);border-radius:13px;padding:16px 18px}
+.loop .lc.p{border-left:3px solid var(--green);background:linear-gradient(100deg,rgba(74,217,145,.06),transparent)}
+.loop .lc.d{border-left:3px solid var(--alert);background:linear-gradient(100deg,rgba(255,107,107,.06),transparent)}
+.loop .lc .lh{font-weight:600;font-size:.98rem;margin-bottom:6px}
+.loop .lc.p .lh{color:#9ef0c4}.loop .lc.d .lh{color:#ffb3b3}
+.loop .lc p{font-size:.9rem;color:#c3ccd8;margin:0;line-height:1.55}
+.loop .lc .who2{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--fog);margin-top:8px}
+/* listing schedule */
+.sched{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:22px 0}
+.sched .row3{display:grid;grid-template-columns:118px 1fr;gap:0;border-bottom:1px solid var(--line)}
+.sched .row3:last-child{border-bottom:none}
+.sched .row3.hot{background:linear-gradient(100deg,rgba(242,177,52,.1),transparent)}
+.sched .dt{padding:13px 14px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;
+  color:var(--gold);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.sched .dt .wk{font-size:10px;color:var(--fog);font-weight:400}
+.sched .ev{padding:13px 16px;font-size:.94rem;color:#c8d1dd;line-height:1.5}
+.sched .ev b{color:#fff}
+.sched .ev .ko{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--silicon);display:block;margin-top:3px}
+.clock{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:22px 0}
+.clock .ck{background:var(--ink2);padding:16px 16px}
+.clock .ck .t2{font-family:'IBM Plex Mono',monospace;font-size:1.15rem;color:var(--silicon);font-weight:600;line-height:1.2}
+.clock .ck .t2.warn2{color:var(--alert)}
+.clock .ck .l2{font-size:.82rem;color:var(--fog);margin-top:5px;line-height:1.45}
+.tradeline{position:relative;height:60px;margin:26px 0 8px;border:1px solid var(--line);border-radius:11px;
+  background:var(--ink2);overflow:hidden}
+.tradeline .seg{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-align:center;line-height:1.3;padding:0 4px}
+.tradeline .pre{left:0;width:30%;background:rgba(141,154,172,.08);color:var(--fog);border-right:1px dashed var(--line)}
+.tradeline .cross{left:30%;width:28%;background:rgba(242,177,52,.13);color:var(--gold);border-right:1px dashed var(--line);font-weight:600}
+.tradeline .reg{left:58%;width:42%;background:rgba(74,217,145,.1);color:#9ef0c4;font-weight:600}
+@media(max-width:560px){
+  .sched .row3{grid-template-columns:96px 1fr}
+  .loop{grid-template-columns:1fr}
+  .arb .st{flex:1 1 100%;border-right:none;border-bottom:1px solid var(--line)}
+  .arb .st:last-child{border-bottom:none}
+  .kbar{grid-template-columns:92px 1fr 48px;gap:8px}
+  .kbar .val{font-size:.78rem}
+  .player .k2{flex:none}
+  .tug{grid-template-columns:1fr}
+  .tug .mid{display:none}
+  .tug .down{border-bottom:1px solid var(--line)}
+  section{padding:64px 18px 32px}
+  .flow .step{flex:1 1 100%;border-right:none;border-bottom:1px solid var(--line)}
+  .flow .step:last-child{border-bottom:none}
+  #toc{width:calc(100vw - 28px)}
+}
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<a id="back" href="../../" aria-label="목록으로 돌아가기">← 목록으로</a>
+<button id="tocToggle" aria-expanded="false" aria-controls="toc">목차 ☰</button>
+<nav id="toc" aria-label="목차">
+  <a href="#hero"><span class="n">00</span>표지</a>
+  <a href="#intro"><span class="n">01</span>왜 지금 하이닉스가 뉴욕에?</a>
+  <a href="#history"><span class="n">02</span>ADR은 왜 생겼나 (연표)</a>
+  <a href="#what"><span class="n">03</span>ADR이란 무엇인가</a>
+  <a href="#how"><span class="n">04</span>작동 원리 — 보증수표의 구조</a>
+  <a href="#korea"><span class="n">05</span>하이닉스 케이스 (한국 상황)</a>
+  <a href="#risk"><span class="n">06</span>투자자 대응 — 득과 실</a>
+  <a href="#price"><span class="n">07</span>상장하면 주가 떨어지나?</a>
+  <a href="#fx"><span class="n">08</span>환율, 숨은 변수</a>
+  <a href="#fxplay"><span class="n">09</span>환율 대응 전략</a>
+  <a href="#person"><span class="n">10</span>키맨 — 최태원</a>
+  <a href="#outlook"><span class="n">11</span>전망 시나리오</a>
+  <a href="#chart"><span class="n">12</span>가격 변동 시나리오 그래프</a>
+  <a href="#players"><span class="n">13</span>이해관계자별 행동강령</a>
+  <a href="#cases"><span class="n">14</span>실제 사례 — TSMC·국내 ADR</a>
+  <a href="#recap"><span class="n">15</span>오늘 기억할 6가지</a>
+</nav>
+<button id="top" aria-label="맨 위로">↑</button>
+
+<!-- HERO -->
+<header class="hero" id="hero">
+  <div class="ticker reveal"><b>NASDAQ: SKHY</b> &nbsp;·&nbsp; 잠정 데뷔 2026.07.10 &nbsp;·&nbsp; USD/KRW 1,535</div>
+  <h1 class="reveal">하이닉스가<br>뉴욕에 간다</h1>
+  <p class="sub reveal">코스피 황제주가 나스닥에 ADR로 데뷔합니다. 내 주식엔 무슨 일이 생길까요? 그리고 17년 만의 강달러, 환율은 어떻게 대응해야 할까요?</p>
+  <div class="meta reveal">
+    경제 스터디 · eco-lab &nbsp;|&nbsp; 약 20분 분량<br>
+    주제 · SK하이닉스 ADR 상장과 환율 대응 &nbsp;|&nbsp; 2026년 6월
+  </div>
+</header>
+
+<!-- 01 INTRO -->
+<section id="intro">
+  <div class="reveal">
+    <div class="eyebrow">01 — 도입</div>
+    <h2>왜 갑자기, 하이닉스가 뉴욕에?</h2>
+    <p class="lead">2026년 봄, 한 가지 소식이 한국 증시를 흔들었습니다. <strong>SK하이닉스가 미국 나스닥에 상장한다</strong>는 것이었죠. 정확히는 'ADR(미국주식예탁증서)'이라는 형태로요.</p>
+    <p>이상하지 않나요? 하이닉스는 이미 코스피에 멀쩡히 상장된 회사인데, 왜 굳이 태평양을 건너갈까요? 답은 한 단어에 있습니다. <em>AI</em>.</p>
+    <p>하이닉스는 엔비디아의 AI 칩에 들어가는 <strong>HBM(고대역폭메모리)</strong> 시장의 약 58% 점유율을 쥔 세계 1위입니다. 그런데 정작 주가는 미국 경쟁사 마이크론보다 훨씬 싸게 거래돼 왔습니다. <span class="dim">국내 12개월 선행 PER이 7배 미만인 반면 마이크론·샌디스크 등은 10배 안팎</span><span class="src">이코리아·investchosun</span> — 같은 일을 하는데 미국 친구가 두 배 가까이 비싼 셈이죠.</p>
+    <p>"그럼 미국 시장에 직접 가서 제값을 받아보자." 이게 이번 상장의 본질입니다. 그리고 그 과정에서 우리 같은 개인 투자자가 알아야 할 함정과 기회가 숨어 있습니다.</p>
+  </div>
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>같은 회사 주식인데 한국에서는 싸고 미국에서는 비싸게 팔린다면, 그 가격 차이는 누가, 어떻게 메울까요? 정답은 없습니다. 일단 머릿속에 담아두고 가봅시다.</p>
+  </div>
+</section>
+
+<!-- 02 HISTORY -->
+<section id="history">
+  <div class="reveal">
+    <div class="eyebrow">02 — 탄생 배경</div>
+    <h2>ADR은 왜, 어떻게 생겨났나</h2>
+    <p class="lead">시계를 100년 전으로 돌려봅시다. 1920년대, 미국의 부자들 사이에서 "영국 회사 주식을 사고 싶다"는 욕구가 커졌습니다. 문제는 — 너무 불편했다는 것이죠.</p>
+    <p>당시 영국 주식을 사려면 실물 종이 증서를 배에 실어 대서양을 건너오게 하고, 파운드로 환전하고, 영국 법에 따라 배당을 받아야 했습니다. 분실·도난·시차·언어 장벽 — 한 마디로 <strong>"외국 주식은 사고 싶어도 못 사는" 시대</strong>였습니다.</p>
+  </div>
+  <div class="tl reveal">
+    <div class="item">
+      <span class="yr">1927</span>
+      <span class="ti">최초의 ADR 등장 — 영국 셀프리지 백화점</span>
+      <p>미국 모건개런티 은행이 기발한 아이디어를 냅니다. "원주는 런던에 그대로 두고, 그걸 담보로 미국에서 거래되는 '증서'를 발행하자." 투자자는 달러로, 미국 시장에서, 미국 시간에 사고팔 수 있게 됐습니다. 골치 아픈 실물 이동이 사라진 것이죠.</p>
+    </div>
+    <div class="item">
+      <span class="yr">1955</span>
+      <span class="ti">SEC 제도화 — '장난감'에서 '제도'로</span>
+      <p>미국 증권거래위원회(SEC)가 ADR을 정식 등록 대상으로 편입합니다. 아무 은행이나 멋대로 발행하던 것을, 공시·감독 틀 안으로 끌어들인 겁니다. 투자자 보호의 시작이었습니다.</p>
+    </div>
+    <div class="item">
+      <span class="yr">1990s</span>
+      <span class="ti">글로벌 자본의 고속도로</span>
+      <p>신흥국 기업들이 월가의 거대 자본을 끌어오는 통로로 ADR을 적극 활용합니다. 자금이 필요한 외국 기업과, 외국 주식을 편하게 사고 싶은 미국 투자자 — 양쪽의 욕구가 맞아떨어졌습니다.</p>
+    </div>
+    <div class="item">
+      <span class="yr">지금</span>
+      <span class="ti">반도체 거인들의 무대</span>
+      <p>대만 TSMC, 네덜란드 ASML, 영국 ARM, 덴마크 노보노디스크, 일본 도요타가 이 방식으로 뉴욕에서 거래됩니다.<span class="src">경향신문</span> 2026년, 그 명단에 <strong>SK하이닉스</strong>가 이름을 올리려 합니다.</p>
+    </div>
+  </div>
+  <div class="analogy reveal">
+    <span class="tag">한 줄 비유</span>
+    <p>ADR은 <strong>"해외 부동산 대신 받는 보관증"</strong>과 같습니다. 런던에 건물(원주)을 두고, 믿을 만한 은행이 "이 건물의 지분을 보증합니다"라는 증서를 발행해 미국에서 사고팔게 한 것. 건물은 안 움직이는데 권리만 거래되는 거죠.</p>
+  </div>
+</section>
+
+<!-- 03 WHAT -->
+<section id="what">
+  <div class="reveal">
+    <div class="eyebrow">03 — 개념 정의</div>
+    <h2>그래서 ADR이 정확히 뭔가요</h2>
+  </div>
+  <div class="box def reveal">
+    <span class="tag">정의</span>
+    <p>ADR(American Depositary Receipt, 미국주식예탁증서)은 <strong>외국 기업의 주식을 미국 증시에서 달러로 거래할 수 있게 만든 '대리 증서'</strong>입니다. 기업이 원주를 자국 보관기관에 맡기면, 미국 예탁은행이 그걸 담보로 증서를 찍어 나스닥·NYSE에서 유통시킵니다.<span class="src">이코리아</span></p>
+  </div>
+  <div class="reveal">
+    <p>핵심은 ADR 1장이 원주 몇 주를 의미하느냐 하는 <em>전환 비율</em>입니다. 하이닉스 원주는 한 주에 약 255만 원<span class="src">brunch·6/23 종가</span> — 달러로 환산하면 약 1,700달러에 달합니다. 미국 투자자에게 이건 너무 비싸죠. 그래서 하이닉스는 <strong>ADR 1장 = 원주 0.1주(원주 1주 = ADR 10장)</strong> 비율로 설계했습니다.<span class="src">brunch</span> 한 주를 잘게 쪼개 미국인이 익숙한 수십~수백 달러 가격대로 맞춘 겁니다.</p>
+  </div>
+  <div class="analogy reveal">
+    <span class="tag">피자로 이해하기</span>
+    <p>255만 원짜리 통 피자(원주 1주)는 혼자 먹기 부담스럽죠. 그래서 <strong>10조각으로 잘라(ADR 10장)</strong> 한 조각씩 팔기로 한 겁니다. 피자 자체는 한국 냉장고(예탁결제원)에 보관돼 있고, 미국 손님은 '한 조각 교환권'을 사고파는 셈입니다.</p>
+  </div>
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>피자 한 조각의 가격은 '통 피자 값 ÷ 10 ÷ 환율'로 정해집니다. 그렇다면 환율이 출렁이면 미국에서의 조각 값도 같이 흔들리겠죠? 환율 이야기는 뒤에서 본격적으로 다룹니다.</p>
+  </div>
+</section>
+
+<!-- 04 HOW -->
+<section id="how">
+  <div class="reveal">
+    <div class="eyebrow">04 — 작동 원리</div>
+    <h2>보증수표는 어떻게 돌아가나</h2>
+    <p class="lead">ADR이 만들어지고 거래되는 과정을 네 단계로 따라가 봅시다.</p>
+  </div>
+  <div class="flow reveal">
+    <div class="step"><div class="k">STEP 1</div><div class="t">원주 보관</div><p>하이닉스가 신주를 발행해 한국예탁결제원에 맡긴다.</p></div>
+    <div class="step"><div class="k">STEP 2</div><div class="t">증서 발행</div><p>미국 예탁은행이 이를 담보로 ADR을 찍어낸다.</p></div>
+    <div class="step"><div class="k">STEP 3</div><div class="t">나스닥 거래</div><p>미국 투자자가 달러로 SKHY를 사고판다.</p></div>
+    <div class="step"><div class="k">STEP 4</div><div class="t">배당·의결권</div><p>예탁은행이 배당을 달러로 환전해 전달하고 의결권을 대리 행사한다.</p></div>
+  </div>
+  <div class="reveal">
+    <h3>왜 중요한가 — '일물일가'와 차익거래</h3>
+    <p>이론상 같은 회사 주식은 서울에서든 뉴욕에서든 (환율을 반영하면) 값이 같아야 합니다. 이걸 <em>일물일가의 법칙</em>이라 부릅니다.<span class="src">brunch</span> 원주와 ADR은 <strong>언제든 서로 바꿀 수 있는 한 세트</strong>라서, 한쪽이 비싸지면 그 틈을 노린 '차익거래자'가 등장해 가격을 다시 붙입니다.</p>
+    <p>핵심 원리는 딱 한 줄입니다 — <strong>"비싼 쪽을 팔고, 싼 쪽을 사서" 두 가격을 가운데로 모은다.</strong> 그 과정에서 양쪽 가격이 <em>동시에</em> 움직입니다. 아래 두 경우를 나눠서 보면 명확해집니다.</p>
+  </div>
+
+  <div class="audq reveal">
+    <span class="face">🙋</span>
+    <div class="qbody">
+      <div class="who3">스터디원 질문</div>
+      <p class="qtext">"잠깐요 — ADR이 더 비싸면, 원주 갖고 있던 사람들이 ADR로 바꿔서 팔 거 아녜요? 그럼 물량이 늘어서 <b>ADR 값이 더 떨어지는</b> 거 아닌가요? 아니면 원주 매수세가 더 세서 <b>원주만 오르고</b> ADR은 그대로일까요?"</p>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <p style="margin-bottom:6px;font-weight:600;color:#fff">경우 A. ADR이 원주보다 <span style="color:var(--green)">비쌀 때</span> (프리미엄)</p>
+  </div>
+  <div class="arb up reveal">
+    <div class="head"><span class="pill">CASE A · 프리미엄</span> 비싼 ADR을 팔고, 싼 원주를 산다</div>
+    <div class="seq">
+      <div class="st"><div class="num">STEP 1</div><div class="txt">한국에서 <b>원주를 사들인다</b></div><div class="eff g">▲ 원주 수요↑ → 원주값 올라감</div></div>
+      <div class="st"><div class="num">STEP 2</div><div class="txt">그 원주를 예탁기관에 맡겨 <b>ADR로 전환</b></div><div class="eff g">＝ 원주 → ADR</div></div>
+      <div class="st"><div class="num">STEP 3</div><div class="txt">받은 ADR을 미국에서 <b>비싸게 판다</b></div><div class="eff r">▼ ADR 공급↑ → ADR값 내려감</div></div>
+    </div>
+    <div class="res">결과 → <b>원주는 오르고, ADR은 눌려서</b> 둘이 가운데서 만남. 그래서 "ADR 프리미엄이 거꾸로 국내 원주를 끌어올린다"는 말이 나옵니다. (TSMC가 이 경로)</div>
+  </div>
+  <div class="reveal">
+    <p><strong>여기서 꼭 나오는 질문이 있습니다.</strong> "ADR을 팔면 물량이 늘어 ADR이 떨어지는 것 아닌가?" → 맞습니다(STEP 3). "원주 매수세가 강하니 원주가 오르는 것 아닌가?" → 그것도 맞습니다(STEP 1). 흔히 둘 중 하나라고 생각하지만, 실제로는 <em>둘 중 하나가 아니라 동시에</em> 일어납니다. 어느 쪽이 더 크게 움직이느냐는 <strong>시장 크기·자금력(수급)</strong>에 달렸습니다 — 미국 시장이 더 크고 두꺼우면 ADR은 잘 안 밀리고 원주가 따라 올라가고, 국내 거래가 얇으면 원주가 더 출렁입니다. 정해진 답은 없고, <strong>방향이 서로를 향한다</strong>는 게 핵심입니다.</p>
+  </div>
+
+  <div class="reveal">
+    <p style="margin:18px 0 6px;font-weight:600;color:#fff">경우 B. ADR이 원주보다 <span style="color:var(--alert)">쌀 때</span> (디스카운트) = <em style="color:var(--alert)">역유입 리스크</em></p>
+  </div>
+  <div class="arb down reveal">
+    <div class="head"><span class="pill">CASE B · 디스카운트</span> 싼 ADR을 사고, 비싼 원주 시장에 판다 — 화살표가 거꾸로</div>
+    <div class="seq">
+      <div class="st"><div class="num">STEP 1</div><div class="txt">미국에서 <b>싼 ADR을 사들인다</b></div><div class="eff r" style="color:var(--green)">▲ ADR 수요↑ → ADR값 올라감</div></div>
+      <div class="st"><div class="num">STEP 2</div><div class="txt">그 ADR을 반납해 <b>원주로 전환</b></div><div class="eff r">＝ ADR → 원주 (국내로 유입)</div></div>
+      <div class="st"><div class="num">STEP 3</div><div class="txt">전환된 원주를 <b>한국 시장에 내다 판다</b></div><div class="eff r">▼ 국내 원주 공급↑ → 국내 주가 눌림</div></div>
+    </div>
+    <div class="res">결과 → ADR이 원주로 바뀌어 <b>한국으로 거꾸로 흘러들어와</b> 국내에 매도됨. 이 흐름이 <b>역유입</b>, 그렇게 풀릴 잠재 매물이 <b>오버행(머리 위에 얹힌 물량)</b>. 국내 주주에겐 매도 압력 = 악재.</div>
+  </div>
+  <div class="box analogy reveal">
+    <span class="tag">물의 흐름으로 기억하기</span>
+    <p>두 개의 물탱크(한국·미국)를 <strong>관으로 연결</strong>했다고 보세요. 한쪽 수위(가격)가 높으면 물은 자동으로 낮은 쪽으로 흐릅니다. <strong>미국 수위가 높으면(프리미엄)</strong> 물량이 미국으로 → 원주값이 따라 오름. <strong>미국 수위가 낮으면(디스카운트)</strong> 물량이 한국으로 거꾸로 흘러옴 = <em>역유입</em>. 어느 경우든 물은 수위를 맞추려 흐르고, 흐르는 양은 관의 굵기(거래 규모)가 정합니다.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>그런데 왜 격차가 안 사라지나 — '차익거래의 한계'</h3>
+    <p>여기서 당연한 의문이 생깁니다. "차익거래가 가격을 붙인다며? 그럼 TSMC는 왜 +10~30% 프리미엄이 <strong>수년째</strong> 유지되고, 국내 금융주는 왜 계속 디스카운트야?" 답은 — <strong>차익거래에는 비용과 장벽(마찰)이 있어서, 격차를 줄이긴 해도 0으로 만들진 못한다</strong>는 데 있습니다. 학계에선 이를 <em>'차익거래의 한계(limits to arbitrage)'</em>라 부르고, 실제로 TSMC 프리미엄은 일물일가 법칙이 깨진 채 <strong>수십 년 유지될 수도 있는</strong> 대표 사례로 꼽힙니다.<span class="src">Acadian·O.Lamont</span></p>
+    <p>아까 물탱크 비유로 치면 — <strong>관이 가늘거나 밸브가 잠겨 있으면</strong> 수위 차이(가격 격차)가 안 메워지고 그대로 남습니다. 그 '밸브'가 무엇인지 네 가지로 정리했습니다.</p>
+  </div>
+
+  <div class="fric reveal">
+    <div class="fc">
+      <div class="ti2"><span class="no">1</span>전환 장벽·자본통제</div>
+      <p>원주↔ADR 전환에 당국 승인·한도·시간이 걸리면 차익거래의 핵심 단계(전환)가 막힙니다. 그럼 비싼 ADR을 팔아 싼 원주를 사들이는 흐름이 느려져 격차가 남죠.</p>
+      <div class="ex2"><b>예) 대만</b> — TSMC 원주를 ADR로 바꾸려면 <b>당국 특별 승인</b>이 필요. 일반인은 못 해 격차가 유지됨<span class="src">GS·TradingView</span></div>
+    </div>
+    <div class="fc">
+      <div class="ti2"><span class="no">2</span>강제 수요(패시브)</div>
+      <p>미국 지수·ETF에 편입되면 "무조건 ADR을 사야만 하는" 구조적 초과수요가 생깁니다. 이 수요가 프리미엄을 떠받칩니다. 반대로 미국 수요가 약하면 디스카운트가 나기 쉽고요.</p>
+      <div class="ex2"><b>예) TSMC</b> — 필라델피아 반도체 지수 편입 → 추종 ETF가 대만 원주 아닌 <b>ADR을 강제 매수</b><span class="src">ainvest</span></div>
+    </div>
+    <div class="fc">
+      <div class="ti2"><span class="no">3</span>거래·보유 비용</div>
+      <p>ADR엔 예탁은행 보관수수료·환전 비용·배당 원천징수가 붙습니다. 차익이 이 비용보다 작으면 차익거래자가 안 움직여요. "메울 가치가 없는" 만큼의 격차는 그대로 남습니다.</p>
+      <div class="ex2"><b>골드만삭스</b> — "비싼 ADR 팔아 싼 원주 사도 <b>즉각 수익이 안 날 수 있다</b>"<span class="src">GS</span></div>
+    </div>
+    <div class="fc">
+      <div class="ti2"><span class="no">4</span>투자자층·시차·심리</div>
+      <p>두 시장은 거래 시간이 다르고 투자자 구성도 다릅니다. 미국 기관은 미국 반도체주(마이크론 등)와 비교해 값을 매기고, AI 심리가 더 뜨거우면 ADR이 더 오릅니다.</p>
+      <div class="ex2"><b>ChatGPT 이후</b> — TSMC ADR +190% vs 대만 원주 +140%, 같은 회사인데 격차 확대<span class="src">ainvest</span></div>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <p>그래서 <strong>마찰이 클수록 프리미엄(또는 디스카운트)이 오래 유지</strong>됩니다. 두 한국 사례가 정반대 방향을 보여줘요.</p>
+  </div>
+  <div class="loop reveal">
+    <div class="lc p">
+      <div class="lh">▲ 지속적 프리미엄 — TSMC</div>
+      <p>전환 장벽(당국 승인) + 반도체 ETF 강제 수요가 겹쳐, 평년 약 10%·호황기 30%까지 프리미엄이 <b>수년간</b> 유지.</p>
+      <div class="who2">반도체·성장주 / 미국 수요 강함</div>
+    </div>
+    <div class="lc d">
+      <div class="lh">▼ 지속적 디스카운트 — 국내 금융·통신주</div>
+      <p>미국 투자자에게 "꼭 살 이유"가 약하고 패시브 강제 수요도 적어, 대부분 원주보다 <b>싸게</b> 거래.</p>
+      <div class="who2">성숙·내수주 / 미국 수요 약함</div>
+    </div>
+  </div>
+
+  <div class="box def reveal">
+    <span class="tag">하이닉스의 갈림길</span>
+    <p>그래서 핵심 변수는 결국 <strong>"하이닉스가 어느 쪽 마찰 구조에 놓이느냐"</strong>입니다. <strong>반도체 ETF(SOXX·SMH)에 편입</strong>되면 TSMC식 강제 수요 → 프리미엄 쪽으로. 반대로 <strong>한국↔미국 전환이 자유롭고 패시브 편입이 약하면</strong> 격차가 빨리 메워지거나 디스카운트로. 앞 섹션에서 '패시브 편입 여부'를 핵심으로 꼽은 이유가 바로 이것입니다.</p>
+  </div>
+  <div class="box warn reveal">
+    <span class="tag">마찰은 영원하지 않다</span>
+    <p>밸브가 열리면 격차도 줄어듭니다. 실제로 2026년 4월 대만 금융당국(FSC)이 로컬 펀드의 단일종목 보유한도를 10%→25%로 올리자, 대만 투자자가 원주를 대거 사들이며 <strong>ADR 프리미엄이 13.7%까지 좁혀졌습니다.</strong><span class="src">Whalesbook·Bloomberg</span> 규제(마찰)가 바뀌면 프리미엄도 변한다는 산 증거죠. <em>프리미엄은 고정된 보장이 아니라 마찰의 함수</em>입니다.</p>
+  </div>
+
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 01</div>
+    <div class="q">하이닉스 ADR의 전환 비율은 'ADR 1장 = 원주 0.1주'입니다. 왜 이렇게 잘게 쪼갰을까요?</div>
+    <button class="opt" data-correct="false">한국 법이 1:1 비율을 금지하기 때문</button>
+    <button class="opt" data-correct="true">원주가 약 1,700달러로 너무 비싸 미국 투자자에게 익숙한 가격대로 낮추려고</button>
+    <button class="opt" data-correct="false">배당을 10배 더 받기 위해</button>
+    <button class="opt" data-correct="false">예탁은행 수수료를 아끼기 위해</button>
+    <div class="exp"><b>정답: 2번.</b> 원주 1주가 255만 원(약 1,700달러)이라 미국 시장에선 너무 비쌉니다. 10장으로 쪼개면 한 장당 부담이 1/10로 줄어 거래가 훨씬 활발해집니다. 비율은 가격을 '익숙한 구간'에 맞추는 조절 장치일 뿐, 주식 가치 자체를 바꾸지는 않습니다.</div>
+  </div>
+
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 02</div>
+    <div class="q">ADR이 원주보다 비싼(프리미엄) 상태에서 차익거래가 일어납니다. 이때 가격은 어떻게 움직일까요?</div>
+    <button class="opt" data-correct="false">ADR만 떨어지고 원주는 그대로다</button>
+    <button class="opt" data-correct="false">원주만 오르고 ADR은 그대로다</button>
+    <button class="opt" data-correct="true">원주는 오르고 ADR은 눌려서, 양쪽이 가운데로 수렴한다</button>
+    <button class="opt" data-correct="false">둘 다 똑같이 더 오른다</button>
+    <div class="exp"><b>정답: 3번.</b> 차익거래자는 한국에서 원주를 사(원주값↑) ADR로 바꿔 미국에서 팝니다(ADR값↓). 두 가격이 <b>동시에</b> 서로를 향해 움직여 일물일가로 수렴하죠. 어느 쪽이 더 크게 움직일지는 시장 규모·자금력(수급)에 달려 있어, 정해진 답은 없습니다. 핵심은 '방향이 서로를 향한다'는 것.</div>
+  </div>
+</section>
+
+<!-- 05 KOREA / CASE -->
+<section id="korea">
+  <div class="reveal">
+    <div class="eyebrow">05 — 한국의 상황</div>
+    <h2>하이닉스 케이스, 숫자로 보기</h2>
+    <p class="lead">2026년 6월 24일, 하이닉스는 이사회를 열고 구체적인 계획을 공시했습니다. 시장 관측이 아니라 회사가 직접 밝힌 숫자들입니다.</p>
+  </div>
+  <div class="stats reveal">
+    <div class="s"><div class="v g">~45.4조원</div><div class="l">발행 예정 DR 최대 규모<span class="src">공시</span></div></div>
+    <div class="s"><div class="v">2.5%</div><div class="l">전체 주식 대비 신주 비중</div></div>
+    <div class="s"><div class="v g">~$140억</div><div class="l">로이터 추정 조달액(외부 추정)</div></div>
+    <div class="s"><div class="v">7.10</div><div class="l">잠정 데뷔일 (현지시간)</div></div>
+  </div>
+  <div class="reveal">
+    <p>주관사는 뱅크오브아메리카·씨티·골드만삭스·JP모건 — 월가의 간판들이 총출동했습니다.<span class="src">tradingkey</span> 임시 티커는 <strong>SKHY</strong>. 조달한 돈은 용인 반도체 클러스터 1기 팹, 청주 P&amp;T7 첨단 패키징 공장, EUV 노광장비 등 <strong>설비 투자</strong>에 투입됩니다.<span class="src">경향·파이낸셜</span></p>
+    <h3>핵심은 '신주 발행' 방식</h3>
+    <p>여기서 중요한 디테일. 기존 주식을 미국에 옮겨 파는 게 아니라, <strong>새 주식을 찍어내는(신주 발행) 방식</strong>입니다. 자금 조달형 ADR이죠. 회사 금고에 현금이 들어오니 투자엔 좋지만, 기존 주주 입장에선 <em>지분이 희석</em>됩니다. 피자 조각 수가 늘면 내 조각의 비중은 줄어드니까요.</p>
+  </div>
+  <div class="box warn reveal">
+    <span class="tag">아직 '확정 아님'</span>
+    <p>회사는 일관되게 강조합니다 — "최종 발행 물량은 증권신고서 제출 시점에, 최종 공모가는 수요예측을 거쳐 상장 하루 전날쯤 확정된다."<span class="src">서울경제</span> SEC는 특정 날짜에 도장을 찍어주는 구조가 아니라 질의응답을 반복하는 방식이라, <strong>7월 10일조차 '잠정'</strong>입니다. 뉴스 제목만 보고 날짜를 단정하면 안 됩니다.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>상장 일정 — 언제, 한국시간 몇 시에 살 수 있나</h3>
+    <p>공시에 적힌 <strong>잠정 일정</strong>입니다(한·미 당국 승인·시장 상황에 따라 변동 가능).<span class="src">디지털타임스·이투데이</span> "기회 되면 바로 사겠다"는 분이라면 마지막 두 줄(거래 시간)이 핵심입니다.</p>
+  </div>
+  <div class="sched reveal">
+    <div class="row3"><div class="dt">7월 6일<span class="wk">월</span></div><div class="ev">증권신고서 효력 발생 · 투자설명서 제출 · <b>ADR 수요예측 시작</b></div></div>
+    <div class="row3"><div class="dt">7월 9일<span class="wk">목 (미국시간)</span></div><div class="ev"><b>최종 공모가 확정</b> · 인수계약 체결 <span class="ko">→ 한국시간 7/10 새벽~오전</span></div></div>
+    <div class="row3 hot"><div class="dt">7월 10일<span class="wk">금 (현지시간)</span></div><div class="ev"><b>나스닥 상장 · 거래 개시 (티커 SKHY)</b><span class="ko">→ 한국시간 7/10 밤 ~ 7/11 새벽</span></div></div>
+    <div class="row3"><div class="dt">7월 14일<span class="wk">화</span></div><div class="ev">청약 · 납입일</div></div>
+  </div>
+
+  <div class="box def reveal">
+    <span class="tag">한국시간 거래 가능 시각 (핵심)</span>
+    <p>나스닥 <strong>정규장</strong>은 미국 동부시간 9:30~16:00 — 서머타임 적용 중이라 <strong>한국시간 밤 10:30 ~ 새벽 5:00</strong>입니다. 그런데 <strong>상장 첫날엔 밤 10:30 정각에 못 삽니다.</strong></p>
+  </div>
+  <div class="clock reveal">
+    <div class="ck"><div class="t2 warn2">프리장 ✕</div><div class="l2">신규 상장 종목은 프리마켓(밤 9시대) 거래 <b>불가</b>. 대기만 가능</div></div>
+    <div class="ck"><div class="t2 warn2">22:30 ✕</div><div class="l2">정규장 개장(밤 10:30)에도 <b>아직 거래 안 됨</b> — 가격 결정 절차 진행 중</div></div>
+    <div class="ck"><div class="t2">자정~새벽</div><div class="l2"><b>IPO Cross</b> 완료 후 첫 거래. 과거 신규주는 보통 미 동부 오전 10~14시(한국 밤 11시~새벽 3시)에 시작</div></div>
+  </div>
+  <div class="reveal">
+    <p style="margin-bottom:6px"><strong>왜 개장하자마자 못 사나?</strong> 나스닥은 신규 상장 종목을 정규 개장(9:30)에 바로 풀지 않고, <em>IPO Cross</em>라는 별도 경매 절차를 거칩니다.<span class="src">Nasdaq</span> 약 15분 이상(변동성 크면 연장)의 '호가만 받는 시간'을 거쳐 적정 시초가를 찾은 뒤에야 첫 체결이 일어나요. 그래서 정확한 첫 거래 시각은 <strong>그날그날 다르고 미리 못 박지 못합니다.</strong></p>
+  </div>
+  <div class="tradeline reveal" role="img" aria-label="상장 당일 거래 가능 시간대 도식">
+    <div class="seg pre">프리장·개장 직후<br>거래 ✕ (대기)</div>
+    <div class="seg cross">IPO Cross<br>호가만·체결 ✕</div>
+    <div class="seg reg">첫 체결 이후<br>정상 거래 ○</div>
+  </div>
+  <div class="box warn reveal">
+    <span class="tag">실전 팁</span>
+    <p>① 상장 첫날은 <strong>변동성이 매우 큽니다</strong>(나스닥은 시초가 ±10% 밴드에서 변동 시 일시정지). 시장가 추격보다 <strong>지정가</strong>가 안전합니다. ② 첫 체결 시각이 유동적이니 <strong>밤 11시~새벽 사이 알림</strong>을 걸어두세요. ③ 증권사마다 신규 상장 ADR 매매 개시 시점이 다를 수 있어, <strong>본인 증권사의 거래 가능 시점</strong>을 미리 확인하는 게 좋습니다. ④ 무엇보다 <strong>7/10은 잠정일</strong>이라 하루 이틀 밀릴 수 있습니다.</p>
+  </div>
+
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>회사 금고엔 45조 원이 들어오는데, 내 한 주의 지분율은 살짝 줄어듭니다. 여러분이 기존 주주라면 이걸 '호재'로 볼까요, '악재'로 볼까요? 판단의 열쇠는 다음 섹션에 있습니다.</p>
+  </div>
+</section>
+
+<!-- 06 RISK / INVESTOR -->
+<section id="risk">
+  <div class="reveal">
+    <div class="eyebrow">06 — 투자자 대응</div>
+    <h2>득과 실 — 주식투자자는 어떻게 대응할까</h2>
+    <p class="lead">호재론과 신중론이 팽팽합니다. 양쪽 논리를 모두 알아야 휩쓸리지 않습니다.</p>
+  </div>
+  <div class="grid reveal">
+    <div class="card"><div class="h"><span class="ic">＋</span>리레이팅 기대</div><p>마이크론(PER 약 18배) 수준으로만 평가받아도 큰 폭의 주가 상승 여지. 국내 PER은 한 자릿수에 머물러 있습니다.<span class="src">investchosun</span></p></div>
+    <div class="card"><div class="h"><span class="ic">＋</span>패시브 자금</div><p>필라델피아 반도체 지수·나스닥 ETF에 편입되면 지수 추종 자금이 자동으로 유입되는 '고속도로'가 열립니다.<span class="src">brunch</span></p></div>
+    <div class="card"><div class="h"><span class="ic">＋</span>TSMC 선례</div><p>대만 TSMC는 ADR 상장 후 본주 대비 10% 넘는 프리미엄에 거래되며 '대만 디스카운트'를 상쇄했습니다.<span class="src">경향</span></p></div>
+    <div class="card"><div class="h"><span class="ic" style="color:var(--alert)">－</span>지분 희석</div><p>신주 2.5% 발행으로 기존 주주의 한 주당 가치가 소폭 희석됩니다.</p></div>
+    <div class="card"><div class="h"><span class="ic" style="color:var(--alert)">－</span>역유입(오버행)</div><p>ADR이 원주보다 싸지면 차익거래로 ADR→원주 전환 물량이 국내로 쏟아져 매도 압력이 됩니다.<span class="src">investchosun</span></p></div>
+    <div class="card"><div class="h"><span class="ic" style="color:var(--alert)">－</span>업황·경쟁</div><p>HBM 계약가 하락 압력, 삼성의 HBM4 추격, AI 설비투자 둔화 가능성은 상존하는 리스크입니다.<span class="src">tradingkey</span></p></div>
+  </div>
+  <div class="box warn reveal">
+    <span class="tag">현실 점검 — 미국 프리미엄은 보장이 아니다</span>
+    <p>이미 미국에 상장된 국내 기업들을 보면 'ADR 프리미엄'은커녕 대부분 <strong>한국보다 싸게(디스카운트)</strong> 거래됩니다. 6월 20일 기준 KB금융·신한지주·포스코홀딩스 모두 미국 가격이 더 낮았습니다.<span class="src">investchosun</span> 그래서 차익을 노린 역유입이 자주 일어났죠. 다만 하이닉스는 AI 반도체 핵심 플레이어라 기존 금융지주들과 다를 것이라는 낙관론도 강합니다.</p>
+  </div>
+  <div class="reveal">
+    <h3>실무자 시각 — 개인 투자자를 위한 체크리스트</h3>
+    <ul class="clean">
+      <li><strong>"상장 = 주가 상승"이 아니다.</strong> 이벤트 기대가 이미 주가에 선반영됐는지부터 확인. 단기 급등 구간에선 공모 조건·희석·금리·업황이 재료보다 더 크게 작용합니다.<span class="src">economic-news24</span></li>
+      <li><strong>괴리율을 본다.</strong> ADR과 원주의 가격 차이(프리미엄/디스카운트)가 어느 방향인지가 역유입 여부를 가릅니다.</li>
+      <li><strong>기존 원주 보유자는 바뀌는 게 없다.</strong> 신주 발행이라 내 코스피 주식이 ADR로 변하지 않습니다. 다만 희석·수급 영향은 간접적으로 받습니다.</li>
+      <li><strong>상장 첫날은 시장가보다 지정가.</strong> 변동성이 큰 데뷔 당일엔 가격 범위를 미리 정해두는 게 안전합니다.<span class="src">economic-news24</span></li>
+      <li><strong>비용을 잊지 말 것.</strong> ADR엔 보관 수수료(custody fee)와 배당 원천징수·환전 비용이 붙습니다.<span class="src">help-me</span></li>
+    </ul>
+  </div>
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 03</div>
+    <div class="q">'역유입(오버행) 리스크'가 현실화되는 조건은 무엇일까요?</div>
+    <button class="opt" data-correct="false">한국 원주가 미국 ADR보다 싸질 때</button>
+    <button class="opt" data-correct="true">미국 ADR이 한국 원주보다 싸져, 차익을 노려 ADR을 원주로 바꿔 국내에 팔 때</button>
+    <button class="opt" data-correct="false">환율이 1,500원 아래로 내려갈 때</button>
+    <button class="opt" data-correct="false">배당이 줄어들 때</button>
+    <div class="exp"><b>정답: 2번.</b> ADR과 원주는 떼어놓을 수 없는 한 세트라(대법원 판례), ADR 보유자는 언제든 반납하고 원주를 받을 수 있습니다. 미국 가격이 더 싸면 "미국에서 싸게 사 → 원주로 전환 → 한국에서 비싸게 판다"는 차익거래가 작동하고, 그만큼 국내 유통 물량이 늘어 매도 압력이 됩니다.</div>
+  </div>
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 04</div>
+    <div class="q">코스피에 하이닉스 원주를 이미 보유한 투자자입니다. 이번 ADR 상장으로 내 주식은 어떻게 되나요?</div>
+    <button class="opt" data-correct="false">자동으로 ADR로 전환된다</button>
+    <button class="opt" data-correct="false">강제로 미국 계좌로 옮겨진다</button>
+    <button class="opt" data-correct="true">내 원주는 그대로다. 신주 발행 방식이라 기존 주식은 바뀌지 않는다</button>
+    <button class="opt" data-correct="false">배당을 달러로만 받게 된다</button>
+    <div class="exp"><b>정답: 3번.</b> 이번 ADR은 기존 주식을 옮기는 게 아니라 <b>새 주식을 찍어내는</b> 신주 발행 방식입니다. 따라서 내 코스피 원주는 그대로 유지됩니다. 다만 신주만큼 지분이 희석되고, 역유입·리레이팅 같은 수급 효과는 간접적으로 받습니다.</div>
+  </div>
+</section>
+
+<!-- 07 PRICE IMPACT -->
+<section id="price">
+  <div class="reveal">
+    <div class="eyebrow">07 — 가장 많이 묻는 질문</div>
+    <h2>"ADR 상장하면 주가 떨어지나요?"</h2>
+    <p class="lead">결론부터. <strong>꼭 떨어지는 건 아닙니다.</strong> 하지만 단기적으로 주가를 <em>누르는 힘</em>과 중장기적으로 <em>밀어 올리는 힘</em>이 동시에 작동합니다. 한쪽만 보면 오답이에요. 줄다리기로 이해해야 합니다.</p>
+  </div>
+
+  <div class="tug reveal">
+    <div class="side down">
+      <div class="lab"><span class="arr">▼</span> 누르는 힘 · 단기</div>
+      <ul>
+        <li><b>지분 희석</b><span>신주 2.5%를 새로 찍어내 주식 수가 늘어남 → 한 주당 가치가 그만큼 묽어진다</span></li>
+        <li><b>역유입(오버행)</b><span>ADR이 원주보다 싸지면 ADR→원주 전환 물량이 국내로 쏟아져 매도 압력</span></li>
+        <li><b>기대 선반영</b><span>상장 기대가 이미 주가에 반영됐다면, 막상 상장 땐 '재료 소멸'로 차익실현이 나올 수 있다</span></li>
+      </ul>
+    </div>
+    <div class="mid">vs</div>
+    <div class="side up">
+      <div class="lab"><span class="arr">▲</span> 밀어 올리는 힘 · 중장기</div>
+      <ul>
+        <li><b>밸류 리레이팅</b><span>국내 PER 한 자릿수 → 마이크론(약 18배) 수준으로 재평가되면 상승 여지<span class="src">investchosun</span></span></li>
+        <li><b>패시브 자금</b><span>필라델피아 반도체 지수·나스닥 ETF 편입 시 지수추종 자금이 자동 유입<span class="src">brunch</span></span></li>
+        <li><b>차익거래 견인</b><span>ADR이 원주보다 비싸지면(프리미엄) 거꾸로 원주 수요를 끌어올린다<span class="src">알파경제</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <h3>단기와 장기를 나눠 보면</h3>
+    <p><span class="timeframe s">단기 · 상장 전후</span><br>희석과 오버행 우려가 먼저 부각되기 쉽습니다. 특히 신주 발행 방식이라 "주식 수가 늘었다"는 사실이 즉각 체감되죠. 게다가 상장 기대로 미리 올라 있었다면, 막상 상장일엔 차익 매물이 나올 수 있습니다. 그래서 <strong>상장 직후의 출렁임은 자연스러운 현상</strong>입니다.</p>
+    <p><span class="timeframe l">중장기 · 상장 이후</span><br>회사 금고에 들어온 45조 원이 용인 클러스터·HBM 증설로 이어져 <strong>이익이 실제로 늘면</strong>, 희석을 덮고도 남습니다. 여기에 미국 시장에서 마이크론 수준으로 재평가받고 패시브 자금까지 들어오면, 장기적으로는 오히려 상승 동력이 될 수 있습니다.</p>
+  </div>
+
+  <div class="box analogy reveal">
+    <span class="tag">한 줄 비유 — 가게 확장</span>
+    <p>잘 되는 식당이 <strong>2호점을 내려고 동업자에게 지분 일부를 파는 것</strong>과 같습니다. 당장은 내 몫(지분)이 줄어 섭섭하죠(=희석, 단기 하락 압력). 하지만 그 돈으로 2호점이 대박 나면, 작아진 내 지분의 <em>가치 자체</em>가 훨씬 커집니다(=중장기 상승). 핵심은 "받은 돈으로 얼마나 잘 키우느냐"입니다.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>현실 점검 — "미국 가면 비싸진다"는 착각</h3>
+    <p>막연한 기대와 달리, 이미 미국에 상장된 국내 기업 다수는 <strong>한국보다 싸게(디스카운트)</strong> 거래됩니다. 2026년 6월 20일 기준입니다.</p>
+  </div>
+  <div class="casebar reveal">
+    <div class="c"><div class="nm">KB금융</div><div class="pc neg">-2.99%</div><div class="ds">美 가격이 韓보다 낮음</div></div>
+    <div class="c"><div class="nm">신한지주</div><div class="pc neg">-5.45%</div><div class="ds">美 가격이 韓보다 낮음</div></div>
+    <div class="c"><div class="nm">포스코홀딩스</div><div class="pc neg">-2.76%</div><div class="ds">美 가격이 韓보다 낮음</div></div>
+  </div>
+  <div class="reveal">
+    <p class="dim" style="margin-top:-6px">출처: 인베스트조선(2026.3.24). 이렇게 미국이 더 싸면 차익을 노린 '역유입'이 자주 일어납니다. 다만 하이닉스는 금융지주·전통산업과 달리 <strong>AI 반도체 핵심 플레이어</strong>라 미국 투자자 지명도가 높아 다를 것이라는 낙관론도 강합니다. TSMC가 ADR 상장 후 본주 대비 10% 넘는 프리미엄을 받은 것이 그 근거죠.<span class="src">경향</span></p>
+  </div>
+
+  <div class="box warn reveal">
+    <span class="tag">그래서 정답은</span>
+    <p>"상장 = 하락"도, "상장 = 상승"도 아닙니다. <strong>① 단기엔 희석·오버행이 누르고, ② 중장기엔 자금 활용·리레이팅이 받친다</strong>는 줄다리기 구조입니다. 어느 쪽이 이길지는 <em>괴리율의 방향(ADR이 원주보다 비싼가 싼가)</em>과 <em>조달 자금이 실적으로 연결되는가</em>가 가릅니다. 그래서 실무자는 주가 방향을 점치기보다 이 두 가지를 관찰합니다.</p>
+  </div>
+
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>만약 상장 직후 주가가 5% 빠졌다면 — 이건 '실패'일까요, 아니면 '희석을 반영한 자연스러운 조정'일까요? 떨어진 가격만 보지 말고, <strong>그 돈으로 회사가 무엇을 하는지</strong>를 함께 보면 답이 달라집니다.</p>
+  </div>
+
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 05</div>
+    <div class="q">"ADR 상장 = 무조건 주가 상승"이라는 생각이 위험한 이유로 가장 적절한 것은?</div>
+    <button class="opt" data-correct="false">상장은 법적으로 주가를 고정시키기 때문</button>
+    <button class="opt" data-correct="true">단기엔 희석·오버행이 주가를 누를 수 있고, 미국 상장 국내 기업 다수가 오히려 디스카운트 상태이기 때문</button>
+    <button class="opt" data-correct="false">ADR은 배당을 주지 않기 때문</button>
+    <button class="opt" data-correct="false">상장 후엔 원주를 팔 수 없게 되기 때문</button>
+    <div class="exp"><b>정답: 2번.</b> 신주 발행에 따른 희석, 역유입(오버행), 기대 선반영은 단기적으로 주가를 누를 수 있습니다. 실제로 KB금융·신한지주·포스코홀딩스 등 미국 상장 국내 기업 다수는 한국보다 싸게 거래됩니다. 상장은 상승의 '계기'가 될 수 있지만 '보장'은 아닙니다. 조달 자금이 실적으로 이어지는지, 괴리율이 어느 방향인지를 봐야 합니다.</div>
+  </div>
+</section>
+
+<!-- 08 FX -->
+<section id="fx">
+  <div class="reveal">
+    <div class="eyebrow">08 — 숨은 변수</div>
+    <h2>환율, 모든 것을 흔드는 배경음</h2>
+    <p class="lead">ADR 가격은 '원주 가격 × 비율 ÷ 환율'로 결정됩니다.<span class="src">economic-news24</span> 즉 환율은 ADR 이야기에서 빼놓을 수 없는 숨은 주인공입니다. 그런데 2026년의 환율은 평범하지 않습니다.</p>
+  </div>
+  <div class="stats reveal">
+    <div class="s"><div class="v g">~1,535원</div><div class="l">USD/KRW (2026.6.24)<span class="src">investing·tradingeconomics</span></div></div>
+    <div class="s"><div class="v">17년</div><div class="l">'1,540원'은 17년 만의 고점대<span class="src">investing</span></div></div>
+    <div class="s"><div class="v" style="color:var(--alert)">-13.3%</div><div class="l">지난 12개월 원화 약세폭<span class="src">tradingeconomics</span></div></div>
+  </div>
+  <div class="reveal">
+    <p>언론은 이를 두고 <strong>"뉴노멀이 된 강달러"</strong>라 부릅니다.<span class="src">investing</span> 미국 연준의 추가 긴축 가능성, 외국인 자금 이탈, 중동 불확실성과 유가 상승이 겹치며 원화가 17년 만의 최저 수준으로 밀린 겁니다.<span class="src">tradingeconomics</span></p>
+    <h3>왜 환율이 ADR 투자자에게 중요한가</h3>
+    <p>달러로 SKHY를 사는 순간, 여러분은 <strong>두 가지에 동시에 베팅</strong>하는 셈입니다 — ① 하이닉스 주가가 오르느냐, ② 원/달러 환율이 어떻게 움직이느냐. 주가가 올라도 환율이 불리하게 움직이면 수익이 깎이고, 반대면 더해집니다.</p>
+  </div>
+  <div class="analogy reveal">
+    <span class="tag">환율은 '두 번째 주가'</span>
+    <p>해외 주식 투자는 <strong>주식 한 장 값 + 환율</strong>이라는 두 장의 가격표가 붙은 쇼핑입니다. 물건값(주가)이 5% 올라도 환율(가격표 2)이 5% 불리하면 본전. 그래서 환율을 '두 번째 주가'라고 부릅니다.</p>
+  </div>
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 06</div>
+    <div class="q">한국에 사는 투자자가 달러로 미국 ADR(SKHY)을 샀습니다. 주가가 그대로인데 <b>원/달러 환율이 1,535원 → 1,650원으로 올랐다면</b>(원화 약세), 원화로 환산한 평가금액은?</div>
+    <button class="opt" data-correct="false">변화 없다 (주가가 그대로니까)</button>
+    <button class="opt" data-correct="true">늘어난다 — 같은 달러 자산이 더 많은 원화로 환산되므로</button>
+    <button class="opt" data-correct="false">줄어든다 — 환율이 오르면 손해니까</button>
+    <button class="opt" data-correct="false">알 수 없다</button>
+    <div class="exp"><b>정답: 2번.</b> 환율이 오르면(원화 약세) 내가 가진 달러 자산을 원화로 바꿀 때 더 많은 원화를 받습니다. 즉 <b>해외 자산 보유자에게 원화 약세는 환차익</b>입니다. 반대로 원화가 강세로 돌아서면 환차손이 납니다. 주가와 별개로 움직이는 '두 번째 손익'인 셈이죠.</div>
+  </div>
+</section>
+
+<!-- 08 FX PLAY -->
+<section id="fxplay">
+  <div class="reveal">
+    <div class="eyebrow">09 — 환율 대응 전략</div>
+    <h2>강달러 시대, 환율은 어떻게 다룰까</h2>
+    <p class="lead">환율을 '예측'하는 건 전문가도 어렵습니다. 그래서 실무에선 예측보다 <em>구조를 짜는 쪽</em>으로 접근합니다.</p>
+  </div>
+  <div class="tw reveal">
+    <table>
+      <thead><tr><th>전략</th><th>핵심 아이디어</th><th>이런 분께</th></tr></thead>
+      <tbody>
+        <tr><td><strong>분할 환전</strong></td><td>한 번에 환전하지 않고 여러 시점에 나눠 평균 환율을 만든다(환 코스트 애버리징)</td><td>고점 부담이 걱정되는 대부분의 개인</td></tr>
+        <tr><td><strong>원화 노출 유지</strong></td><td>굳이 달러 ADR을 사지 않고 <strong>코스피 원주</strong>로 같은 회사에 투자 — 환위험 자체를 회피</td><td>환율이 부담스럽고 국내 계좌가 편한 분</td></tr>
+        <tr><td><strong>환헤지 상품</strong></td><td>환율 변동을 상쇄하는 (H) 표시 ETF·펀드 활용. 단 헤지 비용 발생</td><td>순수하게 주가에만 베팅하고 싶은 분</td></tr>
+        <tr><td><strong>환노출 유지(언헤지)</strong></td><td>달러 자산을 '환율 분산' 수단으로 본다. 원화 약세 시 자산 방어 효과</td><td>원화 자산이 대부분인 장기 투자자</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="box analogy reveal">
+    <span class="tag">실전 감각</span>
+    <p>같은 하이닉스에 투자하는 길이 둘 있습니다 — <strong>① 코스피 원주(원화, 환위험 없음)</strong> vs <strong>② 나스닥 ADR(달러, 환위험 있음)</strong>. 환율이 17년 만의 고점인 지금 달러로 갈아타는 건 '비싼 달러를 사서 들어가는' 셈일 수 있습니다. 반대로 원화가 더 약해진다고 보면 달러 자산이 방어막이 되죠. 정답은 <em>본인의 환율 전망과 보유 자산 구성</em>에 달려 있습니다.</p>
+  </div>
+  <div class="box warn reveal">
+    <span class="tag">시나리오일 뿐, 확정 아님</span>
+    <p>한 환율 예측 사이트는 2026년 7~8월 평균을 1,557~1,593원, 일부 모델은 2027년 1,700원대까지 보지만<span class="src">wonforecast</span>, 뱅크오브아메리카는 AI 반도체 수요가 오히려 원화를 떠받쳐 한국이 2026년 금리를 올릴 수 있다고 봅니다.<span class="src">investing</span> <strong>전망은 갈립니다. 어느 쪽도 확정이 아닙니다.</strong> 그래서 '예측'이 아니라 '분산·구조'가 답입니다.</p>
+  </div>
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>여러분의 자산은 지금 원화에 얼마나 쏠려 있나요? 만약 집·예금·연금이 전부 원화라면, 달러 자산 일부는 '환율 보험'이 될 수도 있습니다. 반대라면? 정답은 사람마다 다릅니다.</p>
+  </div>
+</section>
+
+<!-- 09 PERSON -->
+<section id="person">
+  <div class="reveal">
+    <div class="eyebrow">10 — 키맨</div>
+    <h2>이 결정의 뒤에 선 사람 — 최태원</h2>
+    <p class="lead">이 거대한 승부수를 던진 인물은 SK그룹 회장 최태원입니다. 그의 성향과 행보를 알면 앞으로의 방향이 보입니다.</p>
+  </div>
+  <div class="reveal">
+    <p>최 회장은 엔비디아 GTC 2026 컨퍼런스 현장에서 직접 ADR 발행 검토를 언급했고<span class="src">investchosun</span>, "한국 주주뿐 아니라 미국·글로벌 주주에게 노출되면 더 글로벌한 회사가 될 수 있다"고 역설했습니다.<span class="src">ceomagazine</span> 단순 자금 조달을 넘어 <strong>하이닉스를 '글로벌 AI 인프라 기업'으로 재포지셔닝</strong>하려는 큰 그림입니다.</p>
+    <p>그는 SK를 '반도체·AI 중심'으로 재편해온 인물로, 메모리 다운사이클의 위험을 알면서도 HBM에 집중 투자해 결과적으로 AI 호황의 최대 수혜를 끌어냈습니다. 이번 ADR은 그 전략의 자본시장 버전인 셈입니다.</p>
+  </div>
+  <div class="box reveal">
+    <h3 style="margin-top:0">향후 행보 — 무엇을 지켜볼까 <span class="dim" style="font-weight:400">(시나리오)</span></h3>
+    <ul class="clean">
+      <li>조달한 45조 원이 용인 클러스터·청주 패키징·EUV에 실제 집행되는 속도와 규모</li>
+      <li>희석 우려를 달래기 위한 <strong>주주환원책</strong>(자사주 소각·배당) 발표 여부 — 회사는 연내 발표를 예고했습니다<span class="src">경향</span></li>
+      <li>HBM4 양산 경쟁에서 삼성을 따돌리고 엔비디아 공급 지위를 유지하는지</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10 OUTLOOK -->
+<section id="outlook">
+  <div class="reveal">
+    <div class="eyebrow">11 — 전망</div>
+    <h2>앞으로 벌어질 수 있는 세 갈래</h2>
+    <p class="lead">아래는 단정이 아니라 <strong>'확정이 아닌 시나리오'</strong>입니다. 어느 쪽이든 열려 있다는 마음으로 봐주세요.</p>
+  </div>
+  <div class="grid reveal">
+    <div class="card"><div class="h"><span class="ic" style="color:var(--green)">▲</span>낙관</div><p>패시브 자금 유입 + 마이크론 수준 리레이팅. ADR이 원주에 프리미엄을 형성해 거꾸로 국내 주가를 끌어올린다. TSMC 경로.</p></div>
+    <div class="card"><div class="h"><span class="ic" style="color:var(--gold)">＝</span>중립</div><p>초기 변동성 후 ADR과 원주가 환율을 반영해 비슷한 수준에 수렴. 희석과 자금조달 효과가 상쇄.</p></div>
+    <div class="card"><div class="h"><span class="ic" style="color:var(--alert)">▼</span>신중</div><p>HBM 가격 하락·AI 투자 둔화가 겹치면 ADR 디스카운트 → 역유입. 강달러까지 겹치면 국내 투자자 체감 부담 가중.</p></div>
+  </div>
+  <div class="reveal">
+    <p>증권가 평가도 엇갈립니다. CLSA는 'High Conviction Outperform'을 재확인, 다이와는 목표주가를 360만 원으로 상향했습니다.<span class="src">tradingkey</span> 동시에 같은 보고서들이 HBM 계약가 하락과 삼성 추격을 리스크로 명시합니다. <strong>호재와 리스크가 한 몸에 있다</strong>는 점이 이번 이벤트의 본질입니다.</p>
+  </div>
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 07</div>
+    <div class="q">전문가들이 공통적으로 '확정이 아니다'라고 강조하는 항목이 아닌 것은?</div>
+    <button class="opt" data-correct="false">7월 10일이라는 상장일</button>
+    <button class="opt" data-correct="false">최종 공모가와 발행 물량</button>
+    <button class="opt" data-correct="true">하이닉스가 코스피에 이미 상장돼 있다는 사실</button>
+    <button class="opt" data-correct="false">상장 후 주가 방향(리레이팅 여부)</button>
+    <div class="exp"><b>정답: 3번.</b> 코스피 상장은 이미 확정된 '사실'입니다. 반면 상장일(SEC 승인은 날짜를 못 박지 않음), 공모가·물량(상장 직전 확정), 주가 방향(시장이 결정)은 모두 미확정입니다. 미확정 변수를 확정처럼 받아들이는 게 가장 큰 투자 실수입니다.</div>
+  </div>
+</section>
+
+<!-- 12 CHART -->
+<section id="chart">
+  <div class="reveal">
+    <div class="eyebrow">12 — 시나리오 도식</div>
+    <h2>앞으로의 가격, 세 갈래로 그려보면</h2>
+    <p class="lead">아래 그래프는 <strong>예측이 아닙니다.</strong> "이런 식으로 움직일 수 있다"를 보여주는 <em>이해용 도식</em>입니다. 상장 직전 가격을 100으로 놓고, ADR(달러)과 국내 원주(원화)가 시나리오별로 어떻게 갈라질 수 있는지를 그렸습니다.</p>
+  </div>
+
+  <div class="box warn reveal" style="margin-top:0">
+    <span class="tag">반드시 먼저 읽어주세요</span>
+    <p>실제 주가·환율은 누구도 맞히지 못합니다. 숫자(100·150 등)는 <strong>실제 가격이 아니라 상대 지수</strong>이며, 곡선의 모양은 본문에서 설명한 '희석·역유입 vs 리레이팅·패시브자금'의 줄다리기를 시각화한 가정일 뿐입니다. <strong>'확정이 아닌 시나리오'</strong>입니다.</p>
+  </div>
+
+  <div class="reveal">
+    <div class="toggles" role="group" aria-label="시나리오 선택">
+      <button class="tog" data-sc="opt" aria-pressed="true"><span class="dot" style="background:#4ad991"></span>낙관</button>
+      <button class="tog" data-sc="base" aria-pressed="true"><span class="dot" style="background:#f2b134"></span>중립</button>
+      <button class="tog" data-sc="bear" aria-pressed="true"><span class="dot" style="background:#ff6b6b"></span>신중</button>
+      <span style="flex:1"></span>
+      <button class="tog" id="togADR" aria-pressed="true"><span class="dot" style="background:#fff"></span>ADR(달러) 실선</button>
+      <button class="tog" id="togKR" aria-pressed="true"><span class="dot" style="background:#fff;opacity:.5"></span>원주(원화) 점선</button>
+    </div>
+
+    <div class="chartwrap">
+      <svg viewBox="0 0 760 380" role="img" aria-label="ADR과 국내 원주의 시나리오별 가격 변동 도식">
+        <!-- y gridlines + labels -->
+        <g>
+          <line class="scgrid" x1="60" y1="288.9" x2="720" y2="288.9"></line>
+          <line class="scgrid" x1="60" y1="226.7" x2="720" y2="226.7" style="stroke:#3a4554"></line>
+          <line class="scgrid" x1="60" y1="164.4" x2="720" y2="164.4"></line>
+          <line class="scgrid" x1="60" y1="102.2" x2="720" y2="102.2"></line>
+          <line class="scgrid" x1="60" y1="40" x2="720" y2="40"></line>
+          <text class="axlab" x="52" y="292" text-anchor="end">80</text>
+          <text class="axlab" x="52" y="230" text-anchor="end">100</text>
+          <text class="axlab" x="52" y="168" text-anchor="end">120</text>
+          <text class="axlab" x="52" y="106" text-anchor="end">140</text>
+          <text class="axlab" x="52" y="44" text-anchor="end">160</text>
+          <text class="axlab" x="20" y="180" text-anchor="middle" transform="rotate(-90 20 180)" style="fill:#6b7888">가격지수 (상장 직전=100)</text>
+        </g>
+        <!-- event line: 상장일 -->
+        <line class="evline" x1="192" y1="40" x2="192" y2="320"></line>
+        <text class="evtxt" x="196" y="52">▲ 상장일 (변동성 ↑)</text>
+        <!-- baseline 100 marker -->
+        <text class="evtxt" x="60" y="338" style="fill:#6b7888">시작점 100</text>
+
+        <!-- bands -->
+        <path class="cband" data-band="opt" d="M 60.0 226.7 L 192.0 201.8 L 324.0 214.2 L 456.0 170.7 L 588.0 127.1 L 720.0 71.1 L 720.0 108.4 L 588.0 161.3 L 456.0 195.6 L 324.0 223.6 L 192.0 217.3 L 60.0 226.7 Z" fill="#4ad991" opacity="0.07"></path>
+        <path class="cband" data-band="bear" d="M 60.0 226.7 L 192.0 236.0 L 324.0 257.8 L 456.0 264.0 L 588.0 251.6 L 720.0 242.2 L 720.0 257.8 L 588.0 264.0 L 456.0 282.7 L 324.0 270.2 L 192.0 242.2 L 60.0 226.7 Z" fill="#ff6b6b" opacity="0.06"></path>
+
+        <!-- lines: ADR solid, KR dashed -->
+        <path class="cline adr" data-sc="opt"  stroke="#4ad991" d="M 60.0 226.7 C 82.0 222.5 148.0 203.9 192.0 201.8 C 236.0 199.7 280.0 219.4 324.0 214.2 C 368.0 209.0 412.0 185.2 456.0 170.7 C 500.0 156.1 544.0 143.7 588.0 127.1 C 632.0 110.5 698.0 80.4 720.0 71.1"></path>
+        <path class="cline kr"  data-sc="opt"  stroke="#4ad991" stroke-dasharray="5 4" d="M 60.0 226.7 C 82.0 225.1 148.0 217.9 192.0 217.3 C 236.0 216.8 280.0 227.2 324.0 223.6 C 368.0 219.9 412.0 205.9 456.0 195.6 C 500.0 185.2 544.0 175.9 588.0 161.3 C 632.0 146.8 698.0 117.3 720.0 108.4"></path>
+
+        <path class="cline adr" data-sc="base" stroke="#f2b134" d="M 60.0 226.7 C 82.0 225.6 148.0 218.4 192.0 220.4 C 236.0 222.5 280.0 237.6 324.0 239.1 C 368.0 240.7 412.0 233.9 456.0 229.8 C 500.0 225.6 544.0 218.9 588.0 214.2 C 632.0 209.6 698.0 203.9 720.0 201.8"></path>
+        <path class="cline kr"  data-sc="base" stroke="#f2b134" stroke-dasharray="5 4" d="M 60.0 226.7 C 82.0 227.2 148.0 227.2 192.0 229.8 C 236.0 232.4 280.0 241.7 324.0 242.2 C 368.0 242.7 412.0 236.5 456.0 232.9 C 500.0 229.3 544.0 224.6 588.0 220.4 C 632.0 216.3 698.0 210.1 720.0 208.0"></path>
+
+        <path class="cline adr" data-sc="bear" stroke="#ff6b6b" d="M 60.0 226.7 C 82.0 229.3 148.0 235.0 192.0 242.2 C 236.0 249.5 280.0 263.5 324.0 270.2 C 368.0 277.0 412.0 283.7 456.0 282.7 C 500.0 281.6 544.0 268.1 588.0 264.0 C 632.0 259.9 698.0 258.8 720.0 257.8"></path>
+        <path class="cline kr"  data-sc="bear" stroke="#ff6b6b" stroke-dasharray="5 4" d="M 60.0 226.7 C 82.0 228.2 148.0 230.8 192.0 236.0 C 236.0 241.2 280.0 253.1 324.0 257.8 C 368.0 262.4 412.0 265.0 456.0 264.0 C 500.0 263.0 544.0 255.2 588.0 251.6 C 632.0 247.9 698.0 243.8 720.0 242.2"></path>
+
+        <!-- end labels -->
+        <text class="chiplab adr" data-sc="opt"  x="724" y="73"  fill="#4ad991">ADR +50</text>
+        <text class="chiplab adr" data-sc="base" x="724" y="204" fill="#f2b134">ADR +8</text>
+        <text class="chiplab adr" data-sc="bear" x="724" y="260" fill="#ff6b6b">ADR -10</text>
+
+        <!-- x labels -->
+        <g>
+          <text class="axlab" x="60"  y="338" text-anchor="middle"></text>
+          <text class="axlab" x="192" y="354" text-anchor="middle">상장일</text>
+          <text class="axlab" x="324" y="354" text-anchor="middle">+1개월</text>
+          <text class="axlab" x="456" y="354" text-anchor="middle">+3개월</text>
+          <text class="axlab" x="588" y="354" text-anchor="middle">+6개월</text>
+          <text class="axlab" x="720" y="354" text-anchor="middle">+12개월</text>
+        </g>
+      </svg>
+      <div class="clegend">
+        <div class="li"><span class="sw" style="background:#fff"></span>실선 = ADR(달러·나스닥)</div>
+        <div class="li"><span class="sw" style="background:#fff;height:2px;background:repeating-linear-gradient(90deg,#fff 0 5px,transparent 5px 9px)"></span>점선 = 국내 원주(원화·코스피)</div>
+      </div>
+    </div>
+    <p class="dim">버튼으로 시나리오와 ADR/원주를 켜고 끌 수 있습니다. 세 시나리오의 공통점에 주목하세요 — <strong>상장일 직후엔 대체로 한 번 출렁이고(희석·오버행), 그 뒤 갈림길이 열립니다.</strong></p>
+  </div>
+
+  <div class="reveal">
+    <h3>곡선을 읽는 법</h3>
+    <ul class="clean">
+      <li><b>상장 직후 골(谷):</b> 세 시나리오 모두 +1개월 부근에서 한 번 눌립니다. 신주 희석과 기대 선반영 차익실현이 반영되는, 흔한 패턴입니다.</li>
+      <li><b>낙관(초록):</b> ADR이 원주 위로 벌어집니다. 미국 프리미엄 → 차익거래가 원주까지 끌어올리는 TSMC형 경로.</li>
+      <li><b>중립(노랑):</b> ADR과 원주가 환율을 반영해 비슷하게 붙어 횡보. 희석과 자금조달 효과가 상쇄됩니다.</li>
+      <li><b>신중(빨강):</b> ADR이 원주 아래로 내려가 디스카운트 → 역유입 압력으로 원주도 눌립니다. 강달러까지 겹치면 국내 투자자 체감이 더 나빠질 수 있습니다.</li>
+    </ul>
+  </div>
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>세 곡선 중 어느 것이 맞을지는 아무도 모릅니다. 그렇다면 투자자가 통제할 수 있는 건 '예측'이 아니라 '대응'입니다. 그래서 다음 섹션 — 입장별 행동강령이 중요합니다.</p>
+  </div>
+</section>
+
+<!-- 13 PLAYERS -->
+<section id="players">
+  <div class="reveal">
+    <div class="eyebrow">13 — 입장별 행동강령</div>
+    <h2>나는 어느 입장인가, 무엇을 할까</h2>
+    <p class="lead">같은 이벤트라도 내가 가진 자산이 무엇이냐에 따라 할 일이 완전히 달라집니다. 네 가지 대표 입장으로 정리했습니다. <span class="dim">(투자 권유가 아니라 점검용 체크리스트입니다.)</span></p>
+  </div>
+
+  <div class="players reveal">
+
+    <div class="player won">
+      <div class="top">
+        <div class="av">₩</div>
+        <div>
+          <div class="who">원화만 보유 · ADR 신규 진입 고민</div>
+          <div class="sub2">국내 계좌·예금 위주, 하이닉스에 새로 들어갈까 고민하는 분</div>
+        </div>
+      </div>
+      <div class="body2">
+        <div class="row"><div class="k2">관전</div><div class="v2">달러로 사면 <b>주가 + 환율</b>에 동시 베팅. 환율이 17년 만의 고점(~1,535원)이라 지금 달러 전환은 '비싼 달러로 들어가는' 셈일 수 있음.</div></div>
+        <div class="row"><div class="k2">대안</div><div class="v2">굳이 ADR이 아니어도 <b>코스피 원주</b>로 같은 회사에 투자 가능 → 환위험 0. 미국 노출이 꼭 필요한 게 아니면 원주가 단순.</div></div>
+        <div class="row"><div class="k2">실행</div><div class="v2">달러가 꼭 필요하면 <b>분할 환전</b>으로 평균 단가 만들기. 상장 첫날은 <b>지정가</b>로, 시장가 추격매수 자제.</div></div>
+        <div class="row"><div class="k2">피하기</div><div class="v2">"상장 = 급등" 기대로 고점 추격. 기대가 선반영됐는지부터 확인.</div></div>
+        <div class="tagrow"><span class="minitag">환위험 신규 발생</span><span class="minitag">분할 환전</span><span class="minitag">원주가 대안</span></div>
+      </div>
+    </div>
+
+    <div class="player usd">
+      <div class="top">
+        <div class="av">$</div>
+        <div>
+          <div class="who">달러 보유 · ADR 매수 검토</div>
+          <div class="sub2">이미 달러 예수금이 있거나 미국 주식 계좌를 쓰는 분</div>
+        </div>
+      </div>
+      <div class="body2">
+        <div class="row"><div class="k2">강점</div><div class="v2">환전 부담이 없으니 <b>순수 주가 베팅</b>이 가능. 환율 고점 부담에서 상대적으로 자유로움.</div></div>
+        <div class="row"><div class="k2">관전</div><div class="v2">상장 직후 <b>괴리율 방향</b>을 확인. ADR이 원주보다 비싸면(프리미엄) 추격 신중, 싸면(디스카운트) 역유입 가능성 체크.</div></div>
+        <div class="row"><div class="k2">실행</div><div class="v2">변동성 큰 데뷔 당일 대신 <b>며칠 지켜본 뒤 분할 매수</b>. <b>보관수수료(custody fee)</b>·배당 원천징수 비용을 수익률에 반영.</div></div>
+        <div class="row"><div class="k2">피하기</div><div class="v2">원화로 환산한 손익을 잊는 것. 원화 강세로 돌아서면 달러 자산 평가액(원화 기준)이 줄어듦.</div></div>
+        <div class="tagrow"><span class="minitag">괴리율 체크</span><span class="minitag">보관수수료</span><span class="minitag">데뷔일 회피</span></div>
+      </div>
+    </div>
+
+    <div class="player kr">
+      <div class="top">
+        <div class="av">◆</div>
+        <div>
+          <div class="who">하이닉스 국내 원주 보유자</div>
+          <div class="sub2">코스피 000660을 이미 들고 있는 분</div>
+        </div>
+      </div>
+      <div class="body2">
+        <div class="row"><div class="k2">안심</div><div class="v2">신주 발행 방식이라 <b>내 원주는 그대로</b>. ADR로 강제 전환되거나 미국 계좌로 옮겨지지 않음.</div></div>
+        <div class="row"><div class="k2">주의</div><div class="v2">신주 2.5%만큼 <b>지분 희석</b>. ADR이 원주보다 싸지면 <b>역유입 매도 압력</b>이 국내 주가를 누를 수 있음.</div></div>
+        <div class="row"><div class="k2">관전</div><div class="v2">조달한 45조 원이 <b>실적(HBM 증설)으로 연결</b>되는지, <b>주주환원책</b>(자사주 소각·배당) 발표 여부. 회사는 연내 발표 예고.</div></div>
+        <div class="row"><div class="k2">실행</div><div class="v2">단기 출렁임에 흔들리기보다 <b>괴리율 방향 + 자금의 실적 전환</b>을 분기 단위로 점검. 비중 조절은 본인 원칙대로.</div></div>
+        <div class="tagrow"><span class="minitag">원주 유지</span><span class="minitag">희석 인지</span><span class="minitag">주주환원 관전</span></div>
+      </div>
+    </div>
+
+    <div class="player none2">
+      <div class="top">
+        <div class="av">○</div>
+        <div>
+          <div class="who">미보유 · 구경하는 관망자</div>
+          <div class="sub2">하이닉스도 달러도 없지만 시장을 배우려는 분</div>
+        </div>
+      </div>
+      <div class="body2">
+        <div class="row"><div class="k2">기회</div><div class="v2">이번 건은 <b>ADR·괴리율·역유입·환율</b>이 한 번에 작동하는 살아있는 교재. 실시간으로 관찰하기 좋은 사례.</div></div>
+        <div class="row"><div class="k2">관전 포인트</div><div class="v2">① 상장일 첫날 변동성 ② ADR vs 원주 괴리율 방향 ③ 반도체 ETF 편입 여부 ④ 환율 흐름.</div></div>
+        <div class="row"><div class="k2">실행</div><div class="v2">들어간다면 <b>소액·분할</b>로 시작해 메커니즘을 몸으로 익히기. 뉴스 제목보다 <b>DART·SEC EDGAR 공시</b> 확인 습관.</div></div>
+        <div class="row"><div class="k2">피하기</div><div class="v2">"남들 다 산다"는 분위기 매수. 확정 안 된 일정·물량을 확정처럼 믿는 것.</div></div>
+        <div class="tagrow"><span class="minitag">소액 학습</span><span class="minitag">공시 확인</span><span class="minitag">FOMO 경계</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="box def reveal">
+    <span class="tag">모두에게 공통</span>
+    <p>입장이 무엇이든 세 가지는 같습니다 — ① <strong>일정·물량·공모가는 아직 미확정</strong>(상장 직전 확정), ② <strong>예측보다 분산·구조</strong>가 답, ③ <strong>괴리율 방향</strong>이 단기 흐름의 핵심 신호. 나머지는 본인의 자산 구성과 위험 감내도에 달려 있습니다.</p>
+  </div>
+</section>
+
+<!-- 14 CASES -->
+<section id="cases">
+  <div class="reveal">
+    <div class="eyebrow">14 — 실제 사례 비교</div>
+    <h2>그래서 진짜로는 어땠나 — TSMC와 국내 ADR</h2>
+    <p class="lead">앞의 시나리오 그래프는 가정이었죠. 이번엔 <strong>실제 데이터</strong>입니다. 가장 닮은 선례(대만 TSMC)와, 이미 미국에 가 있는 국내 ADR들이 실제로 어떻게 거래됐는지 봅니다. 결론을 미리 말하면 — <em>둘의 운명이 정반대였습니다.</em></p>
+  </div>
+
+  <div class="reveal">
+    <h3>① TSMC — ADR이 원주보다 '비싼'(프리미엄) 대표 사례</h3>
+    <p>TSMC는 1994년 대만 상장, <strong>1997년 뉴욕(NYSE) ADR 상장</strong>했습니다(ADR 1장 = 원주 5주).<span class="src">Morningstar·SEC</span> 이후 AI 열풍 속에서 미국 ETF·패시브 자금이 몰리며 ADR이 대만 원주보다 <strong>비싸게</strong> 거래됐습니다. 아래는 ADR이 원주보다 몇 % 비쌌는지(프리미엄)를 실제 시점별로 그린 것입니다.</p>
+  </div>
+
+  <div class="chartwrap reveal">
+    <svg viewBox="0 0 760 290" role="img" aria-label="TSMC ADR의 대만 원주 대비 프리미엄 추이">
+      <!-- gridlines -->
+      <line class="scgrid" x1="70" y1="57" x2="720" y2="57"></line>
+      <line class="scgrid" x1="70" y1="112.2" x2="720" y2="112.2"></line>
+      <line class="scgrid" x1="70" y1="167.3" x2="720" y2="167.3"></line>
+      <text class="axlab" x="62" y="61" text-anchor="end">+30%</text>
+      <text class="axlab" x="62" y="116" text-anchor="end">+20%</text>
+      <text class="axlab" x="62" y="171" text-anchor="end">+10%</text>
+      <text class="axlab" x="62" y="226" text-anchor="end">0%</text>
+      <!-- zero line -->
+      <line class="zeroline" x1="70" y1="222.4" x2="720" y2="222.4"></line>
+      <text class="axlab" x="724" y="226" style="fill:#5a6678">원주와 동일</text>
+      <!-- premium curve -->
+      <path class="tsmcpath" d="M 70.0 178.3 C 91.7 185.7 156.7 234.4 200.0 222.4 C 243.3 210.5 286.7 134.2 330.0 106.6 C 373.3 79.1 416.7 61.6 460.0 57.0 C 503.3 52.4 546.7 64.1 590.0 79.1 C 633.3 94.1 698.3 135.6 720.0 146.9"></path>
+      <!-- dots -->
+      <circle class="tdot" cx="70" cy="178.3" r="4"></circle>
+      <circle class="tdot" cx="200" cy="222.4" r="4"></circle>
+      <circle class="tdot" cx="330" cy="106.6" r="4"></circle>
+      <circle class="tdot" cx="460" cy="57" r="4"></circle>
+      <circle class="tdot" cx="590" cy="79.1" r="4"></circle>
+      <circle class="tdot" cx="720" cy="146.9" r="4"></circle>
+      <!-- value labels -->
+      <text class="premlab" x="70" y="170" text-anchor="middle">+8%</text>
+      <text class="disclab" x="200" y="240" text-anchor="middle" style="fill:#9aa6b5">0%</text>
+      <text class="premlab" x="330" y="98" text-anchor="middle">+21%</text>
+      <text class="premlab" x="460" y="49" text-anchor="middle">+30%</text>
+      <text class="premlab" x="590" y="71" text-anchor="middle">+26%</text>
+      <text class="premlab" x="720" y="139" text-anchor="middle">+13.7%</text>
+      <!-- x labels -->
+      <text class="tdotlab" x="70" y="262" text-anchor="middle">5년평균</text>
+      <text class="tdotlab" x="200" y="262" text-anchor="middle">'22 한파</text>
+      <text class="tdotlab" x="330" y="262" text-anchor="middle">'24.6 AI</text>
+      <text class="tdotlab" x="460" y="262" text-anchor="middle">'25.2 최고</text>
+      <text class="tdotlab" x="590" y="262" text-anchor="middle">'25.12</text>
+      <text class="tdotlab" x="720" y="262" text-anchor="middle">'26.5</text>
+    </svg>
+    <div class="clegend"><div class="li"><span class="sw" style="background:var(--silicon)"></span>TSMC ADR 프리미엄(원주 대비 %)</div></div>
+  </div>
+  <div class="reveal">
+    <p>읽는 법: 선이 0% 위에 있으면 <strong>ADR이 원주보다 비싸다</strong>는 뜻입니다. 5년 평균은 약 8%였는데, AI 열풍이 불자 2025년 2월엔 <strong>30%까지</strong> 치솟았습니다.<span class="src">머니투데이·블룸버그</span> 반대로 2022년 반도체 한파 때는 프리미엄이 <strong>0%까지</strong> 사라지기도 했죠.<span class="src">brosef</span> 즉 프리미엄은 <em>고정값이 아니라 반도체 업황과 AI 심리에 따라 출렁이는 변수</em>입니다. 2026년 5월엔 대만 원주가 더 가파르게 올라 프리미엄이 13.7%로 좁혀졌습니다.<span class="src">Bloomberg</span></p>
+  </div>
+  <div class="box analogy reveal">
+    <span class="tag">하이닉스에 주는 힌트</span>
+    <p>TSMC ADR은 1997년 상장 후 <strong>대만 원주 주가까지 함께 끌어올린</strong> '미국 프리미엄'의 교과서입니다. 하이닉스 낙관론(파이낸셜뉴스·HSBC 등)이 기대하는 게 바로 이 경로예요. 단, TSMC조차 한파 땐 프리미엄이 0이 됐다는 점 — <strong>프리미엄은 보장이 아니라 업황의 함수</strong>라는 걸 잊으면 안 됩니다.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>② 국내 ADR — 대부분 원주보다 '싼'(디스카운트) 현실</h3>
+    <p>그런데 이미 미국에 가 있는 <strong>국내 기업 ADR들</strong>은 TSMC와 정반대입니다. 대부분 원주보다 <strong>싸게</strong> 거래돼 왔어요. 아래는 미국 상장 국내 종목들의 가격 위치를 단순화해 비교한 것입니다. <span class="dim">(0%선 기준, 왼쪽=디스카운트, 오른쪽=프리미엄)</span></p>
+  </div>
+  <div class="kbars reveal">
+    <div class="kbar">
+      <div class="nm2">포스코홀딩스<span class="sec">철강·소재 / PKX</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill neg" style="width:34%"></div></div>
+      <div class="val neg">디스카운트</div>
+    </div>
+    <div class="kbar">
+      <div class="nm2">KT<span class="sec">통신 / KT</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill neg" style="width:30%"></div></div>
+      <div class="val neg">디스카운트</div>
+    </div>
+    <div class="kbar">
+      <div class="nm2">SK텔레콤<span class="sec">통신 / SKM</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill neg" style="width:18%"></div></div>
+      <div class="val neg">-5.7%대</div>
+    </div>
+    <div class="kbar">
+      <div class="nm2">신한지주<span class="sec">금융 / SHG</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill neg" style="width:17%"></div></div>
+      <div class="val neg">-5.4%대</div>
+    </div>
+    <div class="kbar">
+      <div class="nm2">KB금융<span class="sec">금융 / KB</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill neg" style="width:11%"></div></div>
+      <div class="val neg">-3.0%대</div>
+    </div>
+    <div class="kbar">
+      <div class="nm2">한국전력<span class="sec">유틸리티 / KEP</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill neg" style="width:28%"></div></div>
+      <div class="val neg">디스카운트</div>
+    </div>
+    <div class="kbar">
+      <div class="nm2">LG디스플레이<span class="sec">디스플레이 / LPL</span></div>
+      <div class="track"><div class="mid0"></div><div class="fill pos" style="width:7%"></div></div>
+      <div class="val pos">소폭+</div>
+    </div>
+  </div>
+  <div class="reveal">
+    <p class="dim">※ 막대 길이는 시점별로 달라지는 괴리 방향을 <strong>개념적으로</strong> 표현한 것으로, 정밀 실시간 수치가 아닙니다. 예컨대 KT 원주는 약 5만1800원인데 뉴욕 ADR은 약 2만7000원(비율 환산 시 원주가 더 비쌈) 수준으로 거래된 바 있습니다.<span class="src">뉴스퀘스트</span> 출처: 인베스트조선·뉴스퀘스트·헤럴드경제(2026).</p>
+    <p>왜 국내 ADR은 디스카운트일까요? 통신·금융·철강·유틸리티는 <strong>대체로 성숙·내수 산업</strong>이라 미국 투자자에게 '꼭 미국에서 사야 할 이유'가 약합니다. 지명도·성장 스토리가 약하면 패시브 자금도 덜 붙고, 그래서 원주보다 싸지기 쉽죠. TSMC가 받은 'AI 성장 프리미엄'과는 출발선이 다른 겁니다.</p>
+  </div>
+
+  <div class="firstbadge reveal">
+    <span class="em">🔍</span>
+    <p>맞습니다 — <strong>국내에는 '반도체 ADR' 선례가 없습니다.</strong> 현재 미국 상장 국내 종목(포스코·한전·SK텔레콤·KT·KB·신한·우리금융·LG디스플레이·그라비티·더블다운)<span class="src">나무위키·포춘코리아</span> 중 반도체는 하나도 없습니다. LG디스플레이는 '디스플레이', 가장 가까운 IT도 게임주입니다. <strong>SK하이닉스가 국내 1호 반도체 ADR</strong>이 되는 셈이라, TSMC(반도체·성장주)에 가까울지 기존 국내 ADR(성숙·내수주)에 가까울지가 이번 투자의 핵심 분기점입니다.</p>
+  </div>
+
+  <div class="tw reveal">
+    <table>
+      <thead><tr><th>구분</th><th>TSMC (대만)</th><th>기존 국내 ADR</th><th>SK하이닉스 (예정)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>섹터</strong></td><td>반도체 파운드리(성장)</td><td>통신·금융·철강·유틸(성숙)</td><td class="num">반도체 메모리·HBM(성장)</td></tr>
+        <tr><td><strong>괴리 경향</strong></td><td>프리미엄(원주보다 비쌈)</td><td>대체로 디스카운트</td><td class="num">미정 — 양쪽 다 가능</td></tr>
+        <tr><td><strong>패시브 수요</strong></td><td>강함(반도체 ETF 편입)</td><td>약함</td><td class="num">강할 것으로 기대(SMH·SOXX·QQQ)</td></tr>
+        <tr><td><strong>상장 방식</strong></td><td>구주 매출 등</td><td>구주 예탁</td><td class="num">신주 발행(자금 조달형)</td></tr>
+        <tr><td><strong>상장 시점</strong></td><td>1997</td><td>1994~</td><td class="num">2026.7 예정(잠정)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="quiz reveal" data-quiz>
+    <div class="qno">QUIZ 08</div>
+    <div class="q">TSMC ADR과 기존 국내 ADR(포스코·KT 등)의 가장 큰 차이로 적절한 것은?</div>
+    <button class="opt" data-correct="false">TSMC는 ADR이고 국내 기업은 ADR이 아니다</button>
+    <button class="opt" data-correct="true">TSMC는 성장 섹터(반도체)라 프리미엄을 받았고, 국내 ADR은 성숙·내수 섹터가 많아 대체로 디스카운트였다</button>
+    <button class="opt" data-correct="false">국내 ADR은 배당을 주지 않는다</button>
+    <button class="opt" data-correct="false">TSMC는 환율 영향을 받지 않는다</button>
+    <div class="exp"><b>정답: 2번.</b> 둘 다 같은 ADR 제도지만 결과는 갈렸습니다. TSMC는 AI·반도체 성장 스토리와 ETF 편입으로 ADR이 원주보다 비싸졌고(최대 +30%), 통신·금융·철강 같은 국내 성숙 산업 ADR은 미국 투자자에게 매력이 덜해 대체로 디스카운트였습니다. SK하이닉스는 '반도체 성장주'라는 점에서 TSMC 쪽에 가깝다는 기대가 있지만, 국내 첫 반도체 ADR이라 실제 결과는 지켜봐야 합니다.</div>
+  </div>
+
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>SK하이닉스는 'TSMC 경로(프리미엄)'를 따를까요, '기존 국내 ADR 경로(디스카운트)'를 따를까요? 무엇이 그 방향을 가를 가장 중요한 한 가지라고 생각하시나요? — 섹터? 패시브 편입? 아니면 그날의 환율?</p>
+  </div>
+</section>
+
+<!-- 15 RECAP -->
+<section id="recap">
+  <div class="reveal">
+    <div class="eyebrow">15 — 정리</div>
+    <h2>오늘 기억할 6가지</h2>
+  </div>
+  <ol class="recap reveal">
+    <li><b>ADR은 외국 주식을 미국에서 달러로 거래하게 한 '보증 증서'다.</b> 1927년 불편함을 풀려고 태어나, 지금은 글로벌 자본의 고속도로가 됐다.</li>
+    <li><b>하이닉스는 신주를 찍어 45조 원을 조달한다.</b> 자금엔 좋지만 기존 주주는 2.5% 희석된다. 7월 10일은 아직 '잠정'이다.</li>
+    <li><b>'상장 = 주가 상승'이 아니다.</b> 미국 상장 국내 기업 다수는 오히려 디스카운트 상태다. 괴리율의 방향을 봐야 한다.</li>
+    <li><b>역유입(오버행) 리스크를 기억하라.</b> ADR이 원주보다 싸지면 차익거래 물량이 국내로 흘러들 수 있다.</li>
+    <li><b>달러 ADR을 사면 '주가 + 환율' 두 가지에 베팅하는 것이다.</b> 환율은 두 번째 주가다.</li>
+    <li><b>17년 만의 강달러 앞에서, 답은 예측이 아니라 분산·구조다.</b> 분할 환전, 원주 vs ADR 선택, 헤지 여부를 본인 자산 구성에 맞춰 정하라.</li>
+  </ol>
+  <div class="ask reveal" style="border-color:var(--gold);background:rgba(242,177,52,.06)">
+    <span class="tag" style="color:var(--gold)">마무리 토론 질문</span>
+    <p class="big-q">여러분이 지금 하이닉스에 투자한다면 — 환율 위험이 없는 <strong>코스피 원주</strong>를 택하겠습니까, 아니면 17년 만의 강달러를 무릅쓰고 <strong>나스닥 ADR(SKHY)</strong>에 들어가겠습니까? 그 선택의 진짜 이유는 '하이닉스 전망'일까요, 아니면 '환율 전망'일까요?</p>
+  </div>
+</section>
+
+<footer>
+  <h3>출처 / SOURCES</h3>
+  <ol>
+    <li>SK하이닉스 ADR 나스닥 상장·45조원 발행 공시 — 파이낸셜뉴스(2026.6.24) · 경향신문(2026.6.24) · MBC뉴스(2026.6.24)</li>
+    <li>전환 비율(1ADR=0.1원주)·티커 SKHY·주관사·일정 — brunch.co.kr/@kid008/1211 (2026.6) · TradingKey(2026.6)</li>
+    <li>"확정된 것 없다"·공모가 상장 직전 확정 — 서울경제 sedaily.com/article/20058499 (2026.6) · 한국일보(2026.6.22)</li>
+    <li>역유입·괴리율·차익거래·디스카운트 사례 — 인베스트조선(2026.3.24) · 헬프미 법률블로그(2026.3.25) · 알파경제(2026.6) · 이코리아(2026.6)</li>
+    <li>USD/KRW ~1,535원·17년 만 강달러·12개월 -13.3% — Investing.com · TradingEconomics(2026.6.24)</li>
+    <li>환율 전망(시나리오) — wonforecast.com · BofA 한국 성장률 전망(Investing.com)</li>
+    <li>상장 일정(7/6 효력·7/9 공모가·7/10 상장·7/14 납입)·거래 시간 — 디지털타임스·이투데이·연합인포맥스(2026.6) · Nasdaq IPO Cross FAQ·"How Nasdaq Supports the IPO Process"(nasdaq.com)</li>
+    <li>최태원 회장 발언·전략 — 인베스트조선 · CEO매거진(2026)</li>
+    <li>TSMC ADR 프리미엄 추이(8%평균·30%최고·13.7%) — 머니투데이/Bloomberg(2024.6) · TradingView/GuruFocus(2026.5) · brosef.substack(2024) · Morningstar·SEC EDGAR</li>
+    <li>차익거래의 한계·전환 규제·패시브 강제수요 — Acadian/Owen Lamont(2024.10) · Goldman Sachs(2024.6) · ainvest(2025.8) · Whalesbook/FSC 규제변경(2026.4) · granitefirm</li>
+    <li>국내 ADR 목록·섹터·디스카운트 — 나무위키 · 포춘코리아 · 뉴스퀘스트(2025.12) · 헤럴드경제(투자360) · 더퍼블릭(2026.3)</li>
+  </ol>
+  <p class="disc">※ 본 자료의 수치·일정·전망은 2026년 6월 작성 시점 기준이며, 시장 상황에 따라 변동됩니다. 특히 상장일·공모가·발행물량·환율 전망은 모두 <strong>'확정이 아닌 시나리오'</strong>입니다. 본 자료는 학습·토론용이며 특정 종목의 매수·매도 권유가 아닙니다. 투자 판단과 책임은 투자자 본인에게 있습니다.</p>
+</footer>
+
+<script>
+// progress bar
+var bar=document.getElementById('bar');
+function prog(){var h=document.documentElement;var sc=h.scrollTop||document.body.scrollTop;
+  var max=h.scrollHeight-h.clientHeight;bar.style.width=(max>0?(sc/max*100):0)+'%';}
+// top button
+var topBtn=document.getElementById('top');
+function topShow(){topBtn.classList.toggle('show',(window.scrollY||document.documentElement.scrollTop)>700);}
+topBtn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+window.addEventListener('scroll',function(){prog();topShow();},{passive:true});
+prog();
+
+// TOC toggle
+var tocToggle=document.getElementById('tocToggle'),toc=document.getElementById('toc');
+tocToggle.addEventListener('click',function(){
+  var open=toc.classList.toggle('open');
+  tocToggle.setAttribute('aria-expanded',open?'true':'false');
+});
+toc.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){
+  if(window.innerWidth<700){toc.classList.remove('open');tocToggle.setAttribute('aria-expanded','false');}
+});});
+document.addEventListener('click',function(e){
+  if(!toc.contains(e.target)&&e.target!==tocToggle&&toc.classList.contains('open')&&window.innerWidth<700){
+    toc.classList.remove('open');tocToggle.setAttribute('aria-expanded','false');
+  }
+});
+
+// reveal on scroll
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+
+// active TOC link via section observer
+var secs=document.querySelectorAll('section,header.hero');
+var links=toc.querySelectorAll('a');
+var spy=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(e.isIntersecting){
+      var id=e.target.id;
+      links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+id);});
+    }
+  });
+},{rootMargin:'-45% 0px -50% 0px'});
+secs.forEach(function(s){spy.observe(s);});
+
+// quizzes
+document.querySelectorAll('[data-quiz]').forEach(function(q){
+  var opts=q.querySelectorAll('.opt');var exp=q.querySelector('.exp');var done=false;
+  opts.forEach(function(o){
+    o.addEventListener('click',function(){
+      if(done)return;done=true;
+      opts.forEach(function(x){
+        x.classList.add('disabled');
+        if(x.getAttribute('data-correct')==='true')x.classList.add('correct');
+      });
+      if(o.getAttribute('data-correct')!=='true')o.classList.add('wrong');
+      exp.classList.add('show');
+    });
+  });
+});
+// scenario chart toggles
+(function(){
+  var scOn={opt:true,base:true,bear:true};
+  var adrOn=true,krOn=true;
+  function apply(){
+    document.querySelectorAll('.cline').forEach(function(p){
+      var sc=p.getAttribute('data-sc');
+      var isAdr=p.classList.contains('adr');
+      var visible=scOn[sc] && (isAdr?adrOn:krOn);
+      p.classList.toggle('dim',!visible);
+    });
+    document.querySelectorAll('.chiplab').forEach(function(t){
+      var sc=t.getAttribute('data-sc');
+      t.style.opacity=(scOn[sc]&&adrOn)?'1':'0.12';
+    });
+    document.querySelectorAll('.cband').forEach(function(b){
+      var sc=b.getAttribute('data-band');
+      b.classList.toggle('dim',!scOn[sc]);
+    });
+  }
+  document.querySelectorAll('.tog[data-sc]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var sc=btn.getAttribute('data-sc');
+      scOn[sc]=!scOn[sc];
+      btn.classList.toggle('off',!scOn[sc]);
+      btn.setAttribute('aria-pressed',scOn[sc]?'true':'false');
+      apply();
+    });
+  });
+  var ta=document.getElementById('togADR'),tk=document.getElementById('togKR');
+  if(ta)ta.addEventListener('click',function(){adrOn=!adrOn;ta.classList.toggle('off',!adrOn);ta.setAttribute('aria-pressed',adrOn?'true':'false');apply();});
+  if(tk)tk.addEventListener('click',function(){krOn=!krOn;tk.classList.toggle('off',!krOn);tk.setAttribute('aria-pressed',krOn?'true':'false');apply();});
+  apply();
+})();
+</script>
+</body>
+</html>

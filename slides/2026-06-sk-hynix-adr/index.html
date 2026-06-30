@@ -393,7 +393,48 @@ ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
 .tradeline .pre{left:0;width:30%;background:rgba(141,154,172,.08);color:var(--fog);border-right:1px dashed var(--line)}
 .tradeline .cross{left:30%;width:28%;background:rgba(242,177,52,.13);color:var(--gold);border-right:1px dashed var(--line);font-weight:600}
 .tradeline .reg{left:58%;width:42%;background:rgba(74,217,145,.1);color:#9ef0c4;font-weight:600}
+/* return calculator */
+.calc{border:1px solid var(--line);border-radius:16px;padding:22px 20px;background:var(--panel);margin:24px 0}
+.calc .ctrls{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:18px}
+.calc .cg{flex:1 1 200px}
+.calc .cg label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;
+  color:var(--fog);margin-bottom:8px;text-transform:uppercase}
+.calc .cg .vv{color:var(--silicon);font-weight:600}
+.calc input[type=range]{width:100%;accent-color:var(--silicon);height:24px;cursor:pointer}
+.calc .seg2{display:flex;gap:6px;flex-wrap:wrap}
+.calc .seg2 button{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);
+  background:var(--ink);color:var(--fog);border-radius:8px;padding:8px 12px;cursor:pointer;min-height:40px;transition:.15s}
+.calc .seg2 button.on{background:rgba(90,209,201,.16);border-color:var(--silicon);color:#fff}
+.calc .seg2 button:focus-visible{outline:2px solid var(--silicon);outline-offset:2px}
+.ctab{overflow-x:auto;margin:8px 0}
+.ctab table{width:100%;border-collapse:collapse;min-width:560px;font-size:.9rem}
+.ctab th,.ctab td{padding:11px 10px;text-align:right;border-bottom:1px solid var(--line)}
+.ctab th:first-child,.ctab td:first-child{text-align:left}
+.ctab th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.04em;color:var(--fog);text-transform:uppercase;font-weight:500}
+.ctab td{font-family:'IBM Plex Mono',monospace;color:#ccd5e1}
+.ctab td.dom{color:var(--silicon)}
+.ctab td.adr{color:var(--gold)}
+.ctab td.adr2{color:#c79a3a}
+.ctab .win{font-family:'IBM Plex Sans KR';font-weight:600;font-size:.82rem;text-align:center}
+.ctab .win.d{color:var(--silicon)}.ctab .win.a{color:var(--gold)}.ctab .win.t{color:var(--fog)}
+.ctab tr.amtrow td{border-bottom:1px solid var(--line)}
+.ctab .gap{font-family:'IBM Plex Mono',monospace;font-size:.82rem}
+.ctab .gap.neg{color:var(--alert)}.ctab .gap.pos{color:var(--green)}
+.cnote{font-size:.84rem;color:var(--fog);margin-top:10px;line-height:1.6}
+.cbars{margin:18px 0 4px}
+.cbar2{display:grid;grid-template-columns:96px 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px;font-size:.82rem}
+.cbar2 .lab3{font-family:'IBM Plex Mono',monospace;color:var(--fog);font-size:.78rem}
+.cbar2 .bcell{position:relative;height:30px;background:var(--ink);border-radius:6px;border:1px solid var(--line);overflow:hidden}
+.cbar2 .bf{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;padding-left:8px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#06121a;white-space:nowrap;transition:width .4s}
+.cbar2 .bf.d{background:linear-gradient(90deg,#2f8f88,var(--silicon))}
+.cbar2 .bf.a{background:linear-gradient(90deg,#b3852a,var(--gold))}
+.cbar2 .bf.neg{background:linear-gradient(90deg,#b34646,var(--alert));color:#fff}
+.chl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--fog);display:grid;grid-template-columns:96px 1fr 1fr;gap:8px;margin-bottom:6px}
 @media(max-width:560px){
+  .cbar2{grid-template-columns:64px 1fr 1fr;gap:5px}
+  .chl{grid-template-columns:64px 1fr 1fr;gap:5px}
+  .ctab table{min-width:480px}
   .sched .row3{grid-template-columns:96px 1fr}
   .loop{grid-template-columns:1fr}
   .arb .st{flex:1 1 100%;border-right:none;border-bottom:1px solid var(--line)}
@@ -432,7 +473,8 @@ ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
   <a href="#chart"><span class="n">12</span>가격 변동 시나리오 그래프</a>
   <a href="#players"><span class="n">13</span>이해관계자별 행동강령</a>
   <a href="#cases"><span class="n">14</span>실제 사례 — TSMC·국내 ADR</a>
-  <a href="#recap"><span class="n">15</span>오늘 기억할 6가지</a>
+  <a href="#calc"><span class="n">15</span>ADR vs 국내주식 수익률 계산</a>
+  <a href="#recap"><span class="n">16</span>오늘 기억할 6가지</a>
 </nav>
 <button id="top" aria-label="맨 위로">↑</button>
 
@@ -1275,10 +1317,77 @@ ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
   </div>
 </section>
 
-<!-- 15 RECAP -->
+<!-- 15 CALC -->
+<section id="calc">
+  <div class="reveal">
+    <div class="eyebrow">15 — 직접 계산</div>
+    <h2>ADR vs 국내주식 — 내 돈으론 뭐가 유리할까</h2>
+    <p class="lead">같은 하이닉스에 같은 금액을 넣어도, <strong>세금과 비용 때문에 최종 수익률이 갈립니다.</strong> 투자금(100만~1억)과 수익률(하락 포함)을 바꿔가며 직접 비교해 보세요. 슬라이더와 버튼은 발표 중에도 즉석에서 조절됩니다.</p>
+  </div>
+
+  <div class="box def reveal" style="margin-top:0">
+    <span class="tag">계산 규칙 (실제 세법 기준)</span>
+    <p><strong>국내 원주</strong>: 양도세 0% + 매도 시 증권거래세 0.18%. &nbsp;|&nbsp; <strong>ADR(해외)</strong>: 양도차익에 22%(연 250만 원 공제), 거래세 없음. &nbsp;|&nbsp; <em>환율은 매수·매도 동일로 가정해 효과를 제거</em>했고, 괴리율(프리미엄)은 매수·매도 시 같다고 보아 상쇄로 처리했습니다. 즉 이 표의 차이는 <strong>순수하게 '세금'에서 옵니다.</strong></p>
+  </div>
+
+  <div class="calc reveal">
+    <div class="ctrls">
+      <div class="cg">
+        <label>가정 수익률 — <span class="vv" id="cRetV">+30%</span></label>
+        <input type="range" id="cRet" min="-40" max="150" step="5" value="30" aria-label="가정 수익률">
+      </div>
+      <div class="cg">
+        <label>ADR 양도세 기본공제(연 250만)</label>
+        <div class="seg2" id="cDed">
+          <button data-d="1" class="on">공제 적용</button>
+          <button data-d="0">공제 미적용</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctab">
+      <table id="cTable">
+        <thead>
+          <tr>
+            <th>투자금</th>
+            <th>국내 원주<br>최종 순수익</th>
+            <th>ADR(달러)<br>최종 순수익</th>
+            <th>차이<br>(ADR−국내)</th>
+            <th>유리</th>
+          </tr>
+        </thead>
+        <tbody id="cBody"><!-- JS fills --></tbody>
+      </table>
+    </div>
+    <p class="cnote" id="cSummary"></p>
+
+    <div class="cbars" id="cBars" aria-hidden="true"></div>
+  </div>
+
+  <div class="reveal">
+    <h3>표를 읽는 법 — 왜 금액·수익률마다 다를까</h3>
+    <ul class="clean">
+      <li><strong>세금은 '수익'에만 붙는다.</strong> 손실이거나 수익이 작으면 ADR 양도세도 거의 0이라, 오히려 국내의 거래세(0.18%)만큼 ADR이 미세하게 유리할 수도 있습니다.</li>
+      <li><strong>금액·수익률이 커질수록 국내가 유리.</strong> 250만 원 공제는 큰 수익에선 비중이 작아지고, 22% 세금이 본격적으로 부과되기 때문입니다.</li>
+      <li><strong>분기점은 대략 '수익 250만 원'.</strong> 양도차익이 250만 원을 넘는 순간부터 ADR에 세금이 붙기 시작합니다. (예: 1천만 원을 +30% → 수익 300만 원 → 50만 원 초과분에 과세)</li>
+    </ul>
+  </div>
+
+  <div class="box warn reveal">
+    <span class="tag">이 표가 말하지 않는 것 (중요)</span>
+    <p>위 계산은 <strong>'세금'만</strong> 비교한 것입니다. 현실에선 두 가지가 결과를 뒤집을 수 있어요. ① <strong>환율</strong> — 달러로 산 ADR은 원화 약세 시 환차익이 더해져 세금 불리함을 덮을 수 있습니다(반대면 가중). ② <strong>괴리율</strong> — 매수 때보다 매도 때 ADR 프리미엄이 커지면 ADR이 더 유리, 줄면 불리. 그래서 "세금만 보면 국내, 환율·프리미엄 기대가 크면 ADR"이 정확한 요약입니다.</p>
+  </div>
+
+  <div class="ask reveal">
+    <span class="tag">함께 생각해 봐요</span>
+    <p>슬라이더를 +100%로 올려보세요. 1억 투자 시 국내와 ADR의 최종 수익 차이가 얼마나 벌어지나요? 반대로 −20%(손실)로 내리면 둘 중 뭐가 유리한가요? 세금이 '수익에만' 붙는다는 게 왜 중요한지 보일 겁니다.</p>
+  </div>
+</section>
+
+<!-- 16 RECAP -->
 <section id="recap">
   <div class="reveal">
-    <div class="eyebrow">15 — 정리</div>
+    <div class="eyebrow">16 — 정리</div>
     <h2>오늘 기억할 6가지</h2>
   </div>
   <ol class="recap reveal">
@@ -1407,6 +1516,69 @@ document.querySelectorAll('[data-quiz]').forEach(function(q){
   if(ta)ta.addEventListener('click',function(){adrOn=!adrOn;ta.classList.toggle('off',!adrOn);ta.setAttribute('aria-pressed',adrOn?'true':'false');apply();});
   if(tk)tk.addEventListener('click',function(){krOn=!krOn;tk.classList.toggle('off',!krOn);tk.setAttribute('aria-pressed',krOn?'true':'false');apply();});
   apply();
+})();
+// ADR vs domestic calculator
+(function(){
+  var amounts=[1000000,5000000,10000000,50000000,100000000];
+  var labels=['100만','500만','1,000만','5,000만','1억'];
+  var DED=2500000, ADRTAX=0.22, TXN=0.0018;
+  var ret=0.30, useDed=true;
+  var retEl=document.getElementById('cRet'), retV=document.getElementById('cRetV');
+  var body=document.getElementById('cBody'), summary=document.getElementById('cSummary'), bars=document.getElementById('cBars');
+  if(!retEl) return;
+  function won(n){ // format KRW compact
+    var neg=n<0; n=Math.abs(Math.round(n));
+    var s;
+    if(n>=100000000) s=(n/100000000).toFixed(2).replace(/\.?0+$/,'')+'억';
+    else if(n>=10000) s=Math.round(n/10000).toLocaleString()+'만';
+    else s=n.toLocaleString();
+    return (neg?'−':'')+s;
+  }
+  function dom(inv){ var pr=inv*(1+ret); var net=pr-pr*TXN; return net-inv; }
+  function adr(inv){ var sell=inv*(1+ret); var gain=sell-inv; var tax=0;
+    if(gain>0){ var taxable=Math.max(0,gain-(useDed?DED:0)); tax=taxable*ADRTAX; }
+    return sell-tax-inv; }
+  function render(){
+    retV.textContent=(ret>=0?'+':'')+(ret*100).toFixed(0)+'%';
+    var rows='', maxAbs=0;
+    amounts.forEach(function(amt){ maxAbs=Math.max(maxAbs,Math.abs(dom(amt)),Math.abs(adr(amt))); });
+    amounts.forEach(function(amt,i){
+      var dp=dom(amt), ap=adr(amt), diff=ap-dp;
+      var dr=dp/amt*100, ar=ap/amt*100;
+      var win,wc; if(Math.abs(diff)<amt*0.0005){win='≈ 동일';wc='t';} else if(diff>0){win='ADR';wc='a';} else {win='국내';wc='d';}
+      var gc=diff<0?'neg':'pos';
+      rows+='<tr class="amtrow"><td>'+labels[i]+'</td>'
+        +'<td class="dom">'+won(dp)+'<br><span style="font-size:.78rem;opacity:.7">'+(dr>=0?'+':'')+dr.toFixed(1)+'%</span></td>'
+        +'<td class="adr">'+won(ap)+'<br><span style="font-size:.78rem;opacity:.7">'+(ar>=0?'+':'')+ar.toFixed(1)+'%</span></td>'
+        +'<td class="gap '+gc+'">'+(diff>=0?'+':'−')+won(Math.abs(diff))+'</td>'
+        +'<td class="win '+wc+'">'+win+'</td></tr>';
+    });
+    body.innerHTML=rows;
+    // bars for the 1억 case (most illustrative)
+    var amt=100000000, dp=dom(amt), ap=adr(amt);
+    var m=Math.max(Math.abs(dp),Math.abs(ap),1);
+    function bar(cls,val){ var w=Math.abs(val)/m*100; var neg=val<0;
+      return '<div class="bcell"><div class="bf '+(neg?'neg':cls)+'" style="width:'+w+'%">'+won(val)+'</div></div>'; }
+    bars.innerHTML='<div class="chl"><span>1억 투자 시</span><span>국내 원주</span><span>ADR(달러)</span></div>'
+      +'<div class="cbar2"><span class="lab3">최종 순수익</span>'+bar('d',dp)+bar('a',ap)+'</div>';
+    // summary
+    var amt1=100000000, d1=dom(amt1), a1=adr(amt1), gap=d1-a1;
+    if(ret<=0){
+      summary.innerHTML='수익이 없거나 손실인 구간 — ADR 양도세가 거의 0이라 <b style="color:var(--gold)">국내·ADR 차이가 미미</b>합니다. 오히려 국내 거래세(0.18%)만큼 ADR이 살짝 나을 수도 있어요.';
+    } else if(gap>0){
+      summary.innerHTML='이 수익률에서 1억 투자 기준 <b style="color:var(--silicon)">국내가 ADR보다 약 '+won(gap)+' 원 유리</b>합니다(세금 차이). 수익률을 올릴수록 격차가 더 벌어집니다.';
+    } else {
+      summary.innerHTML='이 구간에선 양도차익이 공제(250만) 안에 들어 <b style="color:var(--gold)">ADR이 불리하지 않습니다.</b>';
+    }
+  }
+  retEl.addEventListener('input',function(){ ret=parseFloat(retEl.value)/100; render(); });
+  document.querySelectorAll('#cDed button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#cDed button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); useDed=b.getAttribute('data-d')==='1'; render();
+    });
+  });
+  render();
 })();
 </script>
 </body>

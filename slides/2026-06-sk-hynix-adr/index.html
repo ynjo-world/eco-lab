@@ -1327,7 +1327,7 @@ ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
 
   <div class="box def reveal" style="margin-top:0">
     <span class="tag">계산 규칙 (실제 세법 기준)</span>
-    <p><strong>국내 원주</strong>: 양도세 0% + 매도 시 증권거래세 0.18%. &nbsp;|&nbsp; <strong>ADR(해외)</strong>: 양도차익에 22%(연 250만 원 공제), 거래세 없음. &nbsp;|&nbsp; <em>환율은 매수·매도 동일로 가정해 효과를 제거</em>했고, 괴리율(프리미엄)은 매수·매도 시 같다고 보아 상쇄로 처리했습니다. 즉 이 표의 차이는 <strong>순수하게 '세금'에서 옵니다.</strong></p>
+    <p><strong>국내 원주</strong>: 양도세 0% + 매도 시 증권거래세 0.18%. &nbsp;|&nbsp; <strong>ADR(해외)</strong>: 양도차익에 22%(연 250만 원 공제), 거래세 없음. &nbsp;|&nbsp; <em>환율은 매수·매도 동일로 가정</em>해 효과를 제거했습니다. <strong>괴리율(프리미엄)은 아래에서 직접 조절</strong>할 수 있어요 — ADR은 같은 회사라도 원주보다 비싸게(프리미엄) 거래되는데, <strong>살 때보다 팔 때 프리미엄이 더 벌어지면 ADR이 그만큼 이득, 좁혀지면 손해</strong>입니다.</p>
   </div>
 
   <div class="calc reveal">
@@ -1344,6 +1344,17 @@ ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
         </div>
       </div>
     </div>
+    <div class="ctrls" style="border-top:1px solid var(--line);padding-top:16px">
+      <div class="cg">
+        <label>살 때 ADR 프리미엄 — <span class="vv" id="cBuyV">+2%</span></label>
+        <input type="range" id="cBuy" min="-10" max="30" step="1" value="2" aria-label="매수 시 프리미엄">
+      </div>
+      <div class="cg">
+        <label>팔 때 ADR 프리미엄 — <span class="vv" id="cSellV">+8%</span></label>
+        <input type="range" id="cSell" min="-10" max="30" step="1" value="8" aria-label="매도 시 프리미엄">
+      </div>
+    </div>
+    <p class="cnote" id="cPrem" style="margin-top:0"></p>
 
     <div class="ctab">
       <table id="cTable">
@@ -1375,12 +1386,12 @@ ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--silicon)}
 
   <div class="box warn reveal">
     <span class="tag">이 표가 말하지 않는 것 (중요)</span>
-    <p>위 계산은 <strong>'세금'만</strong> 비교한 것입니다. 현실에선 두 가지가 결과를 뒤집을 수 있어요. ① <strong>환율</strong> — 달러로 산 ADR은 원화 약세 시 환차익이 더해져 세금 불리함을 덮을 수 있습니다(반대면 가중). ② <strong>괴리율</strong> — 매수 때보다 매도 때 ADR 프리미엄이 커지면 ADR이 더 유리, 줄면 불리. 그래서 "세금만 보면 국내, 환율·프리미엄 기대가 크면 ADR"이 정확한 요약입니다.</p>
+    <p>이제 표는 <strong>세금 + 프리미엄</strong>까지 반영합니다. 남은 변수는 딱 하나 — <strong>환율</strong>입니다. 위 계산은 매수·매도 환율을 같다고 가정했지만, 실제로 달러로 산 ADR은 <strong>원화가 약해지면 환차익이 더해져</strong> 유리해지고(반대면 불리), 국내 원주는 환율과 무관합니다. 그래서 정확한 요약은 — <strong>"세금만 보면 국내, 프리미엄이 벌어지거나 원화 약세를 점치면 ADR"</strong>입니다. 세 변수(세금·프리미엄·환율)를 함께 봐야 합니다.</p>
   </div>
 
   <div class="ask reveal">
     <span class="tag">함께 생각해 봐요</span>
-    <p>슬라이더를 +100%로 올려보세요. 1억 투자 시 국내와 ADR의 최종 수익 차이가 얼마나 벌어지나요? 반대로 −20%(손실)로 내리면 둘 중 뭐가 유리한가요? 세금이 '수익에만' 붙는다는 게 왜 중요한지 보일 겁니다.</p>
+    <p>'팔 때 프리미엄'을 올려보세요 — TSMC처럼 상장 후 프리미엄이 벌어지면 ADR이 어디서부터 국내를 앞지르나요? 반대로 '살 때 프리미엄'을 높게(비싸게 사고) '팔 때'를 낮추면(디스카운트로 전환) ADR이 얼마나 불리해지는지 보세요. 같은 세금이라도 <strong>프리미엄 방향이 승패를 가른다</strong>는 게 드러납니다.</p>
   </div>
 </section>
 
@@ -1522,11 +1533,14 @@ document.querySelectorAll('[data-quiz]').forEach(function(q){
   var amounts=[1000000,5000000,10000000,50000000,100000000];
   var labels=['100만','500만','1,000만','5,000만','1억'];
   var DED=2500000, ADRTAX=0.22, TXN=0.0018;
-  var ret=0.30, useDed=true;
+  var ret=0.30, useDed=true, pBuy=0.02, pSell=0.08;
   var retEl=document.getElementById('cRet'), retV=document.getElementById('cRetV');
+  var buyEl=document.getElementById('cBuy'), buyV=document.getElementById('cBuyV');
+  var sellEl=document.getElementById('cSell'), sellV=document.getElementById('cSellV');
+  var premEl=document.getElementById('cPrem');
   var body=document.getElementById('cBody'), summary=document.getElementById('cSummary'), bars=document.getElementById('cBars');
   if(!retEl) return;
-  function won(n){ // format KRW compact
+  function won(n){
     var neg=n<0; n=Math.abs(Math.round(n));
     var s;
     if(n>=100000000) s=(n/100000000).toFixed(2).replace(/\.?0+$/,'')+'억';
@@ -1535,13 +1549,25 @@ document.querySelectorAll('[data-quiz]').forEach(function(q){
     return (neg?'−':'')+s;
   }
   function dom(inv){ var pr=inv*(1+ret); var net=pr-pr*TXN; return net-inv; }
-  function adr(inv){ var sell=inv*(1+ret); var gain=sell-inv; var tax=0;
+  function adr(inv){
+    var units=inv/(1+pBuy);
+    var sell=units*(1+ret)*(1+pSell);
+    var gain=sell-inv, tax=0;
     if(gain>0){ var taxable=Math.max(0,gain-(useDed?DED:0)); tax=taxable*ADRTAX; }
-    return sell-tax-inv; }
+    return sell-tax-inv;
+  }
   function render(){
     retV.textContent=(ret>=0?'+':'')+(ret*100).toFixed(0)+'%';
-    var rows='', maxAbs=0;
-    amounts.forEach(function(amt){ maxAbs=Math.max(maxAbs,Math.abs(dom(amt)),Math.abs(adr(amt))); });
+    buyV.textContent=(pBuy>=0?'+':'')+(pBuy*100).toFixed(0)+'%';
+    sellV.textContent=(pSell>=0?'+':'')+(pSell*100).toFixed(0)+'%';
+    // net premium effect
+    var net=((1+pSell)/(1+pBuy)-1)*100;
+    var netTxt, nc;
+    if(net>0.5){netTxt='벌어짐 → ADR에 +'+net.toFixed(1)+'% 유리';nc='var(--green)';}
+    else if(net<-0.5){netTxt='좁혀짐 → ADR에 '+net.toFixed(1)+'% 불리';nc='var(--alert)';}
+    else{netTxt='거의 그대로 → 세금 효과만 남음';nc='var(--fog)';}
+    premEl.innerHTML='프리미엄 변화: <b style="color:'+nc+'">'+netTxt+'</b>';
+    var rows='';
     amounts.forEach(function(amt,i){
       var dp=dom(amt), ap=adr(amt), diff=ap-dp;
       var dr=dp/amt*100, ar=ap/amt*100;
@@ -1554,24 +1580,24 @@ document.querySelectorAll('[data-quiz]').forEach(function(q){
         +'<td class="win '+wc+'">'+win+'</td></tr>';
     });
     body.innerHTML=rows;
-    // bars for the 1억 case (most illustrative)
     var amt=100000000, dp=dom(amt), ap=adr(amt);
     var m=Math.max(Math.abs(dp),Math.abs(ap),1);
     function bar(cls,val){ var w=Math.abs(val)/m*100; var neg=val<0;
       return '<div class="bcell"><div class="bf '+(neg?'neg':cls)+'" style="width:'+w+'%">'+won(val)+'</div></div>'; }
     bars.innerHTML='<div class="chl"><span>1억 투자 시</span><span>국내 원주</span><span>ADR(달러)</span></div>'
       +'<div class="cbar2"><span class="lab3">최종 순수익</span>'+bar('d',dp)+bar('a',ap)+'</div>';
-    // summary
-    var amt1=100000000, d1=dom(amt1), a1=adr(amt1), gap=d1-a1;
-    if(ret<=0){
-      summary.innerHTML='수익이 없거나 손실인 구간 — ADR 양도세가 거의 0이라 <b style="color:var(--gold)">국내·ADR 차이가 미미</b>합니다. 오히려 국내 거래세(0.18%)만큼 ADR이 살짝 나을 수도 있어요.';
-    } else if(gap>0){
-      summary.innerHTML='이 수익률에서 1억 투자 기준 <b style="color:var(--silicon)">국내가 ADR보다 약 '+won(gap)+' 원 유리</b>합니다(세금 차이). 수익률을 올릴수록 격차가 더 벌어집니다.';
+    var d1=dom(100000000), a1=adr(100000000), gap=d1-a1;
+    if(gap>0){
+      summary.innerHTML='이 설정에서 1억 투자 기준 <b style="color:var(--silicon)">국내가 ADR보다 약 '+won(gap)+' 원 유리</b>합니다. 세금 부담이 프리미엄 효과를 앞섭니다.';
+    } else if(gap<0){
+      summary.innerHTML='이 설정에서 1억 투자 기준 <b style="color:var(--gold)">ADR이 국내보다 약 '+won(-gap)+' 원 유리</b>합니다. 벌어진 프리미엄이 세금 부담을 넘어섭니다.';
     } else {
-      summary.innerHTML='이 구간에선 양도차익이 공제(250만) 안에 들어 <b style="color:var(--gold)">ADR이 불리하지 않습니다.</b>';
+      summary.innerHTML='이 설정에선 국내와 ADR이 <b>거의 같습니다.</b>';
     }
   }
   retEl.addEventListener('input',function(){ ret=parseFloat(retEl.value)/100; render(); });
+  buyEl.addEventListener('input',function(){ pBuy=parseFloat(buyEl.value)/100; render(); });
+  sellEl.addEventListener('input',function(){ pSell=parseFloat(sellEl.value)/100; render(); });
   document.querySelectorAll('#cDed button').forEach(function(b){
     b.addEventListener('click',function(){
       document.querySelectorAll('#cDed button').forEach(function(x){x.classList.remove('on');});

@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레이 달리오의 투자전략 — 모든 계절을 견디는 포트폴리오</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#10151c;
+  --paper:#f3efe6;
+  --paper-deep:#e8e2d4;
+  --storm:#1b2a3a;        /* 폭풍의 남색 */
+  --storm-light:#2d4257;
+  --brass:#b8893f;        /* 황동 */
+  --brass-bright:#d4a64e;
+  --sky:#5a8aa8;          /* 맑은 하늘 */
+  --rain:#6d7d8a;
+  --gold:#c8a035;
+  --leaf:#5f7a52;
+  --frost:#8fa8b8;
+  --ember:#c25a3a;
+  --line:rgba(27,42,58,.16);
+  --shadow:0 10px 40px rgba(16,21,28,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:30px}
+body{
+  font-family:'IBM Plex Sans KR',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.75;
+  font-weight:300;
+  overflow-x:hidden;
+}
+h1,h2,h3,.display{font-family:'Gowun Batang',serif}
+
+/* ===== 진행 막대 ===== */
+#progress{
+  position:fixed;top:0;left:0;height:4px;width:0%;
+  background:linear-gradient(90deg,var(--storm),var(--brass),var(--gold));
+  z-index:1000;transition:width .1s linear;
+}
+
+/* ===== 목록으로 버튼 (인라인 독립 스타일) ===== */
+#backbtn{
+  position:fixed;top:14px;left:14px;z-index:1001;
+  background:#1b2a3a;color:#f3efe6;text-decoration:none;
+  font-family:sans-serif;font-size:14px;font-weight:600;
+  padding:9px 15px;border-radius:8px;
+  box-shadow:0 4px 14px rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.18);
+  transition:transform .15s,background .15s;
+  min-height:44px;display:inline-flex;align-items:center;
+}
+#backbtn:hover{background:#2d4257;transform:translateY(-1px)}
+#backbtn:focus-visible{outline:3px solid #d4a64e;outline-offset:2px}
+
+/* ===== 사이드 패널 (다른 발표 탐색) ===== */
+#panelTrigger{
+  position:fixed;left:0;top:0;width:18px;height:100vh;z-index:998;
+}
+#sidepanel{
+  position:fixed;top:0;left:-340px;width:320px;height:100vh;z-index:1002;
+  background:var(--storm);color:var(--paper);
+  box-shadow:6px 0 30px rgba(0,0,0,.35);
+  transition:left .32s cubic-bezier(.4,0,.2,1);
+  padding:74px 22px 22px;overflow-y:auto;
+}
+#sidepanel.open{left:0}
+#sidepanel h3{color:var(--brass-bright);font-size:1.1rem;margin-bottom:6px}
+#sidepanel .sub{font-size:.8rem;color:var(--frost);margin-bottom:18px}
+#sidepanel a.plink{
+  display:block;color:var(--paper);text-decoration:none;
+  padding:11px 13px;border-radius:8px;margin-bottom:7px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  font-size:.9rem;transition:background .15s;
+}
+#sidepanel a.plink:hover,#sidepanel a.plink:focus-visible{background:rgba(212,166,78,.22);outline:none}
+#sidepanel a.plink .pt{font-weight:600;display:block}
+#sidepanel a.plink .pd{font-size:.76rem;color:var(--frost)}
+#panelClose{
+  position:absolute;top:20px;right:18px;background:none;border:none;
+  color:var(--paper);font-size:1.5rem;cursor:pointer;line-height:1;
+  min-width:44px;min-height:44px;
+}
+#panelClose:focus-visible{outline:2px solid var(--brass-bright)}
+#panelHint{
+  position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:997;
+  background:var(--storm);color:var(--paper);
+  writing-mode:vertical-rl;padding:14px 5px;font-size:.72rem;
+  border-radius:0 8px 8px 0;cursor:pointer;letter-spacing:1px;
+  box-shadow:2px 0 12px rgba(0,0,0,.2);border:none;
+}
+
+/* ===== 레이아웃 ===== */
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:40px;max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ===== 목차 (TOC) ===== */
+#toc{
+  position:sticky;top:24px;align-self:start;
+  font-size:.86rem;max-height:calc(100vh - 48px);overflow-y:auto;
+  padding:20px 0;
+}
+#toc .toctitle{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:2px;color:var(--rain);text-transform:uppercase;margin-bottom:14px}
+#toc a{
+  display:block;color:var(--rain);text-decoration:none;
+  padding:7px 12px;border-left:2px solid transparent;
+  border-radius:0 6px 6px 0;transition:all .18s;margin-bottom:2px;
+}
+#toc a:hover{color:var(--storm);background:rgba(27,42,58,.05)}
+#toc a.active{color:var(--storm);border-left-color:var(--brass);background:rgba(184,137,63,.1);font-weight:500}
+#toc a:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+#tocToggle{display:none}
+
+/* ===== 섹션 ===== */
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+section:last-child{border-bottom:none}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.74rem;letter-spacing:3px;color:var(--brass);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--brass)}
+h2{font-size:2rem;line-height:1.25;color:var(--storm);margin-bottom:20px;font-weight:700}
+h3{font-size:1.25rem;color:var(--storm-light);margin:28px 0 12px}
+p{margin-bottom:16px}
+.lead{font-size:1.12rem;color:var(--storm-light)}
+
+/* 등장 애니메이션 */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* ===== 히어로 ===== */
+#hero{
+  min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  background:
+    radial-gradient(ellipse at 70% 15%,rgba(212,166,78,.18),transparent 55%),
+    radial-gradient(ellipse at 20% 80%,rgba(90,138,168,.20),transparent 50%),
+    linear-gradient(165deg,#16222f 0%,#1b2a3a 55%,#22384a 100%);
+  color:var(--paper);padding:80px 24px 60px;position:relative;border-bottom:none;
+}
+#hero .wrap{position:relative;z-index:2}
+.hero-eyebrow{font-family:'IBM Plex Mono',monospace;letter-spacing:4px;font-size:.8rem;color:var(--brass-bright);margin-bottom:22px;text-transform:uppercase}
+#hero h1{font-size:clamp(2.3rem,6vw,4rem);line-height:1.12;margin-bottom:22px;font-weight:700}
+#hero h1 .accent{color:var(--brass-bright);font-style:italic}
+.hero-sub{font-size:clamp(1rem,2vw,1.25rem);color:#d8d2c4;max-width:640px;font-weight:300}
+.hero-meta{margin-top:40px;display:flex;gap:28px;flex-wrap:wrap;font-size:.86rem;color:var(--frost)}
+.hero-meta b{color:var(--brass-bright);font-weight:600}
+/* 빗줄기 효과 */
+.rain-layer{position:absolute;inset:0;z-index:1;overflow:hidden;opacity:.4}
+.rain-layer span{position:absolute;top:-20%;width:1px;height:80px;background:linear-gradient(transparent,rgba(143,168,184,.5));animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(130vh)}}
+.scroll-cue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:2;color:var(--frost);font-size:.74rem;letter-spacing:2px;text-align:center;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translate(-50%,8px)}}
+
+/* ===== 박스류 ===== */
+.def-box{background:linear-gradient(135deg,var(--storm),var(--storm-light));color:var(--paper);border-radius:14px;padding:28px 30px;margin:24px 0;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.def-box::before{content:"定義";font-family:'Gowun Batang',serif;position:absolute;top:-10px;right:14px;font-size:5rem;color:rgba(212,166,78,.14);font-weight:700}
+.def-box .tag{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:2px;color:var(--brass-bright);text-transform:uppercase;margin-bottom:10px}
+.def-box p{font-size:1.18rem;margin:0;line-height:1.6;position:relative;z-index:1}
+.def-box strong{color:var(--brass-bright)}
+
+.analogy{background:#fff;border-left:4px solid var(--sky);border-radius:0 12px 12px 0;padding:22px 26px;margin:22px 0;box-shadow:0 4px 18px rgba(16,21,28,.07)}
+.analogy .tag{font-size:.78rem;font-weight:600;color:var(--sky);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.analogy .tag::before{content:"☂";font-size:1.1rem}
+.analogy p:last-child{margin-bottom:0}
+
+.callout{background:var(--paper-deep);border-radius:12px;padding:20px 24px;margin:20px 0;border:1px solid var(--line)}
+.callout .tag{font-weight:600;color:var(--brass);margin-bottom:6px;font-size:.92rem}
+
+/* 청중 질문 박스 */
+.ask{background:linear-gradient(135deg,rgba(184,137,63,.12),rgba(90,138,168,.1));border:1.5px dashed var(--brass);border-radius:14px;padding:22px 26px;margin:28px 0}
+.ask .tag{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:2px;color:var(--brass);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ask .tag::before{content:"💬"}
+.ask p{margin:0;font-size:1.06rem;color:var(--storm);font-weight:400}
+
+/* ===== 타임라인 ===== */
+.timeline{position:relative;margin:30px 0;padding-left:8px}
+.timeline::before{content:"";position:absolute;left:18px;top:8px;bottom:8px;width:2px;background:linear-gradient(var(--brass),var(--sky))}
+.tl-item{position:relative;padding:0 0 26px 56px}
+.tl-item::before{content:"";position:absolute;left:11px;top:5px;width:16px;height:16px;border-radius:50%;background:var(--paper);border:3px solid var(--brass);z-index:1}
+.tl-item .yr{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--brass);font-size:.95rem}
+.tl-item .ev{font-weight:600;color:var(--storm);margin:2px 0 4px}
+.tl-item p{margin:0;font-size:.95rem;color:var(--storm-light)}
+
+/* ===== 4계절 그리드 ===== */
+.seasons{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin:26px 0}
+.season{border-radius:14px;padding:22px;color:#fff;position:relative;overflow:hidden;min-height:150px}
+.season h4{font-family:'Gowun Batang',serif;font-size:1.15rem;margin-bottom:8px;position:relative;z-index:1}
+.season p{font-size:.88rem;margin:0;position:relative;z-index:1;opacity:.95}
+.season .ic{position:absolute;right:14px;bottom:6px;font-size:3.4rem;opacity:.22;z-index:0}
+.s-growth{background:linear-gradient(135deg,#5f7a52,#48613e)}
+.s-slow{background:linear-gradient(135deg,#6d7d8a,#4d5a66)}
+.s-infl{background:linear-gradient(135deg,#c25a3a,#9d432a)}
+.s-defl{background:linear-gradient(135deg,#5a8aa8,#3f6880)}
+
+/* ===== 도넛/배분 차트 ===== */
+.alloc{display:flex;gap:30px;align-items:center;flex-wrap:wrap;margin:26px 0;background:#fff;border-radius:14px;padding:26px;box-shadow:0 4px 18px rgba(16,21,28,.07)}
+.alloc .legend{flex:1;min-width:220px}
+.alloc .leg-item{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:.92rem}
+.alloc .sw{width:16px;height:16px;border-radius:4px;flex-shrink:0}
+.alloc .leg-item b{font-family:'IBM Plex Mono',monospace}
+.alloc .leg-item .nm{flex:1}
+
+/* ===== 비교 표 ===== */
+.tbl-wrap{overflow-x:auto;margin:24px 0;border-radius:12px;box-shadow:0 4px 18px rgba(16,21,28,.07)}
+table{width:100%;border-collapse:collapse;background:#fff;min-width:480px}
+th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:.92rem}
+th{background:var(--storm);color:var(--paper);font-weight:600;font-size:.84rem;letter-spacing:.5px}
+td:first-child{font-weight:500;color:var(--storm)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(184,137,63,.06)}
+.num{font-family:'IBM Plex Mono',monospace}
+
+/* ===== 카드 그리드 ===== */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0}
+.card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 4px 16px rgba(16,21,28,.06);border-top:3px solid var(--brass)}
+.card .ic{font-size:1.6rem;margin-bottom:8px}
+.card h4{font-size:1.02rem;color:var(--storm);margin-bottom:6px;font-weight:600}
+.card p{font-size:.88rem;margin:0;color:var(--storm-light)}
+
+/* ===== 퀴즈 ===== */
+.quiz{background:#fff;border-radius:16px;padding:28px 30px;margin:34px 0;box-shadow:var(--shadow);border:1px solid var(--line)}
+.quiz .qtag{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:2px;color:var(--brass);text-transform:uppercase;margin-bottom:10px}
+.quiz .q{font-weight:600;font-size:1.1rem;color:var(--storm);margin-bottom:18px;font-family:'Gowun Batang',serif}
+.opt{display:block;width:100%;text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:10px;cursor:pointer;font-family:inherit;font-size:.96rem;color:var(--storm);transition:all .15s;min-height:44px}
+.opt:hover{border-color:var(--brass);background:rgba(184,137,63,.05)}
+.opt:focus-visible{outline:3px solid var(--brass);outline-offset:1px}
+.opt.correct{background:rgba(95,122,82,.16);border-color:var(--leaf);color:#3a4f30;font-weight:600}
+.opt.wrong{background:rgba(194,90,58,.14);border-color:var(--ember);color:#8c3a22}
+.opt.dim{opacity:.55}
+.opt .mk{float:right;font-weight:700}
+.explain{display:none;margin-top:14px;padding:16px 18px;background:var(--paper-deep);border-radius:10px;font-size:.92rem;color:var(--storm-light);border-left:3px solid var(--brass)}
+.explain.show{display:block;animation:fadein .4s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.explain b{color:var(--storm)}
+
+/* ===== 인물 카드 ===== */
+.person{display:grid;grid-template-columns:auto 1fr;gap:22px;background:linear-gradient(135deg,var(--storm),var(--storm-light));color:var(--paper);border-radius:16px;padding:28px;margin:26px 0;align-items:center;box-shadow:var(--shadow)}
+.person .avatar{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--brass-bright),var(--brass));display:flex;align-items:center;justify-content:center;font-family:'Gowun Batang',serif;font-size:2rem;font-weight:700;color:var(--storm)}
+.person h4{font-family:'Gowun Batang',serif;font-size:1.3rem;color:var(--brass-bright);margin-bottom:4px}
+.person .role{font-size:.84rem;color:var(--frost);margin-bottom:10px}
+.person p{font-size:.92rem;margin:0;color:#d8d2c4}
+
+/* ===== 핵심 정리 ===== */
+.takeaways{counter-reset:tk;margin:26px 0}
+.tk{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:12px;box-shadow:0 4px 14px rgba(16,21,28,.06)}
+.tk::before{counter-increment:tk;content:counter(tk);font-family:'Gowun Batang',serif;font-size:1.6rem;font-weight:700;color:var(--brass);background:rgba(184,137,63,.12);width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tk h4{font-size:1.05rem;color:var(--storm);margin-bottom:4px;font-weight:600}
+.tk p{font-size:.92rem;margin:0;color:var(--storm-light)}
+
+/* 마무리 토론 */
+.discuss{background:linear-gradient(135deg,#16222f,#22384a);color:var(--paper);border-radius:18px;padding:38px 34px;margin:30px 0;text-align:center;box-shadow:var(--shadow)}
+.discuss .tag{font-family:'IBM Plex Mono',monospace;letter-spacing:3px;color:var(--brass-bright);font-size:.78rem;margin-bottom:14px}
+.discuss h3{color:var(--paper);font-size:1.5rem;margin:0 0 14px;border:none}
+.discuss p{color:#d8d2c4;max-width:600px;margin:0 auto;font-size:1.05rem}
+
+/* 맨 위로 */
+#totop{position:fixed;right:20px;bottom:20px;z-index:999;background:var(--storm);color:var(--paper);border:none;width:48px;height:48px;border-radius:50%;font-size:1.2rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .15s}
+#totop.show{opacity:1;pointer-events:auto}
+#totop:hover{transform:translateY(-3px)}
+#totop:focus-visible{outline:3px solid var(--brass-bright);outline-offset:2px}
+
+/* SVG 차트 */
+.chart-box{background:#fff;border-radius:14px;padding:24px;margin:24px 0;box-shadow:0 4px 18px rgba(16,21,28,.07)}
+.chart-box .cap{font-size:.82rem;color:var(--rain);margin-top:10px;text-align:center}
+
+footer{background:var(--storm);color:var(--frost);padding:40px 24px;font-size:.8rem;line-height:1.7}
+footer .wrap{max-width:1080px}
+footer a{color:var(--brass-bright);text-decoration:none;word-break:break-all}
+footer h4{color:var(--paper);font-family:'IBM Plex Sans KR';font-size:.9rem;margin-bottom:10px}
+footer .disc{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);color:var(--rain)}
+
+@media(max-width:880px){
+  .layout{grid-template-columns:1fr;gap:0}
+  #toc{position:sticky;top:0;z-index:996;background:var(--paper);max-height:none;padding:10px 0;margin:0 -24px;border-bottom:1px solid var(--line)}
+  #tocToggle{display:flex;align-items:center;gap:8px;width:100%;background:var(--paper-deep);border:none;padding:14px 20px;font-family:inherit;font-size:.9rem;font-weight:600;color:var(--storm);cursor:pointer;min-height:48px}
+  #tocList{display:none;padding:8px 14px}
+  #tocList.open{display:block}
+  #toc .toctitle{display:none}
+  .seasons{grid-template-columns:1fr}
+  .person{grid-template-columns:1fr;text-align:center}
+  .person .avatar{margin:0 auto}
+  #backbtn{font-size:13px;padding:8px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+  .rain-layer{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<a id="backbtn" href="../../">← 목록으로</a>
+
+<!-- 사이드 패널 -->
+<div id="panelTrigger"></div>
+<button id="panelHint" aria-label="다른 발표 보기">다른 발표 ▸</button>
+<nav id="sidepanel" aria-label="다른 발표 목록">
+  <button id="panelClose" aria-label="패널 닫기">×</button>
+  <h3>다른 발표 둘러보기</h3>
+  <div class="sub">eco-lab 스터디 발표 모음</div>
+  <div id="panelList"><p style="color:var(--frost);font-size:.85rem">목록 불러오는 중…</p></div>
+</nav>
+
+<!-- ===== 히어로 ===== -->
+<header id="hero">
+  <div class="rain-layer" id="rainLayer"></div>
+  <div class="wrap">
+    <div class="hero-eyebrow">ECO-LAB · 투자전략 시리즈</div>
+    <h1>모든 계절을 견디는 포트폴리오<br><span class="accent">레이 달리오</span>의 투자 철학</h1>
+    <p class="hero-sub">시장을 맞히려 하지 말고, 어떤 날씨가 와도 무너지지 않게 준비하라. 세계 최대 헤지펀드를 만든 한 남자가 50년에 걸쳐 다듬은 '올웨더(All Weather)' 전략을, 처음 듣는 사람도 알 수 있게 풀어봅니다.</p>
+    <div class="hero-meta">
+      <span>⏱ 발표 약 <b>20분</b></span>
+      <span>🎯 사전지식 <b>0</b>에서 시작</span>
+      <span>💬 퀴즈 <b>5</b> · 토론 질문 <b>6</b></span>
+    </div>
+  </div>
+  <div class="scroll-cue">스크롤 ↓</div>
+</header>
+
+<div class="layout">
+<!-- ===== 목차 ===== -->
+<nav id="toc" aria-label="목차">
+  <button id="tocToggle" aria-expanded="false">☰ 목차 펼치기</button>
+  <div class="toctitle">목차</div>
+  <div id="tocList">
+    <a href="#origin">1 · 왜 생겨났나 (탄생 배경)</a>
+    <a href="#concept">2 · 그래서 뭔가 (개념 정의)</a>
+    <a href="#how">3 · 어떻게 돌아가나 (작동 원리)</a>
+    <a href="#portfolio">4 · 실제 포트폴리오</a>
+    <a href="#korea">5 · 한국에서는</a>
+    <a href="#pro">6 · 실무자의 시선</a>
+    <a href="#world">7 · 국제 비교와 전망</a>
+    <a href="#impact">8 · 내 자산에 미치는 영향</a>
+    <a href="#person">9 · 레이 달리오라는 사람</a>
+    <a href="#summary">10 · 오늘 기억할 6가지</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ===== 1. 탄생 배경 ===== -->
+<section id="origin">
+  <div class="reveal">
+    <div class="eyebrow">탄생 배경</div>
+    <h2>맞히려는 게임은 왜 늘 졌을까</h2>
+    <p class="lead">올웨더 전략은 "미래를 예측하겠다"는 자신감이 아니라, "나는 미래를 모른다"는 겸손에서 태어났습니다.</p>
+    <p>1970년대 미국은 이상한 시기를 통과합니다. 물가는 치솟는데 경기는 가라앉는 '스태그플레이션'이 닥쳤죠. 주식도, 채권도 동시에 무너졌습니다. "주식 60 + 채권 40으로 나눠 담으면 안전하다"던 당시의 정석이 통하지 않았습니다. 어떤 자산을 골라야 살아남는지, 아무도 확신할 수 없던 시절이었습니다.</p>
+  </div>
+
+  <div class="reveal analogy">
+    <div class="tag">비유로 이해하기</div>
+    <p>여행을 떠나는데 목적지의 날씨를 전혀 모른다고 해봅시다. 한 사람은 일기예보를 철석같이 믿고 반팔만 챙겼다가 한파를 만나 덜덜 떱니다. 또 한 사람은 반팔·외투·우산·선크림을 골고루 챙깁니다. 짐은 조금 무겁지만, <b>어떤 날씨가 와도 얼어 죽거나 타 죽지 않습니다.</b> 올웨더는 두 번째 여행자의 가방입니다.</p>
+  </div>
+
+  <div class="reveal">
+    <p>이 가방을 설계한 사람이 <strong>레이 달리오</strong>입니다. 1975년 뉴욕의 방 두 칸짜리 아파트에서 브리지워터(Bridgewater Associates)를 차린 그는, 1990년대 초 한 가지 개인적인 고민에 부딪힙니다. "내가 세상을 떠난 뒤에도, 시장을 예측할 줄 모르는 가족이 안전하게 굴릴 수 있는 포트폴리오는 없을까?"</p>
+    <p>경기를 맞히는 데 의존하지 않는 조합. 그 답을 찾는 과정에서 '경제의 4계절'이라는 아이디어가 나왔고, 이것이 1996년 브리지워터의 <strong>올웨더 펀드</strong>로 현실이 됩니다.</p>
+  </div>
+
+  <div class="reveal timeline">
+    <div class="tl-item">
+      <div class="yr">1949</div>
+      <div class="ev">레이 달리오, 뉴욕 퀸스에서 출생</div>
+      <p>평범한 가정에서 자라 12살에 골프장 캐디로 번 돈으로 첫 주식을 삽니다.</p>
+    </div>
+    <div class="tl-item">
+      <div class="yr">1975</div>
+      <div class="ev">브리지워터 창업</div>
+      <p>아파트 한 칸에서 통화·채권 자문으로 시작. 훗날 세계 최대 헤지펀드가 됩니다.</p>
+    </div>
+    <div class="tl-item">
+      <div class="yr">1970~80년대</div>
+      <div class="ev">스태그플레이션이라는 숙제</div>
+      <p>물가와 침체가 동시에 오자 기존 분산투자 공식이 깨집니다. "예측 의존"의 한계를 절감.</p>
+    </div>
+    <div class="tl-item">
+      <div class="yr">1996</div>
+      <div class="ev">올웨더 펀드 출시</div>
+      <p>'리스크 패리티'와 '경제 4계절' 개념을 담은, 예측에 기대지 않는 포트폴리오 탄생.</p>
+    </div>
+    <div class="tl-item">
+      <div class="yr">2026</div>
+      <div class="ev">다시 주목받는 철학</div>
+      <p>고부채·고평가 주식·금값 급등 시대. 달리오의 "균형과 겸손"이 재조명되고 있습니다.</p>
+    </div>
+  </div>
+
+  <div class="reveal ask">
+    <div class="tag">생각해 볼 질문</div>
+    <p>당신은 투자할 때 "이번엔 오를 것 같다"는 예측에 얼마나 기대고 있나요? 만약 그 예측이 틀린다면, 당신의 돈은 어떻게 될까요?</p>
+  </div>
+</section>
+
+<!-- ===== 2. 개념 정의 ===== -->
+<section id="concept">
+  <div class="reveal">
+    <div class="eyebrow">개념 정의</div>
+    <h2>그래서 올웨더가 뭔데?</h2>
+  </div>
+
+  <div class="reveal def-box">
+    <div class="tag">한 문장 정의</div>
+    <p>올웨더 전략은 <strong>경기 흐름을 맞히지 않고도</strong>, 어떤 경제 상황(성장·침체·인플레·디플레)에서든 비슷하게 버티도록 <strong>여러 자산에 '위험'을 고르게 나눠 담는</strong> 투자법입니다.</p>
+  </div>
+
+  <div class="reveal">
+    <p>핵심 단어는 두 개입니다. <strong>4계절</strong>과 <strong>리스크 패리티(risk parity)</strong>.</p>
+    <p>달리오는 경제를 날씨처럼 네 가지 '계절'로 나눴습니다. 그리고 각 계절에 잘 버티는 자산이 따로 있다는 점에 주목했죠. 그렇다면 네 계절 자산을 모두 담아두면, 어떤 계절이 와도 누군가는 우산을 펴고 있을 겁니다.</p>
+  </div>
+
+  <div class="reveal seasons">
+    <div class="season s-growth">
+      <h4>🌱 성장 ↑</h4>
+      <p>경기가 예상보다 좋을 때 — <b>주식, 원자재</b>가 빛납니다.</p>
+      <span class="ic">📈</span>
+    </div>
+    <div class="season s-slow">
+      <h4>🍂 성장 ↓</h4>
+      <p>경기가 식을 때 — <b>장기 국채</b>가 방패가 됩니다.</p>
+      <span class="ic">🛡️</span>
+    </div>
+    <div class="season s-infl">
+      <h4>🔥 물가 ↑</h4>
+      <p>인플레가 닥칠 때 — <b>원자재, 금, 물가연동채</b>가 가치를 지킵니다.</p>
+      <span class="ic">🪙</span>
+    </div>
+    <div class="season s-defl">
+      <h4>❄️ 물가 ↓</h4>
+      <p>디플레·금리 하락 때 — <b>장기 국채, 주식</b>이 유리합니다.</p>
+      <span class="ic">💧</span>
+    </div>
+  </div>
+
+  <div class="reveal analogy">
+    <div class="tag">리스크 패리티, 쉽게</div>
+    <p>보통 사람은 "돈"을 똑같이 나눕니다. 주식 50만 원, 채권 50만 원처럼요. 그런데 주식은 채권보다 훨씬 사납게 출렁입니다. 그래서 돈은 반반이어도, <b>전체 위험의 90%는 주식이 차지</b>하는 일이 벌어집니다. 리스크 패리티는 "돈이 아니라 위험을 반반으로 나누자"는 생각입니다. 사나운 주식은 적게, 얌전한 채권은 많이 담아 — 떨림의 크기를 맞추는 거죠. 시소의 무게가 아니라 출렁임을 맞추는 셈입니다.</p>
+  </div>
+
+  <div class="reveal quiz" data-correct="2">
+    <div class="qtag">QUIZ 01</div>
+    <div class="q">올웨더 전략이 태어난 가장 근본적인 이유는?</div>
+    <button class="opt" data-i="0">시장을 더 정확히 예측하는 모델을 만들기 위해</button>
+    <button class="opt" data-i="1">주식 수익률을 최대로 끌어올리기 위해</button>
+    <button class="opt" data-i="2">미래를 맞히지 않고도 어떤 경제 상황이든 견디기 위해</button>
+    <button class="opt" data-i="3">세금을 줄이기 위해</button>
+    <div class="explain"><b>정답: 3번.</b> 올웨더의 출발점은 "예측은 자주 틀린다"는 겸손입니다. 최고 수익이 목표가 아니라, 어떤 계절에도 크게 무너지지 않는 '안정적 생존'이 목표입니다.</div>
+  </div>
+</section>
+
+<!-- ===== 3. 작동 원리 ===== -->
+<section id="how">
+  <div class="reveal">
+    <div class="eyebrow">작동 원리</div>
+    <h2>어떻게 어떤 날씨든 버틸까</h2>
+    <p>비결은 <strong>상관관계가 낮은 자산</strong>을 섞는 데 있습니다. 쉽게 말해, "서로 따로 노는" 자산들을 모으는 겁니다.</p>
+  </div>
+
+  <div class="reveal analogy">
+    <div class="tag">달리오의 '성배(Holy Grail)'</div>
+    <p>달리오는 이렇게 말합니다. "서로 무관하게 움직이는 수익원 <b>15개</b>를 모으면, 기대수익은 그대로 두면서 위험을 최대 80%까지 줄일 수 있다." 한 명이 넘어질 때 다른 한 명이 받쳐주는 식이라, 전체 팀은 거의 안 넘어집니다. 그는 이걸 투자의 '성배'라고 불렀죠.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>한 자산이 무너져도 팀이 버틴다</h3>
+    <p>예를 들어 경기가 갑자기 식으면 주식은 떨어지지만, 안전자산인 장기 국채로 돈이 몰려 채권 가격은 오릅니다. 주식의 손실을 채권의 이익이 메워주는 거죠. 인플레가 오면 주식·채권이 흔들려도 금과 원자재가 버팁니다. <strong>누군가는 항상 우산을 펴고 있다</strong>는 게 핵심입니다.</p>
+  </div>
+
+  <div class="reveal chart-box">
+    <svg viewBox="0 0 600 260" width="100%" role="img" aria-label="시장 충격 시 단일 주식 포트폴리오와 올웨더 포트폴리오의 가치 변화 비교">
+      <line x1="50" y1="20" x2="50" y2="220" stroke="#1b2a3a" stroke-width="1.5"/>
+      <line x1="50" y1="220" x2="580" y2="220" stroke="#1b2a3a" stroke-width="1.5"/>
+      <text x="44" y="30" text-anchor="end" font-size="11" fill="#6d7d8a">높음</text>
+      <text x="44" y="218" text-anchor="end" font-size="11" fill="#6d7d8a">낮음</text>
+      <text x="300" y="248" text-anchor="middle" font-size="12" fill="#6d7d8a">시간 → (가운데 큰 시장 충격 발생)</text>
+      <!-- 충격 구간 표시 -->
+      <rect x="270" y="20" width="60" height="200" fill="rgba(194,90,58,.08)"/>
+      <text x="300" y="16" text-anchor="middle" font-size="10" fill="#c25a3a">충격</text>
+      <!-- 단일 주식: 급락 -->
+      <polyline points="50,120 150,100 270,90 300,180 420,165 580,150" fill="none" stroke="#c25a3a" stroke-width="2.5"/>
+      <!-- 올웨더: 완만 -->
+      <polyline points="50,140 150,128 270,118 300,135 420,120 580,105" fill="none" stroke="#b8893f" stroke-width="2.5"/>
+      <circle cx="580" cy="150" r="4" fill="#c25a3a"/>
+      <circle cx="580" cy="105" r="4" fill="#b8893f"/>
+      <text x="568" y="168" text-anchor="end" font-size="10" fill="#c25a3a">주식 100%</text>
+      <text x="568" y="98" text-anchor="end" font-size="10" fill="#b8893f">올웨더</text>
+    </svg>
+    <div class="cap">개념도: 충격이 오면 주식 100%는 깊게 파였다 천천히 회복하지만, 올웨더는 완만하게 흔들립니다. (예시용 도식, 실제 수치 아님)</div>
+  </div>
+
+  <div class="reveal callout">
+    <div class="tag">⚖️ 리밸런싱 — 자동 저가매수 장치</div>
+    <p>정해둔 비율(예: 주식 30%)이 시장 변동으로 틀어지면, 주기적으로(보통 1년에 한 번) 원래 비율로 되돌립니다. 오른 자산은 일부 팔고, 떨어진 자산은 더 삽니다. 결과적으로 <strong>비싸진 걸 팔고 싸진 걸 사는</strong> 규율이 자동으로 작동합니다.</p>
+  </div>
+
+  <div class="reveal ask">
+    <div class="tag">생각해 볼 질문</div>
+    <p>"오른 걸 팔고 떨어진 걸 더 산다"는 리밸런싱은 직관과 반대입니다. 당신이라면 막상 폭락장에서 떨어진 자산을 더 살 용기가 있을까요?</p>
+  </div>
+
+  <div class="reveal quiz" data-correct="1">
+    <div class="qtag">QUIZ 02</div>
+    <div class="q">올웨더가 '어떤 날씨든' 버티는 핵심 비결은?</div>
+    <button class="opt" data-i="0">가장 많이 오를 자산 하나에 집중한다</button>
+    <button class="opt" data-i="1">서로 다르게 움직이는(상관관계 낮은) 자산을 섞는다</button>
+    <button class="opt" data-i="2">매일 사고팔며 시장 타이밍을 잡는다</button>
+    <button class="opt" data-i="3">현금만 들고 위기를 기다린다</button>
+    <div class="explain"><b>정답: 2번.</b> 한 자산이 떨어질 때 다른 자산이 오르도록, '따로 노는' 자산들을 모으는 게 핵심입니다. 그래야 전체 포트폴리오의 출렁임이 작아집니다.</div>
+  </div>
+</section>
+
+<!-- ===== 4. 실제 포트폴리오 ===== -->
+<section id="portfolio">
+  <div class="reveal">
+    <div class="eyebrow">실전 배분</div>
+    <h2>개인이 따라 할 수 있는 버전</h2>
+    <p>브리지워터의 진짜 올웨더 펀드는 레버리지(빚)와 복잡한 계산을 씁니다. 하지만 달리오가 토니 로빈스와의 인터뷰에서 "일반인이 쉽게 굴릴 수 있는 버전"으로 제시한 단순 배분이 널리 알려져 있습니다. 달리오 본인도 <strong>"정확하거나 완벽한 건 아니다"</strong>라고 단서를 달았죠.</p>
+  </div>
+
+  <div class="reveal alloc">
+    <svg viewBox="0 0 200 200" width="180" height="180" role="img" aria-label="올웨더 포트폴리오 자산 배분 원형 차트">
+      <!-- 도넛: 주식30 장기국채40 중기국채15 금7.5 원자재7.5 -->
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#5f7a52" stroke-width="40" stroke-dasharray="131.9 307.9" transform="rotate(-90 100 100)"/>
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#1b2a3a" stroke-width="40" stroke-dasharray="175.9 263.9" stroke-dashoffset="-131.9" transform="rotate(-90 100 100)"/>
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#5a8aa8" stroke-width="40" stroke-dasharray="65.9 373.9" stroke-dashoffset="-307.8" transform="rotate(-90 100 100)"/>
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#c8a035" stroke-width="40" stroke-dasharray="33 406.8" stroke-dashoffset="-373.7" transform="rotate(-90 100 100)"/>
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#c25a3a" stroke-width="40" stroke-dasharray="33 406.8" stroke-dashoffset="-406.7" transform="rotate(-90 100 100)"/>
+      <text x="100" y="96" text-anchor="middle" font-size="13" fill="#1b2a3a" font-weight="700" font-family="IBM Plex Mono">All</text>
+      <text x="100" y="112" text-anchor="middle" font-size="13" fill="#1b2a3a" font-weight="700" font-family="IBM Plex Mono">Weather</text>
+    </svg>
+    <div class="legend">
+      <div class="leg-item"><span class="sw" style="background:#1b2a3a"></span><span class="nm">장기 국채 (만기 긴 안전자산)</span><b>40%</b></div>
+      <div class="leg-item"><span class="sw" style="background:#5f7a52"></span><span class="nm">주식 (성장의 엔진)</span><b>30%</b></div>
+      <div class="leg-item"><span class="sw" style="background:#5a8aa8"></span><span class="nm">중기 국채</span><b>15%</b></div>
+      <div class="leg-item"><span class="sw" style="background:#c8a035"></span><span class="nm">금</span><b>7.5%</b></div>
+      <div class="leg-item"><span class="sw" style="background:#c25a3a"></span><span class="nm">원자재</span><b>7.5%</b></div>
+    </div>
+  </div>
+
+  <div class="reveal callout">
+    <div class="tag">👀 눈에 띄는 점: 채권이 55%</div>
+    <p>주식이 아니라 <strong>채권이 절반 이상</strong>입니다. 일반적인 직관과 반대죠. 이유는 리스크 패리티 — 사나운 주식의 위험을 누르려고, 얌전한 채권을 많이 담은 결과입니다. 바로 이 점이 강점이자 약점이 됩니다(뒤에서 설명).</p>
+  </div>
+
+  <div class="reveal ask">
+    <div class="tag">생각해 볼 질문</div>
+    <p>채권이 55%인 포트폴리오, 당신에게는 너무 '심심'하게 느껴지나요, 아니면 안심이 되나요? 그 느낌이 당신의 투자 성향을 말해줍니다.</p>
+  </div>
+</section>
+
+<!-- ===== 5. 한국 ===== -->
+<section id="korea">
+  <div class="reveal">
+    <div class="eyebrow">한국에서는</div>
+    <h2>한국 투자자가 그대로 따라 하면 생기는 일</h2>
+    <p>올웨더는 본래 <strong>미국 기관투자자</strong>를 위해 설계됐습니다. 그래서 한국에서 그대로 적용하려면 몇 가지를 손봐야 합니다.</p>
+  </div>
+
+  <div class="reveal cards">
+    <div class="card">
+      <div class="ic">💱</div>
+      <h4>환율 변수</h4>
+      <p>미국 국채·금을 사면 '달러 자산'이 됩니다. 원/달러 환율이 오르내릴 때마다 수익이 출렁입니다. 환헤지 ETF를 쓸지 선택해야 합니다.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🧾</div>
+      <h4>세금 구조</h4>
+      <p>해외주식·해외 ETF 매매차익엔 양도소득세, 국내 상장 해외 ETF엔 배당소득세가 붙는 등 상품 구조에 따라 세금이 다릅니다.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🏦</div>
+      <h4>연금계좌 활용</h4>
+      <p>연금저축·IRP 안에서 ETF로 올웨더를 꾸리면 세제 혜택과 과세이연을 누릴 수 있어, 한국에서 인기 있는 실전 방식입니다.</p>
+    </div>
+    <div class="card">
+      <div class="ic">🇰🇷</div>
+      <h4>국내 자산 비중</h4>
+      <p>생활비를 원화로 쓰는 만큼, 일부는 한국 채권·자산으로 채워 환위험을 낮추는 '한국형 변형'도 고려됩니다.</p>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <p>운용은 누가 할까요? 국내에는 올웨더 '그 자체' 상품은 드물지만, 비슷한 철학의 자산배분형·TDF(타깃데이트펀드) 상품이 자산운용사를 통해 판매됩니다. 개인은 증권사 앱에서 ETF를 직접 조합해 '나만의 올웨더'를 만드는 경우가 많습니다. 시장 데이터는 KRX, 채권·금리는 한국은행(BOK)에서 확인할 수 있습니다.</p>
+  </div>
+
+  <div class="reveal quiz" data-correct="0">
+    <div class="qtag">QUIZ 03</div>
+    <div class="q">한국 투자자가 올웨더를 그대로 따라 할 때 가장 먼저 고려할 변수는?</div>
+    <button class="opt" data-i="0">달러 자산이 많아 환율 변동에 노출된다</button>
+    <button class="opt" data-i="1">한국에선 채권을 살 수 없다</button>
+    <button class="opt" data-i="2">금 투자가 법으로 금지돼 있다</button>
+    <button class="opt" data-i="3">올웨더는 한국에서 불법이다</button>
+    <div class="explain"><b>정답: 1번.</b> 미국 국채·금 등은 달러 표시 자산이라, 원/달러 환율이 수익에 직접 영향을 줍니다. 환헤지 여부와 연금계좌 활용이 한국형 설계의 핵심 고민입니다.</div>
+  </div>
+</section>
+
+<!-- ===== 6. 실무자 ===== -->
+<section id="pro">
+  <div class="reveal">
+    <div class="eyebrow">실무자의 시선</div>
+    <h2>현업은 올웨더를 어떻게 볼까</h2>
+    <p>자산배분을 다루는 실무자들은 올웨더를 '만능 정답'이 아니라 <strong>'사고방식'</strong>으로 봅니다. 좋아하는 점과 미심쩍어하는 점이 분명히 나뉩니다.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>👍 실무자가 인정하는 강점</h3>
+    <ul style="margin:0 0 10px 20px;color:var(--storm-light)">
+      <li style="margin-bottom:6px"><b>규율이 있다.</b> 감정이 아니라 정해진 비율과 리밸런싱으로 움직여, 패닉 매도를 막아준다.</li>
+      <li style="margin-bottom:6px"><b>낙폭이 작다.</b> 폭락장에서 덜 깨지니, 끝까지 버티고 복리를 이어가기 쉽다.</li>
+      <li><b>겸손의 철학.</b> "한 테마(미국 빅테크, 장기채 등)에 몰빵하지 마라"는 메시지는 시대를 안 탄다.</li>
+    </ul>
+  </div>
+
+  <div class="reveal">
+    <h3>👎 실무자가 짚는 약점</h3>
+    <ul style="margin:0 0 10px 20px;color:var(--storm-light)">
+      <li style="margin-bottom:6px"><b>금리 상승에 약하다.</b> 채권이 절반 이상이라, 금리가 급등한 <strong>2022년엔 약 -18%</strong>로 주식보다도 더 빠졌다. "방어해야 할 상황에 못 막았다"는 비판.</li>
+      <li style="margin-bottom:6px"><b>강세장에선 답답하다.</b> 주식이 폭등하는 시기엔 수익이 시장에 한참 못 미친다.</li>
+      <li><b>"40년 금리 하락"의 산물.</b> 1980~2020년 금리 하락기엔 채권이 효자였지만, 그 환경이 반복되리란 보장은 없다.</li>
+    </ul>
+  </div>
+
+  <div class="reveal callout">
+    <div class="tag">💡 실무자의 결론</div>
+    <p>"올웨더를 글자 그대로 베끼기보다, <strong>'위험을 한 곳에 몰지 마라'</strong>는 원리를 자기 상황에 맞게 변형해 쓰라." 최근엔 인플레 방어(금·물가연동채)를 강화한 변형이 늘고 있습니다.</p>
+  </div>
+
+  <div class="reveal ask">
+    <div class="tag">생각해 볼 질문</div>
+    <p>"낙폭이 작은 대신 강세장에서 답답한" 포트폴리오와 "많이 오르지만 많이 빠지는" 포트폴리오. 당신의 성격과 인생 단계에는 어느 쪽이 더 맞을까요?</p>
+  </div>
+</section>
+
+<!-- ===== 7. 국제 비교와 전망 ===== -->
+<section id="world">
+  <div class="reveal">
+    <div class="eyebrow">국제 비교 · 전망</div>
+    <h2>2026년의 올웨더, 그리고 ETF로의 진화</h2>
+  </div>
+
+  <div class="reveal">
+    <h3>📊 30년 성과 — 화려하진 않지만 꾸준</h3>
+    <p>한 분석에 따르면 단순 올웨더 배분은 최근 30년(2026년 5월 기준) 동안 연평균 약 <strong>7.45%</strong> 수익에 변동성 약 7.5%, 최대 낙폭 약 -20.6%를 기록했습니다. 같은 비교에서 최근 12개월 샤프지수(위험 대비 수익)는 약 1.95 수준으로 평가됐습니다. "대박은 아니지만 잔잔하게 굴러간다"는 평가가 많습니다.</p>
+  </div>
+
+  <div class="reveal tbl-wrap">
+    <table>
+      <thead><tr><th>구분</th><th>올웨더(단순형)</th><th>주식 100% (S&P500)</th></tr></thead>
+      <tbody>
+        <tr><td>성격</td><td>방어·안정</td><td>공격·성장</td></tr>
+        <tr><td>출렁임(변동성)</td><td class="num">낮음 (~7.5%)</td><td class="num">높음</td></tr>
+        <tr><td>강세장 수익</td><td>뒤처짐</td><td>앞섬</td></tr>
+        <tr><td>폭락장 방어</td><td>상대적 강함</td><td>약함</td></tr>
+        <tr><td>2022년(금리 급등)</td><td class="num">약 -18%</td><td>큰 하락</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="reveal" style="font-size:.84rem;color:var(--rain)">※ 수치는 출처별 산정 기간·통화·방법에 따라 달라질 수 있으며, 과거 성과가 미래를 보장하지 않습니다.</p>
+
+  <div class="reveal">
+    <h3>🪙 ETF로 진화 — ALLW의 등장</h3>
+    <p>2025년 3월, 스테이트스트리트와 브리지워터가 손잡고 <strong>SPDR 브리지워터 올웨더 ETF(티커: ALLW)</strong>를 내놨습니다. 달리오의 기관용 아이디어를 누구나 살 수 있는 상장 상품으로 옮긴 것이죠. 약 1.8배 레버리지(선물 활용)를 써서 1달러로 약 2달러어치 노출을 만들고, 보수는 연 약 0.85%로 일반 인덱스보다는 높지만 헤지펀드보다는 훨씬 쌉니다.</p>
+  </div>
+
+  <div class="reveal def-box">
+    <div class="tag">⚠️ 전망은 예측이 아니라 시나리오</div>
+    <p>2026년 현재 달리오는 <strong>미국 부채 위기</strong>를 강하게 경고하며, 포트폴리오의 <strong>10~15%를 금</strong>으로 보유하라고 권합니다. 다만 이는 <strong>확정된 미래가 아니라 하나의 시나리오</strong>입니다. 어떤 전문가의 전망도 빗나갈 수 있다는 게 올웨더 철학의 출발점이라는 점을 기억하세요.</p>
+  </div>
+
+  <div class="reveal quiz" data-correct="3">
+    <div class="qtag">QUIZ 04</div>
+    <div class="q">올웨더가 특히 고전했던 시기는 언제일까요?</div>
+    <button class="opt" data-i="0">주식이 폭락한 2008년 금융위기</button>
+    <button class="opt" data-i="1">코로나 초기 2020년 3월</button>
+    <button class="opt" data-i="2">닷컴버블이 터진 2000년</button>
+    <button class="opt" data-i="3">금리가 급등한 2022년</button>
+    <div class="explain"><b>정답: 4번.</b> 채권 비중이 큰 올웨더는 금리가 빠르게 오르면 채권 가격이 떨어져 타격을 받습니다. 2022년엔 약 -18%로, 방어용 포트폴리오가 오히려 더 빠지는 역설이 나타났습니다.</div>
+  </div>
+</section>
+
+<!-- ===== 8. 내 자산 영향 ===== -->
+<section id="impact">
+  <div class="reveal">
+    <div class="eyebrow">내 삶에 미치는 영향</div>
+    <h2>그래서 내 돈은 어떻게 굴려야 하나</h2>
+    <p>올웨더의 진짜 가치는 "이 비율을 똑같이 따라 하라"가 아니라, <strong>내 자산 전체를 보는 눈</strong>을 길러주는 데 있습니다.</p>
+  </div>
+
+  <div class="reveal cards">
+    <div class="card">
+      <div class="ic">🏠</div>
+      <h4>부동산이 전부라면</h4>
+      <p>한국 가계는 자산의 상당 부분이 집 한 채에 묶여 있는 경우가 많습니다. 이건 '부동산 한 계절에 몰빵'한 상태. 올웨더의 관점은 "다른 계절 자산도 좀 챙겨라"라고 말합니다.</p>
+    </div>
+    <div class="card">
+      <div class="ic">📱</div>
+      <h4>주식 몰빵 청년</h4>
+      <p>미국 빅테크·코스피에만 올인했다면, 성장 한 계절에만 베팅한 셈. 금·채권 약간을 섞는 것만으로 폭락장의 충격을 크게 줄일 수 있습니다.</p>
+    </div>
+    <div class="card">
+      <div class="ic">👵</div>
+      <h4>은퇴 준비 세대</h4>
+      <p>큰 손실을 회복할 시간이 적은 만큼, '낙폭이 작은' 올웨더형 배분이 특히 유용합니다. 연금계좌 안에서 ETF로 구성하는 방식이 현실적.</p>
+    </div>
+  </div>
+
+  <div class="reveal analogy">
+    <div class="tag">사례로 보기</div>
+    <p>친구 A는 2021년 끝물에 미국 성장주에 전 재산을 넣었습니다. 2022년 금리 급등으로 자산이 반 토막 나자, 버티지 못하고 바닥에서 팔아버렸죠. 친구 B는 주식·채권·금을 나눠 담아두었습니다. 같은 해 B도 빠졌지만 낙폭이 훨씬 작았고, 리밸런싱 규칙대로 싸진 주식을 더 사두었습니다. 2년 뒤, <b>버틴 B와 팔아버린 A의 격차</b>는 수익률 숫자보다 훨씬 컸습니다. — 올웨더가 지키려는 건 '최고 수익'이 아니라 '게임에서 안 쫓겨나는 것'입니다.</p>
+  </div>
+
+  <div class="reveal ask">
+    <div class="tag">생각해 볼 질문</div>
+    <p>지금 당신의 자산은 어느 '계절'에 가장 많이 쏠려 있나요? 만약 정반대 계절이 갑자기 닥친다면, 마음 편히 잠들 수 있을까요?</p>
+  </div>
+</section>
+
+<!-- ===== 9. 인물 ===== -->
+<section id="person">
+  <div class="reveal">
+    <div class="eyebrow">핵심 인물</div>
+    <h2>레이 달리오라는 사람</h2>
+  </div>
+
+  <div class="reveal person">
+    <div class="avatar">RD</div>
+    <div>
+      <h4>레이 달리오 (Ray Dalio)</h4>
+      <div class="role">브리지워터 어소시에이츠 창업자 · 1949년 뉴욕 출생</div>
+      <p>방 두 칸 아파트에서 세계 최대 헤지펀드를 일군 인물. 12살에 캐디로 번 돈으로 주식을 처음 샀고, 50년 넘게 거시경제의 인과관계를 연구해 왔습니다. 저서 《원칙(Principles)》은 세계적 베스트셀러가 됐습니다.</p>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <h3>이력과 성향</h3>
+    <p>달리오는 2017년 CEO에서 물러난 뒤 2021~2022년 회장·CIO 역할을 단계적으로 내려놓았고, 2025년에는 브리지워터의 남은 지분까지 정리하며 경영에서 완전히 손을 뗐습니다. 지금은 매일의 운용 대신, 부채·금·AI·세계질서 같은 큰 흐름을 경고하는 <strong>'시장의 원로(market statesman)'</strong>로 활동합니다. 흥미롭게도 자신을 본뜬 AI 클론을 만들어 다음 세대를 가르치겠다는 시도도 진행 중입니다.</p>
+  </div>
+
+  <div class="reveal">
+    <h3>향후 행보 — 그가 지금 외치는 것</h3>
+    <p>2026년의 달리오는 미국 부채를 두고 격한 경고를 쏟아내고 있습니다. 미국이 매년 약 7조 달러를 쓰면서 5조 달러밖에 못 걷는 '40% 초과지출' 구조를 지적하며, 2026년 중간선거와 2028년 대선 사이를 <strong>"특히 위험한 시기"</strong>로 봅니다. 그는 이를 500년 역사에서 반복돼 온 <strong>'빅 사이클(Big Cycle)'</strong>의 후반부라고 진단하죠.</p>
+    <div class="callout" style="margin-top:14px">
+      <div class="tag">📌 그의 핵심 메시지 (시나리오)</div>
+      <p>"상관관계가 낮은 좋은 수익원 5개만 균형 있게 모아도 수익은 그대로 두고 위험을 크게 줄일 수 있다." 그리고 불확실한 시대일수록 <strong>금을 자산의 10~15%</strong> 담으라는 조언. — 모두 <strong>확정된 예언이 아니라 대비를 위한 시나리오</strong>입니다.</p>
+    </div>
+  </div>
+
+  <div class="reveal quiz" data-correct="2">
+    <div class="qtag">QUIZ 05</div>
+    <div class="q">2026년 현재 레이 달리오의 위치를 가장 잘 설명한 것은?</div>
+    <button class="opt" data-i="0">여전히 브리지워터 CEO로 매일 펀드를 운용한다</button>
+    <button class="opt" data-i="1">투자에서 완전히 은퇴해 아무 발언도 하지 않는다</button>
+    <button class="opt" data-i="2">경영에선 손을 뗐지만, 부채·금·세계질서를 경고하는 원로로 활동한다</button>
+    <button class="opt" data-i="3">새로 헤지펀드를 차려 다시 운용을 시작했다</button>
+    <div class="explain"><b>정답: 3번.</b> 그는 2025년까지 브리지워터 지분을 모두 정리하고 경영에서 물러났습니다. 지금은 '시장의 원로'로서 거시 위험을 공개적으로 경고하는 데 집중하고 있습니다.</div>
+  </div>
+</section>
+
+<!-- ===== 10. 정리 ===== -->
+<section id="summary">
+  <div class="reveal">
+    <div class="eyebrow">마무리</div>
+    <h2>오늘 기억할 6가지</h2>
+  </div>
+
+  <div class="reveal takeaways">
+    <div class="tk"><div><h4>예측이 아니라 대비</h4><p>올웨더는 미래를 맞히려는 게 아니라, 어떤 미래가 와도 견디려는 전략입니다. 출발점은 '겸손'.</p></div></div>
+    <div class="tk"><div><h4>경제엔 4계절이 있다</h4><p>성장↑·성장↓·물가↑·물가↓. 각 계절에 강한 자산을 모두 담으면 누군가는 늘 우산을 폅니다.</p></div></div>
+    <div class="tk"><div><h4>돈이 아니라 '위험'을 나눈다</h4><p>리스크 패리티 — 사나운 주식은 적게, 얌전한 채권은 많이. 그래서 채권 비중이 절반을 넘습니다.</p></div></div>
+    <div class="tk"><div><h4>강점과 약점이 분명하다</h4><p>폭락장 방어엔 강하지만, 강세장과 금리 급등기(2022년 -18%)엔 약합니다. 만능이 아닙니다.</p></div></div>
+    <div class="tk"><div><h4>비율보다 '사고방식'</h4><p>똑같이 베끼기보다, "위험을 한 곳에 몰지 마라"는 원리를 내 상황에 맞게 변형하는 게 핵심.</p></div></div>
+    <div class="tk"><div><h4>전망은 시나리오일 뿐</h4><p>달리오의 부채 경고·금 권유조차 확정이 아닌 시나리오. 그 불확실성이 바로 올웨더의 이유입니다.</p></div></div>
+  </div>
+
+  <div class="reveal discuss">
+    <div class="tag">FINAL · 함께 토론하기</div>
+    <h3>"나만의 올웨더"를 그려본다면?</h3>
+    <p>오늘 배운 4계절과 리스크 패리티를 떠올려 보세요. 만약 당신이 직접 포트폴리오를 짠다면, 주식·채권·금·부동산을 어떤 비율로 나누겠습니까? 그리고 그 비율에는 당신의 어떤 '예측'이 — 혹은 '겸손'이 — 숨어 있나요? 옆 사람과 비교해 봅시다.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<button id="totop" aria-label="맨 위로">↑</button>
+
+<footer>
+  <div class="wrap">
+    <h4>출처 및 참고자료 (2026년 6월 기준 확인)</h4>
+    <p>
+      · 올웨더 배분·성과: PortfoliosLab, OptimizedPortfolio, LazyPortfolioETF<br>
+      · 전략 개요·ALLW ETF·달리오 발언: EBC Financial Group, Saxo Bank<br>
+      · 달리오 부채 경고·근황·이력: Fortune, TheStreet, AOL, Yahoo Finance, Reuters 보도 종합<br>
+      · 역사·인물 배경: Fortune 기고문 및 공개 약력
+    </p>
+    <p class="disc">
+      ⚠️ 본 자료는 교육·스터디 목적의 정리이며 투자 권유가 아닙니다. 수익률·배분 수치는 출처별 산정 기준(기간·통화·방법)에 따라 달라질 수 있고, 과거 성과가 미래 수익을 보장하지 않습니다. 본문의 모든 전망은 <b>확정된 예측이 아니라 하나의 시나리오</b>입니다. 실제 투자 전 반드시 본인의 상황과 최신 데이터를 확인하세요.
+    </p>
+  </div>
+</footer>
+
+<script>
+/* 진행 막대 */
+const progress=document.getElementById('progress');
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const pct=(h.scrollTop)/(h.scrollHeight-h.clientHeight)*100;
+  progress.style.width=pct+'%';
+  document.getElementById('totop').classList.toggle('show',h.scrollTop>600);
+},{passive:true});
+
+/* 스크롤 등장 애니메이션 */
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* 목차 스크롤스파이 */
+const tocLinks=[...document.querySelectorAll('#tocList a')];
+const secs=tocLinks.map(a=>document.querySelector(a.getAttribute('href')));
+const spy=new IntersectionObserver((es)=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      const id='#'+e.target.id;
+      tocLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')===id));
+    }
+  });
+},{rootMargin:'-30% 0px -60% 0px'});
+secs.forEach(s=>{if(s)spy.observe(s);});
+
+/* 모바일 목차 토글 */
+const tocToggle=document.getElementById('tocToggle');
+const tocList=document.getElementById('tocList');
+tocToggle.addEventListener('click',()=>{
+  const open=tocList.classList.toggle('open');
+  tocToggle.setAttribute('aria-expanded',open);
+  tocToggle.textContent=open?'☰ 목차 접기':'☰ 목차 펼치기';
+});
+tocLinks.forEach(a=>a.addEventListener('click',()=>{
+  if(window.innerWidth<=880){tocList.classList.remove('open');tocToggle.setAttribute('aria-expanded','false');tocToggle.textContent='☰ 목차 펼치기';}
+}));
+
+/* 맨 위로 */
+document.getElementById('totop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+/* 퀴즈 */
+document.querySelectorAll('.quiz').forEach(q=>{
+  const correct=+q.dataset.correct;
+  const opts=[...q.querySelectorAll('.opt')];
+  const exp=q.querySelector('.explain');
+  let done=false;
+  opts.forEach(o=>{
+    o.addEventListener('click',()=>{
+      if(done)return;done=true;
+      const i=+o.dataset.i;
+      opts.forEach(x=>{
+        const xi=+x.dataset.i;
+        if(xi===correct){x.classList.add('correct');x.insertAdjacentHTML('beforeend','<span class="mk">✓</span>');}
+        else if(xi===i){x.classList.add('wrong');x.insertAdjacentHTML('beforeend','<span class="mk">✗</span>');}
+        else x.classList.add('dim');
+      });
+      exp.classList.add('show');
+    });
+  });
+});
+
+/* 빗줄기 생성 */
+(function(){
+  if(window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const layer=document.getElementById('rainLayer');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('span');
+    s.style.left=Math.random()*100+'%';
+    s.style.animationDuration=(0.6+Math.random()*0.8)+'s';
+    s.style.animationDelay=(Math.random()*2)+'s';
+    s.style.height=(40+Math.random()*60)+'px';
+    layer.appendChild(s);
+  }
+})();
+
+/* 사이드 패널 */
+const panel=document.getElementById('sidepanel');
+const openP=()=>panel.classList.add('open');
+const closeP=()=>panel.classList.remove('open');
+document.getElementById('panelHint').addEventListener('click',openP);
+document.getElementById('panelTrigger').addEventListener('mouseenter',openP);
+document.getElementById('panelClose').addEventListener('click',closeP);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeP();});
+document.addEventListener('click',e=>{
+  if(panel.classList.contains('open')&&!panel.contains(e.target)&&e.target.id!=='panelHint'&&e.target.id!=='panelTrigger')closeP();
+});
+
+/* 다른 발표 목록 불러오기 */
+fetch('../../presentations.json')
+  .then(r=>r.json())
+  .then(data=>{
+    const list=Array.isArray(data)?data:(data.presentations||[]);
+    const box=document.getElementById('panelList');
+    box.innerHTML='';
+    if(!list.length){box.innerHTML='<p style="color:var(--frost);font-size:.85rem">목록이 비어 있습니다.</p>';return;}
+    list.forEach(p=>{
+      const a=document.createElement('a');
+      a.className='plink';
+      a.href='../'+(p.slug||'')+'/';
+      a.innerHTML='<span class="pt">'+(p.title||'제목 없음')+'</span><span class="pd">'+(p.date||'')+(p.summary?' · '+p.summary:'')+'</span>';
+      box.appendChild(a);
+    });
+  })
+  .catch(()=>{
+    document.getElementById('panelList').innerHTML='<p style="color:var(--frost);font-size:.85rem">목록을 불러올 수 없습니다.<br>(허브에 배포되면 자동으로 표시됩니다.)</p>';
+  });
+</script>
+</body>
+</html>

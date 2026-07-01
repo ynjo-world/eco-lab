@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식 배당금으로 은퇴 설계하기 — 월급이 끊겨도 통장에 돈이 들어오게</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15281f;          /* 짙은 상록(常綠) */
+    --ink-soft:#3a4d43;
+    --paper:#f6f3ea;        /* 따뜻한 종이 */
+    --paper-2:#efe9da;
+    --leaf:#2f6b46;         /* 배당의 잎 */
+    --leaf-bright:#4f9e6a;
+    --gold:#b3892f;         /* 익은 열매·동전 */
+    --gold-bright:#d9a93f;
+    --berry:#9c3b2e;        /* 경고·세금 */
+    --line:#d8cfba;
+    --shadow:rgba(21,40,31,.10);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans KR',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.75;
+    font-weight:300;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* ===== 진행 막대 ===== */
+  #progress{
+    position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--leaf),var(--gold-bright));
+    z-index:1000;transition:width .1s linear;
+  }
+
+  /* ===== 목록으로 버튼 (인라인 의존 없이 고정) ===== */
+  .back-btn{
+    position:fixed;top:14px;left:14px;z-index:1001;
+    display:inline-flex;align-items:center;gap:6px;
+    padding:9px 15px;border-radius:999px;
+    background:#15281f;color:#f6f3ea;text-decoration:none;
+    font-size:14px;font-weight:500;border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 4px 14px rgba(21,40,31,.28);
+  }
+  .back-btn:hover{background:#234135;}
+  .back-btn:focus-visible{outline:3px solid #d9a93f;outline-offset:2px;}
+
+  /* ===== 사이드 패널 ===== */
+  #edge-trigger{position:fixed;top:0;left:0;width:14px;height:100vh;z-index:990;}
+  #panel-btn{
+    position:fixed;bottom:84px;right:20px;z-index:1001;
+    width:50px;height:50px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--leaf);color:#fff;font-size:20px;
+    box-shadow:0 6px 18px var(--shadow);
+  }
+  #panel-btn:focus-visible{outline:3px solid var(--gold-bright);outline-offset:2px;}
+  #side-panel{
+    position:fixed;top:0;left:0;height:100vh;width:300px;max-width:85vw;
+    background:#15281f;color:#e9e3d4;z-index:1100;
+    transform:translateX(-105%);transition:transform .3s ease;
+    padding:70px 22px 24px;overflow-y:auto;box-shadow:6px 0 30px rgba(0,0,0,.3);
+  }
+  #side-panel.open{transform:translateX(0);}
+  #side-panel h3{font-family:'Gowun Batang';font-size:18px;margin:0 0 4px;color:#fff;}
+  #side-panel .sp-sub{font-size:12px;color:#9fb3a6;margin-bottom:18px;}
+  #side-panel a{
+    display:block;color:#d7e0d8;text-decoration:none;font-size:14px;
+    padding:10px 12px;border-radius:8px;margin-bottom:4px;border:1px solid transparent;
+  }
+  #side-panel a:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);}
+  #side-panel a.current{background:rgba(217,169,63,.15);border-color:var(--gold);color:#fff;}
+  #panel-close{position:absolute;top:16px;right:16px;background:none;border:none;color:#cfc;font-size:24px;cursor:pointer;}
+  #overlay{position:fixed;inset:0;background:rgba(8,16,12,.5);z-index:1099;opacity:0;pointer-events:none;transition:opacity .3s;}
+  #overlay.show{opacity:1;pointer-events:auto;}
+
+  /* ===== 레이아웃 ===== */
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:230px 1fr;gap:48px;}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr;gap:0;}}
+
+  /* ===== 목차 ===== */
+  #toc{position:sticky;top:24px;align-self:start;height:fit-content;padding-top:64px;}
+  #toc .toc-title{font-family:'Gowun Batang';font-weight:700;font-size:14px;letter-spacing:.05em;color:var(--leaf);margin-bottom:10px;text-transform:uppercase;}
+  #toc ol{list-style:none;margin:0;padding:0;counter-reset:t;}
+  #toc li{counter-increment:t;}
+  #toc a{
+    display:flex;gap:10px;text-decoration:none;color:var(--ink-soft);
+    font-size:13.5px;padding:7px 10px;border-radius:7px;border-left:2px solid transparent;
+  }
+  #toc a::before{content:counter(t,decimal-leading-zero);font-family:'IBM Plex Mono';font-size:11px;color:var(--gold);}
+  #toc a:hover{background:var(--paper-2);}
+  #toc a.active{background:var(--paper-2);border-left-color:var(--leaf);color:var(--ink);font-weight:500;}
+  #toc a:focus-visible{outline:2px solid var(--leaf);outline-offset:1px;}
+  .toc-mobile-toggle{display:none;}
+  @media(max-width:900px){
+    #toc{position:sticky;top:0;z-index:900;padding-top:0;background:var(--paper);border-bottom:1px solid var(--line);margin:0 -24px;padding:0 24px;}
+    .toc-mobile-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;
+      background:none;border:none;font-family:'IBM Plex Sans KR';font-weight:600;color:var(--ink);
+      font-size:15px;padding:54px 0 14px;cursor:pointer;}
+    #toc ol{max-height:0;overflow:hidden;transition:max-height .3s ease;}
+    #toc.open ol{max-height:640px;padding-bottom:12px;}
+  }
+
+  /* ===== 콘텐츠 ===== */
+  main{padding-top:56px;min-width:0;}
+  section{padding:46px 0;border-top:1px solid var(--line);}
+  section:first-of-type{border-top:none;}
+  .eyebrow{font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;}
+  h1{font-family:'Gowun Batang';font-weight:700;font-size:clamp(30px,5.4vw,52px);line-height:1.18;margin:0 0 18px;letter-spacing:-.01em;}
+  h2{font-family:'Gowun Batang';font-weight:700;font-size:clamp(24px,3.6vw,34px);line-height:1.25;margin:0 0 16px;}
+  h3{font-family:'Gowun Batang';font-weight:700;font-size:21px;margin:30px 0 10px;}
+  p{margin:0 0 16px;}
+  strong{font-weight:600;color:var(--ink);}
+  .lead{font-size:clamp(17px,2.2vw,20px);color:var(--ink-soft);font-weight:400;}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal.show{opacity:1;transform:none;}
+
+  /* ===== 박스류 ===== */
+  .def{background:linear-gradient(135deg,#15281f,#234135);color:#f2eedf;border-radius:16px;padding:26px 28px;margin:22px 0;box-shadow:0 10px 30px var(--shadow);}
+  .def .tag{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.16em;color:var(--gold-bright);text-transform:uppercase;}
+  .def p{margin:8px 0 0;font-size:18px;line-height:1.6;}
+  .def .big{font-family:'Gowun Batang';font-size:23px;font-weight:700;color:#fff;}
+
+  .analogy{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:0 14px 14px 0;padding:20px 24px;margin:22px 0;box-shadow:0 4px 16px var(--shadow);}
+  .analogy .label{font-weight:600;color:var(--gold);font-size:13px;letter-spacing:.04em;margin-bottom:6px;display:flex;align-items:center;gap:7px;}
+  .analogy .label::before{content:"🌳";}
+
+  .warn{background:#f9ece9;border:1px solid #e3c4bd;border-left:5px solid var(--berry);border-radius:0 14px 14px 0;padding:18px 22px;margin:22px 0;}
+  .warn .label{font-weight:600;color:var(--berry);margin-bottom:5px;}
+
+  .askbox{background:var(--paper-2);border:1px dashed var(--leaf);border-radius:14px;padding:20px 24px;margin:26px 0;}
+  .askbox .q{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.14em;color:var(--leaf);text-transform:uppercase;margin-bottom:7px;}
+  .askbox p{margin:0;font-family:'Gowun Batang';font-size:18px;color:var(--ink);font-weight:400;}
+
+  /* ===== 타임라인 ===== */
+  .timeline{position:relative;margin:28px 0 8px;padding-left:8px;}
+  .timeline::before{content:"";position:absolute;left:14px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--leaf),var(--gold));}
+  .tl-item{position:relative;padding:0 0 26px 44px;}
+  .tl-item::before{content:"";position:absolute;left:8px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--paper);border:3px solid var(--leaf);}
+  .tl-year{font-family:'IBM Plex Mono';font-weight:500;color:var(--gold);font-size:14px;}
+  .tl-item h4{margin:2px 0 5px;font-family:'Gowun Batang';font-size:18px;}
+  .tl-item p{margin:0;font-size:15px;color:var(--ink-soft);}
+
+  /* ===== 카드 그리드 ===== */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 4px 14px var(--shadow);}
+  .card h4{margin:0 0 6px;font-family:'Gowun Batang';font-size:18px;}
+  .card .num{font-family:'IBM Plex Mono';font-size:13px;color:var(--gold);}
+  .card p{font-size:14.5px;color:var(--ink-soft);margin:0;}
+
+  /* ===== 표 ===== */
+  .tbl{overflow-x:auto;margin:22px 0;border-radius:12px;border:1px solid var(--line);}
+  table{border-collapse:collapse;width:100%;background:#fff;font-size:14.5px;min-width:480px;}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);}
+  th{background:#15281f;color:#f2eedf;font-weight:500;font-size:13px;letter-spacing:.02em;}
+  tr:last-child td{border-bottom:none;}
+  td.num,th.num{font-family:'IBM Plex Mono';text-align:right;}
+  tbody tr:nth-child(even){background:var(--paper);}
+  .hl{color:var(--leaf);font-weight:600;}
+
+  /* ===== 다이어그램 ===== */
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:24px 0;justify-content:center;}
+  .flow .node{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;text-align:center;box-shadow:0 4px 12px var(--shadow);flex:1;min-width:120px;}
+  .flow .node .t{font-family:'Gowun Batang';font-weight:700;font-size:15px;}
+  .flow .node .s{font-size:12px;color:var(--ink-soft);}
+  .flow .arrow{color:var(--gold);font-size:22px;font-weight:700;}
+  @media(max-width:640px){.flow{flex-direction:column;}.flow .arrow{transform:rotate(90deg);}}
+
+  /* ===== 퀴즈 ===== */
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin:30px 0;box-shadow:0 6px 20px var(--shadow);}
+  .quiz .qlabel{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+  .quiz h4{margin:0 0 16px;font-family:'Gowun Batang';font-size:19px;line-height:1.4;}
+  .opt{display:block;width:100%;text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;
+    padding:14px 16px;margin-bottom:10px;cursor:pointer;font-family:inherit;font-size:15px;color:var(--ink);
+    transition:border-color .2s,background .2s;min-height:48px;}
+  .opt:hover{border-color:var(--leaf);}
+  .opt:focus-visible{outline:2px solid var(--leaf);outline-offset:2px;}
+  .opt.correct{background:#e4f1e8;border-color:var(--leaf-bright);color:#1c5234;font-weight:500;}
+  .opt.wrong{background:#f9ece9;border-color:var(--berry);color:var(--berry);}
+  .opt.disabled{cursor:default;opacity:.75;}
+  .explain{display:none;margin-top:6px;padding:16px 18px;background:var(--paper-2);border-radius:10px;font-size:14.5px;color:var(--ink-soft);border-left:4px solid var(--leaf);}
+  .explain.show{display:block;animation:fade .4s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;}}
+
+  /* ===== 마무리 ===== */
+  .takeaways{background:#15281f;color:#f2eedf;border-radius:18px;padding:34px 32px;margin:30px 0;}
+  .takeaways h3{color:#fff;margin-top:0;}
+  .takeaways ol{margin:0;padding-left:0;list-style:none;counter-reset:k;}
+  .takeaways li{counter-increment:k;padding:13px 0 13px 46px;position:relative;border-bottom:1px solid rgba(255,255,255,.1);}
+  .takeaways li:last-child{border-bottom:none;}
+  .takeaways li::before{content:counter(k);position:absolute;left:0;top:11px;width:30px;height:30px;border-radius:50%;
+    background:var(--gold);color:#15281f;font-family:'IBM Plex Mono';font-weight:500;display:flex;align-items:center;justify-content:center;font-size:14px;}
+
+  .final-q{text-align:center;padding:50px 24px;background:linear-gradient(135deg,#234135,#15281f);border-radius:18px;color:#f2eedf;margin:30px 0;}
+  .final-q .q{font-family:'IBM Plex Mono';font-size:12px;letter-spacing:.16em;color:var(--gold-bright);margin-bottom:14px;}
+  .final-q p{font-family:'Gowun Batang';font-size:clamp(20px,3vw,26px);line-height:1.5;color:#fff;margin:0;}
+
+  footer{border-top:1px solid var(--line);padding:30px 0 60px;font-size:12.5px;color:var(--ink-soft);}
+  footer a{color:var(--leaf);}
+  .src{font-size:11.5px;line-height:1.7;}
+
+  #top-btn{position:fixed;bottom:20px;right:20px;z-index:1001;width:46px;height:46px;border-radius:50%;
+    background:#15281f;color:#fff;border:none;cursor:pointer;font-size:18px;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:0 6px 18px var(--shadow);}
+  #top-btn.show{opacity:1;pointer-events:auto;}
+  #top-btn:focus-visible{outline:3px solid var(--gold-bright);outline-offset:2px;}
+
+  /* SVG 차트 라벨 */
+  .chart-cap{font-size:12.5px;color:var(--ink-soft);text-align:center;margin-top:6px;}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+    .reveal{opacity:1;transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<a href="../../" class="back-btn" style="position:fixed;top:14px;left:14px;z-index:1001;display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:999px;background:#15281f;color:#f6f3ea;text-decoration:none;font-size:14px;font-weight:500;box-shadow:0 4px 14px rgba(21,40,31,.28);">← 목록으로</a>
+
+<div id="edge-trigger"></div>
+<button id="panel-btn" aria-label="다른 발표 보기">☰</button>
+<div id="overlay"></div>
+<nav id="side-panel" aria-label="발표 목록">
+  <button id="panel-close" aria-label="닫기">×</button>
+  <h3>eco-lab 발표 목록</h3>
+  <div class="sp-sub">다른 주제로 이동</div>
+  <div id="sp-list">불러오는 중…</div>
+</nav>
+
+<button id="top-btn" aria-label="맨 위로">↑</button>
+
+<div class="wrap">
+
+  <!-- 목차 -->
+  <nav id="toc" aria-label="목차">
+    <button class="toc-mobile-toggle" aria-expanded="false">목차 보기 <span>▾</span></button>
+    <div class="toc-title">목차</div>
+    <ol>
+      <li><a href="#intro">여는 이야기</a></li>
+      <li><a href="#history">왜 생겨났나</a></li>
+      <li><a href="#concept">배당이란 무엇인가</a></li>
+      <li><a href="#how">어떻게 돌아가나</a></li>
+      <li><a href="#korea">한국의 제도와 세금</a></li>
+      <li><a href="#stocks">한국 대표 배당주</a></li>
+      <li><a href="#practitioner">실무자의 시선</a></li>
+      <li><a href="#global">국제 비교·전망</a></li>
+      <li><a href="#mylife">얼마가 필요한가</a></li>
+      <li><a href="#compare">다른 자산과 비교</a></li>
+      <li><a href="#build">지금 포트폴리오 짜기</a></li>
+      <li><a href="#strategy">매매·수령 전략</a></li>
+      <li><a href="#takeaway">오늘 기억할 10가지</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <!-- 1. 여는 이야기 -->
+  <section id="intro">
+    <div class="eyebrow reveal">eco-lab · 경제 스터디</div>
+    <h1 class="reveal">월급이 끊겨도<br>통장에 돈이 들어오게</h1>
+    <p class="lead reveal">은퇴하면 가장 무서운 게 뭘까요? 모아둔 돈이 <strong>'줄어드는 걸 지켜보는 일'</strong>입니다. 그런데 돈을 헐지 않고, 나무에서 열매 따듯 <strong>'나오는 것만'</strong> 받아쓸 수 있다면요? 그게 바로 오늘의 주제, <strong>배당금으로 은퇴 설계하기</strong>입니다.</p>
+    <div class="analogy reveal">
+      <div class="label">한 줄 비유</div>
+      <p style="margin:0;">통장에 든 1억을 닭이라고 해봅시다. 배고프다고 닭을 잡아먹으면 내일은 굶습니다. 하지만 <strong>닭이 낳는 달걀</strong>만 먹으면 닭은 그대로 남고, 매년 달걀은 또 나옵니다. 배당 투자는 <strong>"닭을 지키고 달걀로 사는"</strong> 은퇴 전략입니다.</p>
+    </div>
+    <div class="askbox reveal">
+      <div class="q">생각해 볼 질문</div>
+      <p>지금 일을 그만둔다면, 당신의 통장은 몇 달을 버틸 수 있나요? 그리고 그 통장은 가만히 둬도 스스로 돈을 '낳고' 있나요, 아니면 쓰는 만큼 '줄고' 있나요?</p>
+    </div>
+  </section>
+
+  <!-- 2. 왜 생겨났나 -->
+  <section id="history">
+    <div class="eyebrow reveal">탄생 배경</div>
+    <h2 class="reveal">"얼마나 빼 써야 안 망할까"<br>— 한 초보 설계사의 질문</h2>
+    <p class="reveal">배당으로 사는 삶이라는 개념은 사실 아주 오래됐습니다. 19세기 영국의 '연금 생활자(rentier)'는 채권·주식 이자로 일 없이 살았죠. 하지만 <strong>'그래서 매년 얼마까지 빼 써도 평생 안 망하나?'</strong>라는 질문에 숫자로 답한 사람은 의외로 최근에야 등장합니다.</p>
+    <div class="timeline reveal">
+      <div class="tl-item">
+        <div class="tl-year">1929–1970년대</div>
+        <h4>"감으로" 빼 쓰던 시절</h4>
+        <p>대공황과 1970년대 고물가를 겪으며, 많은 은퇴자가 "이 정도면 되겠지" 하고 돈을 빼 쓰다 <strong>예상보다 빨리 바닥</strong>을 봤습니다. 정해진 기준이 없었습니다.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">1994년</div>
+        <h4>'4% 룰'의 탄생 — 윌리엄 벵겐</h4>
+        <p>신참 재무설계사 <strong>윌리엄 벵겐</strong>이 고객들에게 "매년 얼마까지 안전한가"를 묻는 질문에 답하려 직접 스프레드시트로 과거 데이터를 돌렸습니다. 1994년 10월 《재무설계 저널》에 발표한 이 연구로, 오늘날 '4% 인출 법칙'이 탄생합니다. 원래 계산값은 4.15%였는데 출판 과정에서 반올림돼 '4%'로 굳어졌습니다.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">1998년</div>
+        <h4>'트리니티 연구'로 대중화</h4>
+        <p>트리니티 대학 교수 3인이 비슷한 데이터로 검증하면서(트리니티 연구) 4% 룰이 업계 표준으로 퍼졌습니다. 핵심은 "주식·채권 반반 포트폴리오에서 첫해 4%를 빼고 매년 물가만큼만 늘리면, 30년 동안 거의 안 망한다"였죠.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2020년대~현재</div>
+        <h4>저금리·고령화가 불을 지피다</h4>
+        <p>예금 이자가 쥐꼬리만 해지고 수명은 길어지면서, "원금을 헐지 말고 <strong>배당·이자 같은 현금흐름으로 살자</strong>"는 발상이 전 세계 은퇴 설계의 중심이 됐습니다. 벵겐 본인도 자산을 늘려 안전 인출률을 4.7%로 상향했습니다.</p>
+      </div>
+    </div>
+    <div class="warn reveal">
+      <div class="label">⚠ 4% 룰은 '미국·과거' 기준</div>
+      <p style="margin:0;">4% 룰은 미국 역사상 최악의 은퇴 시점(1966년 전후)을 버틴 보수적 숫자입니다. 한국 시장, 환율, 세금에 그대로 적용하면 안 되고 '출발점' 정도로만 봐야 합니다.</p>
+    </div>
+    <div class="askbox reveal">
+      <div class="q">생각해 볼 질문</div>
+      <p>'매년 자산의 4%'와 '매년 들어오는 배당금', 둘 중 어느 쪽이 마음이 더 편할 것 같나요? 왜 그렇게 느낄까요?</p>
+    </div>
+
+    <div class="quiz reveal" data-answer="1">
+      <div class="qlabel">Quiz 1</div>
+      <h4>'4% 룰'을 처음 숫자로 정리한 사람과 시기는?</h4>
+      <button class="opt">존 보글, 1970년대 (인덱스 펀드 창시)</button>
+      <button class="opt">윌리엄 벵겐, 1994년 (재무설계 저널)</button>
+      <button class="opt">워런 버핏, 1988년 (주주 서한)</button>
+      <button class="opt">트리니티 대학, 1929년 (대공황 직후)</button>
+      <div class="explain">정답은 ②. 벵겐이 1994년 《재무설계 저널》에 발표했고, 1998년 트리니티 연구가 이를 검증·대중화했습니다. 원래 계산값 4.15%가 반올림되어 '4%'가 됐습니다.</div>
+    </div>
+  </section>
+
+  <!-- 3. 개념 -->
+  <section id="concept">
+    <div class="eyebrow reveal">개념 정의</div>
+    <h2 class="reveal">배당이란 무엇인가</h2>
+    <div class="def reveal">
+      <div class="tag">Definition</div>
+      <p class="big">배당금이란, 회사가 번 이익의 일부를 주주에게 현금으로 나눠 주는 '몫'입니다.</p>
+      <p>주식 1주를 가졌다는 건 그 회사의 아주 작은 조각을 소유했다는 뜻이고, 회사가 돈을 벌면 그 조각만큼 이익을 나눠 받을 권리가 생깁니다.</p>
+    </div>
+    <div class="analogy reveal">
+      <div class="label">과수원 비유</div>
+      <p style="margin:0;">주식을 사는 건 <strong>과수원의 사과나무 한 그루</strong>를 사는 것과 같습니다. 나무값(주가)은 오르내리지만, 매년 가을이면 <strong>사과(배당)</strong>가 열립니다. 어떤 투자자는 사과를 팔아 생활하고(배당주 투자자), 어떤 투자자는 나무가 더 커져 비싸지길 기다립니다(성장주 투자자).</p>
+    </div>
+    <h3 class="reveal">두 가지 수익을 구분하세요</h3>
+    <div class="grid reveal">
+      <div class="card">
+        <div class="num">수익 ①</div>
+        <h4>시세차익</h4>
+        <p>싸게 사서 비싸게 팔 때 생기는 이익. 팔아야 손에 쥡니다. 나무를 통째로 파는 셈.</p>
+      </div>
+      <div class="card">
+        <div class="num">수익 ②</div>
+        <h4>배당 수익</h4>
+        <p>주식을 <strong>그대로 들고 있어도</strong> 정기적으로 들어오는 현금. 은퇴 생활비의 핵심.</p>
+      </div>
+    </div>
+    <h3 class="reveal">꼭 알아야 할 단어 3개</h3>
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>용어</th><th>쉬운 뜻</th><th>예시</th></tr></thead>
+        <tbody>
+          <tr><td><strong>배당수익률</strong></td><td>주가 대비 배당이 몇 %인가 (예금이자율 같은 느낌)</td><td>10만원 주식이 5천원 배당 → 5%</td></tr>
+          <tr><td><strong>배당성향</strong></td><td>회사가 번 순이익 중 몇 %를 배당으로 주나</td><td>이익 100억 중 50억 배당 → 50%</td></tr>
+          <tr><td><strong>배당기준일</strong></td><td>이날 주식을 갖고 있어야 배당받는 '명단 마감일'</td><td>이날 하루만 보유해도 권리 발생</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="quiz reveal" data-answer="2">
+      <div class="qlabel">Quiz 2</div>
+      <h4>주가 8만원짜리 주식이 한 해 4,000원을 배당했습니다. 배당수익률은?</h4>
+      <button class="opt">2%</button>
+      <button class="opt">4%</button>
+      <button class="opt">5%</button>
+      <button class="opt">8%</button>
+      <div class="explain">정답은 ③. 배당수익률 = 배당금 ÷ 주가 = 4,000 ÷ 80,000 = 5%. 같은 4,000원이라도 주가가 싸지면 수익률은 올라갑니다. 그래서 "주가가 빠질 때 배당수익률이 높아 보이는" 착시를 조심해야 합니다.</div>
+    </div>
+  </section>
+
+  <!-- 4. 작동 원리 -->
+  <section id="how">
+    <div class="eyebrow reveal">작동 원리</div>
+    <h2 class="reveal">배당은 어떻게 내 통장까지 오나</h2>
+    <div class="flow reveal">
+      <div class="node"><div class="t">회사 이익</div><div class="s">1년 장사로 돈을 범</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">이사회·주총 결의</div><div class="s">"주당 ○○원 주자"</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">배당기준일</div><div class="s">이날 보유자 명단 확정</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">내 계좌 입금</div><div class="s">세금 떼고 들어옴</div></div>
+    </div>
+    <p class="reveal">핵심은 <strong>'내가 아무것도 안 해도'</strong> 회사가 알아서 이익을 나눠 준다는 점입니다. 다만 배당은 <strong>약속이 아니라 정책</strong>입니다. 회사가 어려워지면 줄거나 끊길 수 있어요. "배당은 약속이 아니라 정책"이라는 말을 기억해두면 좋습니다.</p>
+
+    <h3 class="reveal">왜 '복리'가 마법인가 — 배당 재투자</h3>
+    <p class="reveal">은퇴 전이라면 배당을 쓰지 말고 <strong>그 돈으로 같은 주식을 또 사세요</strong>. 그러면 나무가 한 그루씩 늘고, 다음 해엔 더 많은 사과가 열립니다. 이게 눈덩이처럼 불어나는 <strong>배당 복리</strong>입니다.</p>
+
+    <!-- SVG 복리 차트 -->
+    <div class="reveal" style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin:20px 0;box-shadow:0 4px 14px var(--shadow);">
+      <svg viewBox="0 0 600 300" width="100%" role="img" aria-label="배당 재투자 여부에 따른 30년 자산 비교 그래프">
+        <line x1="50" y1="260" x2="580" y2="260" stroke="#d8cfba" stroke-width="1.5"/>
+        <line x1="50" y1="30" x2="50" y2="260" stroke="#d8cfba" stroke-width="1.5"/>
+        <!-- 재투자 안 함 (선형에 가까움) -->
+        <polyline points="50,235 150,222 250,208 350,193 450,176 550,158" fill="none" stroke="#b3892f" stroke-width="3"/>
+        <!-- 재투자 함 (복리 곡선) -->
+        <polyline points="50,235 150,215 250,185 350,142 450,90 550,48" fill="none" stroke="#2f6b46" stroke-width="3.5"/>
+        <circle cx="550" cy="48" r="5" fill="#2f6b46"/>
+        <circle cx="550" cy="158" r="5" fill="#b3892f"/>
+        <text x="300" y="288" text-anchor="middle" font-size="13" fill="#3a4d43" font-family="IBM Plex Sans KR">투자 기간 (년) →</text>
+        <text x="40" y="40" text-anchor="end" font-size="12" fill="#3a4d43">자산</text>
+        <text x="555" y="42" font-size="12" fill="#2f6b46" font-weight="600">재투자 O</text>
+        <text x="555" y="172" font-size="12" fill="#b3892f" font-weight="600">재투자 X</text>
+        <text x="55" y="22" font-size="12" fill="#3a4d43" font-family="IBM Plex Sans KR">배당을 다시 사면 곡선이 점점 가팔라진다</text>
+      </svg>
+      <div class="chart-cap">개념 설명용 모식도 — 실제 수익률은 종목·시기에 따라 다릅니다(확정이 아닌 예시).</div>
+    </div>
+
+    <div class="askbox reveal">
+      <div class="q">생각해 볼 질문</div>
+      <p>아직 은퇴까지 20년이 남았다면, 지금 배당금을 '쓰는 것'과 '다시 사는 것' 중 무엇을 택하시겠어요? 반대로 이미 은퇴했다면요?</p>
+    </div>
+  </section>
+
+  <!-- 5. 한국 제도·세금 -->
+  <section id="korea">
+    <div class="eyebrow reveal">한국의 상황과 제도</div>
+    <h2 class="reveal">한국에서 배당받으면 세금은?</h2>
+    <p class="reveal">배당금은 공짜로 다 들어오지 않습니다. <strong>세금</strong>이 먼저 떼이고(원천징수) 통장에 들어와요. 한국 제도의 핵심 세 가지만 알면 됩니다.</p>
+
+    <h3 class="reveal">① 기본: 15.4% 원천징수</h3>
+    <p class="reveal">연간 금융소득(이자+배당) 2,000만원까지는 15.4%(지방세 포함)가 자동으로 떼인 뒤 입금됩니다. 따로 신고할 필요도 없어요. 대부분의 일반 투자자는 여기서 끝납니다.</p>
+
+    <h3 class="reveal">② 2,000만원 넘으면: 금융소득종합과세</h3>
+    <div class="warn reveal">
+      <div class="label">세금 폭탄 구간</div>
+      <p style="margin:0;">금융소득종합과세는 흩어진 이자·배당을 개인별로 모두 합산해 누진세율을 매기는 제도로, 1996년 도입됐습니다. 연 2,000만원을 넘는 금액은 근로·사업소득과 합산돼 최고 49.5%(지방세 포함)까지 세율이 올라갑니다.</p>
+    </div>
+
+    <h3 class="reveal">③ 2026년의 큰 변화: 고배당 분리과세</h3>
+    <div class="def reveal">
+      <div class="tag">2026 New</div>
+      <p class="big">2026년부터 '고배당 기업'의 배당은 종합과세 대신 낮은 단일세율로 따로 매겨집니다.</p>
+      <p>2026년 1월 1일 이후 받은 고배당기업 배당소득은, 금융소득이 2,000만원을 넘더라도 다른 소득과 합산하지 않고 14%~30%(지방세 별도) 수준으로 분리과세받을 수 있습니다.</p>
+    </div>
+    <p class="reveal">왜 이런 제도가 생겼을까요? 한국 기업의 낮은 배당성향이 '코리아 디스카운트'(같은 실적이라도 한국 주식이 싸게 평가받는 현상)의 원인으로 지목됐고, 배당을 늘리도록 유도하려는 취지입니다.</p>
+
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>과세표준 구간</th><th class="num">분리과세 세율(지방세 포함)</th></tr></thead>
+        <tbody>
+          <tr><td>2,000만원 이하</td><td class="num hl">15.4%</td></tr>
+          <tr><td>2,000만원 ~ 3억원</td><td class="num">22%</td></tr>
+          <tr><td>3억원 ~ 50억원</td><td class="num">27.5%</td></tr>
+          <tr><td>50억원 초과</td><td class="num">33%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reveal src">※ 2025년 11월 30일 국회 기재위에서 50억원 초과 구간을 신설하고 최고세율 30%(지방세 별도)로 의결, 2026년 1월 1일 이후 지급분부터 적용. 세부 시행령은 변동될 수 있습니다.</p>
+
+    <div class="warn reveal">
+      <div class="label">⚠ 3가지 함정</div>
+      <p style="margin:0 0 6px;"><strong>1. 자동이 아니다.</strong> 고배당 분리과세는 종합소득세 신고 때 '분리과세 신청서'를 직접 내야 적용됩니다.</p>
+      <p style="margin:0 0 6px;"><strong>2. 해외주식은 제외.</strong> 미국 주식 등 해외 배당은 분리과세 대상이 아니며 기존처럼 종합과세됩니다.</p>
+      <p style="margin:0;"><strong>3. 건강보험료는 별개.</strong> 분리과세를 택해도 건보료 산정 소득에는 포함돼, 피부양자 탈락 기준(연 2,000만원)은 그대로 적용됩니다.</p>
+    </div>
+
+    <h3 class="reveal">절세 그릇: ISA·연금계좌</h3>
+    <div class="grid reveal">
+      <div class="card">
+        <div class="num">계좌 ①</div>
+        <h4>ISA</h4>
+        <p>2026년부터 비과세 한도가 500만원(서민형 1,000만원)으로 확대됐고, 초과분도 9.9% 분리과세됩니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">계좌 ②</div>
+        <h4>연금저축·IRP</h4>
+        <p>연금으로 받을 때 3.3~5.5%의 낮은 세율이 적용돼 장기 배당 투자에 유리합니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">계좌 ③</div>
+        <h4>개인투자용 국채</h4>
+        <p>만기 보유 시 매입액 2억원 한도 내 이자에 15.4% 분리과세로 종합과세를 피할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="quiz reveal" data-answer="3">
+      <div class="qlabel">Quiz 3</div>
+      <h4>2026년 시행된 '고배당 분리과세'에 대해 <u>틀린</u> 설명은?</h4>
+      <button class="opt">고배당기업 배당이면 금융소득 2,000만원을 넘어도 분리과세가 가능하다</button>
+      <button class="opt">종합소득세 신고 때 분리과세 신청서를 내야 적용된다</button>
+      <button class="opt">코리아 디스카운트 해소·배당 확대 유도가 도입 취지다</button>
+      <button class="opt">미국 등 해외 주식 배당에도 똑같이 적용된다</button>
+      <div class="explain">정답(틀린 설명)은 ④. 해외 주식 배당은 분리과세 대상이 아니며 기존처럼 종합과세됩니다. 이 제도는 국내 상장기업의 현금배당에만 적용됩니다.</div>
+    </div>
+  </section>
+
+  <!-- 6. 한국 대표 배당주 -->
+  <section id="stocks">
+    <div class="eyebrow reveal">사례 중심</div>
+    <h2 class="reveal">한국의 대표 배당주, 어떤 게 있나</h2>
+    <p class="reveal">교과서 말고 실제 종목으로 봅시다. 한국 배당주는 크게 <strong>은행(금융지주)·통신·필수소비재</strong> 3대 진영으로 나뉩니다. 2026년 기준 배당수익률 상위권을 이들이 차지하고 있습니다.</p>
+
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>진영</th><th>대표 종목</th><th>성격</th><th>주의할 점</th></tr></thead>
+        <tbody>
+          <tr><td>필수소비재</td><td>KT&G</td><td>안정 배당 + 배당 성장</td><td>담배 규제 리스크</td></tr>
+          <tr><td>통신</td><td>SK텔레콤·KT</td><td>꾸준한 현금흐름</td><td>설비투자 부담</td></tr>
+          <tr><td>금융지주</td><td>KB·신한·하나·우리</td><td>고배당·자사주 환원</td><td>경기·대손 민감</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="reveal">사례: KT&G — '배당 성장주'의 교과서</h3>
+    <div class="analogy reveal">
+      <div class="label">실제 숫자로 보기</div>
+      <p style="margin:0;">KT&G는 2025 회계연도 결산배당으로 보통주 1주당 4,600원을 결정해 연간 배당금이 전년 대비 11.1% 인상됐고, 배당성향은 58%에 달했습니다. 총 주주환원율 100% 이상을 목표로 자사주 소각과 매입도 이어가고 있습니다.</p>
+    </div>
+    <p class="reveal">통신주 중 SK텔레콤은 2024년 기준 주당 3,540원·배당수익률 약 6.1%를 공개했습니다. 다만 은행·통신·우선주는 각각 '실적과 자본비율', '설비투자', '의결권·유동성'을 따로 챙겨봐야 하는 등 피로도의 종류가 다릅니다.</p>
+
+    <div class="warn reveal">
+      <div class="label">⚠ 고배당의 함정 — '배당 함정(yield trap)'</div>
+      <p style="margin:0;">배당수익률이 갑자기 10%로 치솟았다면 좋은 신호가 아닐 수 있습니다. 회사가 망해가서 <strong>주가가 폭락</strong>한 탓에 수익률만 높아 보이는 착시일 수 있어요. 숫자만 보지 말고 배당 지속성(최소 5년), 적정 배당성향(30~50%), 재무 건전성을 함께 점검해야 합니다.</p>
+    </div>
+
+    <div class="quiz reveal" data-answer="1">
+      <div class="qlabel">Quiz 4</div>
+      <h4>어떤 주식의 배당수익률이 갑자기 12%로 치솟았습니다. 가장 합리적인 반응은?</h4>
+      <button class="opt">"공짜 점심이다!" 묻지도 따지지도 않고 전 재산 투입</button>
+      <button class="opt">주가 폭락 탓은 아닌지, 배당이 지속 가능한지부터 확인</button>
+      <button class="opt">수익률이 높을수록 무조건 안전하므로 안심</button>
+      <button class="opt">배당수익률은 회사 실적과 아무 관련이 없으므로 무시</button>
+      <div class="explain">정답은 ②. 수익률 급등은 주가 폭락(=회사 위기)의 신호일 수 있는 '배당 함정'입니다. 배당 지속성·배당성향·재무 건전성을 함께 봐야 진짜 고배당주인지 알 수 있습니다.</div>
+    </div>
+  </section>
+
+  <!-- 7. 실무자의 시선 -->
+  <section id="practitioner">
+    <div class="eyebrow reveal">현업의 시선</div>
+    <h2 class="reveal">실무자는 배당을 이렇게 본다</h2>
+    <div class="grid reveal">
+      <div class="card">
+        <div class="num">관점 ①</div>
+        <h4>"배당락을 잊지 마라"</h4>
+        <p>배당기준일 다음 날 주가는 배당금만큼 빠집니다(배당락). 5천원 배당받고 주가가 5천원 빠지면 당장은 본전. 단기 매매로 배당만 '먹고 튀기'는 어렵습니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">관점 ②</div>
+        <h4>"수익률보다 지속성"</h4>
+        <p>현업은 한 해 8% 주는 회사보다, 10년째 4%를 거르지 않고 <strong>꾸준히 올려 온</strong> 회사를 더 높이 칩니다. 신뢰가 곧 가치입니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">관점 ③</div>
+        <h4>"계좌 배치가 수익률"</h4>
+        <p>같은 종목이라도 일반계좌·ISA·연금계좌 중 어디에 담느냐가 세후 수익률을 크게 바꿉니다. 세금 설계가 종목 선택만큼 중요합니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">관점 ④</div>
+        <h4>"배당은 정책의 산물"</h4>
+        <p>한국은 오너가 적은 지분으로 그룹을 지배하는 구조라 전통적으로 배당을 꺼려, 배당성향이 세계 최하위권이었습니다. 정책 변화를 읽어야 합니다.</p>
+      </div>
+    </div>
+    <div class="askbox reveal">
+      <div class="q">생각해 볼 질문</div>
+      <p>'매년 8%를 주지만 들쭉날쭉한 회사'와 '매년 4%지만 10년째 한 번도 거르지 않은 회사'. 은퇴 자금을 맡긴다면 어느 쪽인가요?</p>
+    </div>
+  </section>
+
+  <!-- 8. 국제 비교·전망 -->
+  <section id="global">
+    <div class="eyebrow reveal">국제 비교와 전망</div>
+    <h2 class="reveal">한국 vs 세계, 그리고 앞으로</h2>
+    <p class="reveal">배당 문화는 나라마다 다릅니다. 미국은 <strong>'배당 귀족(Dividend Aristocrats)'</strong>이라 불리는, 25년 이상 매년 배당을 늘려 온 기업군이 두텁습니다. 반면 한국 기업의 배당성향은 오랫동안 세계 최하위 수준이었습니다.</p>
+
+    <div class="reveal" style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin:20px 0;box-shadow:0 4px 14px var(--shadow);">
+      <svg viewBox="0 0 600 260" width="100%" role="img" aria-label="국가별 배당성향 개념 비교 막대그래프">
+        <line x1="60" y1="210" x2="580" y2="210" stroke="#d8cfba" stroke-width="1.5"/>
+        <!-- 막대들: 개념적 비교 -->
+        <rect x="100" y="90" width="70" height="120" fill="#2f6b46" rx="3"/>
+        <rect x="230" y="120" width="70" height="90" fill="#4f9e6a" rx="3"/>
+        <rect x="360" y="150" width="70" height="60" fill="#b3892f" rx="3"/>
+        <rect x="490" y="135" width="70" height="75" fill="#d9a93f" rx="3"/>
+        <text x="135" y="228" text-anchor="middle" font-size="13" fill="#3a4d43">미국</text>
+        <text x="265" y="228" text-anchor="middle" font-size="13" fill="#3a4d43">유럽</text>
+        <text x="395" y="228" text-anchor="middle" font-size="13" fill="#3a4d43">한국(과거)</text>
+        <text x="525" y="228" text-anchor="middle" font-size="13" fill="#3a4d43">한국(전망)</text>
+        <text x="135" y="82" text-anchor="middle" font-size="12" fill="#2f6b46" font-weight="600">높음</text>
+        <text x="395" y="142" text-anchor="middle" font-size="12" fill="#b3892f" font-weight="600">낮음</text>
+        <text x="525" y="127" text-anchor="middle" font-size="12" fill="#b3892f" font-weight="600">↑개선 기대</text>
+        <text x="50" y="100" text-anchor="end" font-size="11" fill="#3a4d43">배당성향</text>
+      </svg>
+      <div class="chart-cap">국가별 배당 문화의 상대적 차이를 보여주는 개념도 — 정확한 수치가 아닌 경향성 표현입니다.</div>
+    </div>
+
+    <h3 class="reveal">앞으로의 시나리오 <span style="font-size:13px;color:var(--berry);font-weight:400;">(확정이 아닌 전망)</span></h3>
+    <div class="grid reveal">
+      <div class="card">
+        <h4>밸류업 + 분리과세</h4>
+        <p>밸류업 프로그램 안착과 2026년 배당 분리과세로 배당성향 40% 이상 기업의 투자 매력이 구조적으로 높아질 것이라는 분석이 있습니다.</p>
+      </div>
+      <div class="card">
+        <h4>3년 한시 제도</h4>
+        <p>고배당 분리과세는 2027년 5월 신고분부터 2030년 5월 신고분까지 한시 운영 예정으로, 연장 여부가 변수입니다.</p>
+      </div>
+      <div class="card">
+        <h4>비판도 존재</h4>
+        <p>"고소득자·대주주에게 더 유리한 감세"라는 비판과 조세 형평성 우려도 함께 제기됩니다.</p>
+      </div>
+    </div>
+
+    <div class="warn reveal">
+      <div class="label">📌 전망은 시나리오일 뿐</div>
+      <p style="margin:0;">위 내용은 <strong>현재 시점의 제도와 전문가 의견</strong>에 기반한 시나리오이며, 확정된 미래가 아닙니다. 정책·세율·시장은 바뀔 수 있으니 투자 전 반드시 최신 공식 자료(한국거래소·국세청)를 확인하세요.</p>
+    </div>
+  </section>
+
+  <!-- 9. 내 자산에 미치는 영향 -->
+  <section id="mylife">
+    <div class="eyebrow reveal">내 실생활 영향</div>
+    <h2 class="reveal">그래서, 내 은퇴는 어떻게 설계하나</h2>
+    <p class="reveal">개념을 실제 숫자로 묶어 봅시다. <strong>"한 달에 200만원을 배당으로 받으려면 얼마가 필요할까?"</strong></p>
+
+    <div class="def reveal">
+      <div class="tag">간단 계산</div>
+      <p class="big">필요 자금 ≈ 연 목표 배당 ÷ 세후 배당수익률</p>
+      <p>연 2,400만원(월 200만원)을 세후 배당수익률 4%로 받으려면 → 약 6억원. 수익률 5%면 약 4.8억원. <strong>수익률이 1%p만 높아도 필요 자금이 1억 넘게 줄어듭니다.</strong></p>
+    </div>
+
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>월 목표</th><th class="num">연 배당</th><th class="num">필요자금(수익률 4%)</th><th class="num">필요자금(수익률 5%)</th></tr></thead>
+        <tbody>
+          <tr><td>100만원</td><td class="num">1,200만원</td><td class="num">3.0억</td><td class="num">2.4억</td></tr>
+          <tr><td>200만원</td><td class="num">2,400만원</td><td class="num">6.0억</td><td class="num">4.8억</td></tr>
+          <tr><td>300만원</td><td class="num">3,600만원</td><td class="num">9.0억</td><td class="num">7.2억</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reveal src">※ 세금·물가·배당 변동을 단순화한 예시입니다(확정 수익 보장 아님). 실제로는 종목 분산, 환율, 건보료까지 함께 따져야 합니다.</p>
+
+    <h3 class="reveal">현실적인 3단계 로드맵</h3>
+    <div class="flow reveal">
+      <div class="node"><div class="t">1단계 · 적립</div><div class="s">은퇴 전엔 배당을 다시 사서 나무 늘리기</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">2단계 · 그릇 배치</div><div class="s">ISA·연금계좌로 세금 줄이기</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">3단계 · 인출</div><div class="s">은퇴 후엔 달걀(배당)만 받아쓰기</div></div>
+    </div>
+
+    <div class="quiz reveal" data-answer="2">
+      <div class="qlabel">Quiz 5</div>
+      <h4>월 100만원을 세후 배당수익률 4%로 받고 싶습니다. 대략 필요한 자금은?</h4>
+      <button class="opt">약 1.2억원</button>
+      <button class="opt">약 2.4억원</button>
+      <button class="opt">약 3.0억원</button>
+      <button class="opt">약 6.0억원</button>
+      <div class="explain">정답은 ③. 연 1,200만원 ÷ 4% = 3억원. 만약 수익률을 5%로 올리면 2.4억원으로 줄어듭니다. 수익률을 높이려다 '배당 함정'에 빠지지 않는 게 관건입니다.</div>
+    </div>
+  </section>
+
+  <!-- 10. 다른 자산과 비교 -->
+  <section id="compare">
+    <div class="eyebrow reveal">자산 비교</div>
+    <h2 class="reveal">배당주 vs 부동산 vs 예금·채권</h2>
+    <p class="reveal">"그냥 상가 사서 월세 받는 게 낫지 않나?" 당연한 질문입니다. 현금흐름을 만드는 길은 여러 갈래고, 각각 성격이 다릅니다. <strong>경쟁이 아니라 역할 분담</strong>으로 보는 게 핵심입니다.</p>
+
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>항목</th><th>배당주</th><th>부동산 임대(상가·주택)</th><th>리츠(REITs)</th><th>예금·채권</th></tr></thead>
+        <tbody>
+          <tr><td>연 수익률(대략)</td><td class="hl">4~7%</td><td>2~4%(서울 기준 낮음)</td><td>4~6%</td><td>2~3%대</td></tr>
+          <tr><td>시작 금액</td><td class="hl">수만 원~</td><td>수억 원~</td><td>수천 원~</td><td>제한 없음</td></tr>
+          <tr><td>현금흐름 주기</td><td>분기·반기·월(설계 가능)</td><td>매월</td><td>분기·월</td><td>만기·월</td></tr>
+          <tr><td>손이 가는가</td><td>거의 없음</td><td>세입자·수리·공실 관리</td><td>없음</td><td>없음</td></tr>
+          <tr><td>현금화(유동성)</td><td class="hl">클릭 한 번</td><td>매도에 수개월</td><td>클릭 한 번</td><td>중도해지·매도</td></tr>
+          <tr><td>가격 변동성</td><td>큼</td><td>중간(체감은 작음)</td><td>금리에 민감</td><td>거의 없음</td></tr>
+          <tr><td>레버리지(대출)</td><td>어려움</td><td class="hl">쉬움(전세·담보)</td><td>제한적</td><td>없음</td></tr>
+          <tr><td>인플레이션 방어</td><td>좋음(배당 성장)</td><td class="hl">좋음(임대료·시세)</td><td>중간</td><td>나쁨</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reveal src">※ 수익률은 2026년 상반기 시장 통념에 기반한 개략치이며 지역·종목·시점에 따라 크게 다릅니다(확정 아님).</p>
+
+    <div class="grid reveal">
+      <div class="card">
+        <div class="num">부동산의 강점</div>
+        <h4>레버리지와 안정감</h4>
+        <p>대출을 끼고 큰 자산을 굴릴 수 있고, 가격이 매일 안 보여 심리적으로 덜 흔들립니다. 인플레이션에 강합니다. 대신 공실·금리·세금(취득·보유·양도) 부담과 환금성 문제가 큽니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">배당주의 강점</div>
+        <h4>소액·유동성·손 안 감</h4>
+        <p>몇만 원으로 시작해 클릭으로 사고팔며, 세입자 관리가 없습니다. 대신 주가가 출렁이고, 회사가 어려우면 배당이 줄 수 있습니다.</p>
+      </div>
+      <div class="card">
+        <div class="num">리츠라는 다리</div>
+        <h4>"주식으로 사는 부동산"</h4>
+        <p>리츠는 부동산을 잘게 쪼개 주식처럼 거래합니다. 소액으로 임대수익에 노출되지만, '진짜 월세 계약서'가 아니라 금리·부동산 경기에 묶인 상장상품임을 잊지 마세요.</p>
+      </div>
+    </div>
+
+    <div class="analogy reveal">
+      <div class="label">한 문장 정리</div>
+      <p style="margin:0;">부동산은 <strong>"크게 빌려 천천히 굴리는"</strong> 자산, 배당주는 <strong>"작게 시작해 빠르게 갈아끼우는"</strong> 자산입니다. 은퇴 현금흐름은 보통 둘에 예금·채권을 섞은 <strong>3~4기둥 구조</strong>가 가장 튼튼합니다.</p>
+    </div>
+
+    <div class="quiz reveal" data-answer="1">
+      <div class="qlabel">Quiz 6</div>
+      <h4>"리츠는 진짜 월세처럼 안전하다"는 말의 가장 큰 오해는?</h4>
+      <button class="opt">리츠도 상장상품이라 가격이 매일 변하고 금리에 민감하다</button>
+      <button class="opt">리츠는 배당을 한 푼도 주지 않는다</button>
+      <button class="opt">리츠는 부동산과 전혀 관련이 없다</button>
+      <button class="opt">리츠는 외국인만 살 수 있다</button>
+      <div class="explain">정답은 ①. 리츠는 임대수익을 배당으로 주지만 주식처럼 거래돼 가격 변동이 있고, 차입으로 부동산을 사는 구조라 금리가 오르면 이자 부담↑·자산가치↓로 배당이 줄 수 있습니다. "월세 느낌 ≠ 원금 안정"입니다.</div>
+    </div>
+  </section>
+
+  <!-- 11. 지금 포트폴리오 짜기 -->
+  <section id="build">
+    <div class="eyebrow reveal">실전 · 현시점 기준</div>
+    <h2 class="reveal">지금 당장 짠다면 뭘 살까</h2>
+    <div class="warn reveal">
+      <div class="label">⚠ 먼저 분명히</div>
+      <p style="margin:0;">아래는 <strong>교육용 예시</strong>일 뿐, 특정 종목 매수 추천이 아닙니다. 종목·수익률·세율은 2026년 상반기 공개자료 기준이며 수시로 바뀝니다. 실제 매수 전 한국거래소·각 사 IR 공시를 직접 확인하세요.</p>
+    </div>
+
+    <p class="reveal">2026년 한국 배당 시장의 두 가지 배경: ① 예금금리가 2%대로 내려와 5~7% 배당의 매력이 커졌고, ② 배당소득 분리과세가 시행돼 고배당 우량주의 세후 수익률이 개선됐습니다. 상위권은 <strong>금융지주·증권·통신·필수소비재</strong>가 차지합니다.</p>
+
+    <h3 class="reveal">진영별 대표 후보 (2026 상반기 공개자료 기준)</h3>
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>진영</th><th>예시 종목</th><th class="num">대략 배당수익률</th><th>한 줄 특징</th></tr></thead>
+        <tbody>
+          <tr><td>금융지주</td><td>KB·신한·하나·우리금융</td><td class="num hl">5.5~7%대</td><td>주주환원율 50% 시대, 분기배당 정례화</td></tr>
+          <tr><td>증권</td><td>삼성증권·기업은행 등</td><td class="num">7~8%대</td><td>분리과세 수혜 기대, 실적 민감</td></tr>
+          <tr><td>필수소비재</td><td>KT&G</td><td class="num">약 6%</td><td>19년 이상 배당 유지, 경기 방어주</td></tr>
+          <tr><td>통신</td><td>SK텔레콤·KT</td><td class="num">약 6%</td><td>현금흐름 안정, 설비투자 변수</td></tr>
+          <tr><td>리츠/인프라</td><td>맥쿼리인프라·SK리츠·롯데리츠</td><td class="num">4~6%</td><td>부동산 분산, 금리 민감</td></tr>
+          <tr><td>월배당 ETF</td><td>TIGER·KODEX 리츠부동산인프라 등</td><td class="num">5~7%</td><td>한 종목으로 분산+매월 수령</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reveal src">※ 우리금융 약 6.8%, 삼성증권 약 8%, 기업은행 약 7.4%, KT&G 주당배당 6,000원대·약 6% 등은 2025 결산~2026 초 공개자료 기준 개략치. KB금융 2026년 총주주환원율 53% 전망 등도 증권사 추정으로 확정이 아닙니다.</p>
+
+    <h3 class="reveal">초보용 모델 포트폴리오 (예시·확정 아님)</h3>
+    <div class="grid reveal">
+      <div class="card">
+        <div class="num">A · 가장 단순</div>
+        <h4>월배당 ETF 1~2종</h4>
+        <p>리츠·고배당 월배당 ETF에 적립식으로. 한 종목으로 수십 개 기업에 분산되고 매월 현금이 들어옵니다. "공부할 시간이 없다"면 여기서 시작.</p>
+      </div>
+      <div class="card">
+        <div class="num">B · 균형형</div>
+        <h4>금융 40 · 통신/소비재 30 · 리츠 30</h4>
+        <p>경기 민감(금융)·방어(통신·KT&G)·부동산(리츠)을 섞어 한 진영이 흔들려도 전체가 덜 출렁이게.</p>
+      </div>
+      <div class="card">
+        <div class="num">C · 절세 결합</div>
+        <h4>ISA·연금계좌에 담기</h4>
+        <p>같은 종목이라도 ISA(비과세 한도)·연금계좌(저율과세)에 넣어 세후 수익률을 끌어올립니다. 그릇이 수익률입니다.</p>
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="tag">고르는 4단계 체크</div>
+      <p class="big">수익률 → 지속성 → 배당성향 → 재무 건전성</p>
+      <p>① 배당수익률이 합리적인가 ② 최소 5년 이상 꾸준히 줬나 ③ 배당성향이 30~50%로 무리 없나 ④ 부채비율·이익이 탄탄한가. 이 순서로 거르면 '배당 함정'을 피할 수 있습니다.</p>
+    </div>
+
+    <div class="askbox reveal">
+      <div class="q">생각해 볼 질문</div>
+      <p>개별 종목을 직접 고르는 재미를 택하시겠어요, 아니면 ETF 한 종목으로 마음 편히 분산하시겠어요? 그 선택은 당신이 투자에 쓸 수 있는 '시간'과 어떻게 연결될까요?</p>
+    </div>
+  </section>
+
+  <!-- 12. 매매·수령 전략 -->
+  <section id="strategy">
+    <div class="eyebrow reveal">매매·수령 전략</div>
+    <h2 class="reveal">언제 사고, 어떻게 받을까</h2>
+
+    <h3 class="reveal">① 매매 전략 — '배당락'을 이해하라</h3>
+    <p class="reveal">배당기준일 직전에 사서 배당만 받고 바로 팔면 이득일까요? 아닙니다. 기준일 다음 날 주가는 배당금만큼 빠집니다(<strong>배당락</strong>). 단기 '배당 먹튀'는 거의 통하지 않아요. 게다가 2024년 이후 한국은 <strong>'선(先) 배당액 확정 → 후(後) 기준일 지정'</strong> 방식으로 바뀌어, 기준일이 12월 31일로 고정되지 않습니다. 종목마다 기준일을 직접 확인해야 합니다.</p>
+    <div class="grid reveal">
+      <div class="card">
+        <div class="num">전략 ①</div>
+        <h4>적립식 분할 매수</h4>
+        <p>타이밍을 맞히려 하지 말고 매달 일정액을 나눠 삽니다. 평균 매입가가 다듬어지고 배당락 타이밍 고민도 사라집니다. 초보에게 가장 안전.</p>
+      </div>
+      <div class="card">
+        <div class="num">전략 ②</div>
+        <h4>금리 인하기 활용</h4>
+        <p>금리가 내리면 예금에서 배당주로 돈이 옮겨와 고배당주가 재평가받는 경향이 있습니다. 2026년이 그런 국면이라는 시각이 있습니다(확정 아님).</p>
+      </div>
+      <div class="card">
+        <div class="num">전략 ③</div>
+        <h4>수익률 역발상</h4>
+        <p>우량주의 주가가 빠져 수익률이 평소보다 높아질 때가 매수 기회일 수 있습니다. 단, '함정'인지 '기회'인지 재무로 구분해야 합니다.</p>
+      </div>
+    </div>
+
+    <h3 class="reveal">② "배당금을 매달 받게" 세팅하는 게 좋을까?</h3>
+    <div class="def reveal">
+      <div class="tag">핵심 답</div>
+      <p class="big">은퇴 '후'엔 매월 세팅이 유용, 은퇴 '전'엔 재투자가 우선.</p>
+      <p>매월 현금흐름이 필요한 은퇴자에겐 '월급처럼' 들어오는 게 심리·생활 관리에 좋습니다. 하지만 자산을 불리는 단계라면, 받는 주기보다 <strong>재투자 여부</strong>가 훨씬 중요합니다.</p>
+    </div>
+    <p class="reveal">한국 개별주는 대부분 분기·반기 배당이라 종목만으로 '매월'을 만들려면 배당월이 다른 종목을 조합해야 합니다. 더 쉬운 길은 <strong>월배당 ETF</strong>입니다(분배 기준일이 매월 말, 익월 초 지급되는 상품이 많음).</p>
+    <div class="tbl reveal">
+      <table>
+        <thead><tr><th>매월 만드는 방법</th><th>장점</th><th>단점</th></tr></thead>
+        <tbody>
+          <tr><td>월배당 ETF 활용</td><td>한 종목으로 매월·분산 자동</td><td>운용보수, 커버드콜형은 원금 갉을 수 있음</td></tr>
+          <tr><td>배당월 다른 개별주 조합</td><td>종목 직접 선택, 보수 없음</td><td>관리 복잡, 분기 쏠림 위험</td></tr>
+          <tr><td>분기배당 + 생활비 통장 분리</td><td>단순함, 종목 자유</td><td>스스로 '월 예산화'하는 습관 필요</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn reveal">
+      <div class="label">⚠ '월배당'이라는 이름의 함정</div>
+      <p style="margin:0;">월배당 ETF는 종류가 다양합니다(배당주형·리츠형·채권형·커버드콜형 등). 특히 <strong>커버드콜형</strong>은 분배율이 높아 보여도 주가(NAV)가 깎여 원금을 헐고 있을 수 있습니다. "수익률 몇 %"가 아니라 <strong>"이 ETF는 어떻게 매달 돈을 만드나"</strong>를 먼저 보세요.</p>
+    </div>
+
+    <h3 class="reveal">③ 받은 배당, 어떻게 굴리나</h3>
+    <div class="flow reveal">
+      <div class="node"><div class="t">은퇴 전</div><div class="s">전액 재투자 → 복리로 나무 늘리기</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">은퇴 직전</div><div class="s">절반 재투자·절반 현금 쿠션</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">은퇴 후</div><div class="s">생활비로 인출, 남으면 일부 재투자</div></div>
+    </div>
+
+    <div class="quiz reveal" data-answer="3">
+      <div class="qlabel">Quiz 7</div>
+      <h4>아직 은퇴까지 15년 남은 직장인입니다. 배당 '수령 방식'으로 가장 합리적인 것은?</h4>
+      <button class="opt">무조건 매월 받도록 세팅해 생활비에 보탠다</button>
+      <button class="opt">배당락 직전에만 사서 배당만 받고 즉시 판다</button>
+      <button class="opt">받는 주기보다, 받은 배당을 다시 사서 복리로 굴린다</button>
+      <button class="opt">커버드콜 월배당 ETF에 전액 몰아 분배율을 극대화한다</button>
+      <div class="explain">정답은 ③. 자산 축적기에는 '월/분기' 같은 수령 주기보다 재투자 여부가 결과를 가릅니다. 배당락 때문에 ②는 통하지 않고, ④는 NAV가 깎이는 위험을 간과한 선택입니다.</div>
+    </div>
+
+    <div class="askbox reveal">
+      <div class="q">생각해 볼 질문</div>
+      <p>만약 매달 배당이 통장에 들어온다면, 당신은 그 돈을 정말 '재투자'할 수 있을까요? 아니면 보이는 순간 써버릴까요? 이 답이 당신의 수령 전략을 정해줍니다.</p>
+    </div>
+  </section>
+
+  <!-- 13. 정리 -->
+  <section id="takeaway">
+    <div class="eyebrow reveal">마무리</div>
+    <h2 class="reveal">오늘 기억할 10가지</h2>
+    <div class="takeaways reveal">
+      <ol>
+        <li><strong>닭이 아니라 달걀로 살자.</strong> 원금(닭)을 헐지 않고 배당(달걀)으로 사는 게 배당 은퇴 설계의 핵심.</li>
+        <li><strong>4% 룰은 출발점.</strong> 1994년 벵겐이 만든 미국·과거 기준 숫자다. 한국엔 세금·환율을 더해 보정해야 한다.</li>
+        <li><strong>필요 자금 = 연 목표배당 ÷ 세후수익률.</strong> 월 200만원·수익률 4%면 약 6억. 수익률 1%p가 자금 1억을 가른다.</li>
+        <li><strong>자산은 역할 분담.</strong> 배당주(소액·유동성)·부동산(레버리지·안정감)·예금(안전)을 섞은 3~4기둥이 튼튼하다.</li>
+        <li><strong>리츠 ≠ 안전한 월세.</strong> 부동산을 주식처럼 담지만 금리·경기에 묶인 상장상품이다.</li>
+        <li><strong>수익률보다 지속성.</strong> 갑자기 높아진 수익률은 '배당 함정'일 수 있다. 5년 이상 꾸준함을 보라.</li>
+        <li><strong>적립식 분할 매수가 기본.</strong> 배당락 때문에 '먹튀'는 안 통한다. 타이밍보다 꾸준함.</li>
+        <li><strong>'매월'보다 '재투자'.</strong> 은퇴 후엔 월 세팅이 유용하지만, 축적기엔 재투자가 결과를 가른다.</li>
+        <li><strong>세금 그릇을 챙겨라.</strong> ISA·연금계좌가 같은 배당의 세후 수익률을 바꾼다. 분리과세는 신청해야 적용.</li>
+        <li><strong>전망은 시나리오다.</strong> 종목·세율·정책은 바뀐다. 투자 전 최신 공식 자료 확인은 필수.</li>
+      </ol>
+    </div>
+
+    <div class="final-q reveal">
+      <div class="q">함께 토론해 봅시다</div>
+      <p>만약 오늘부터 매달 일정액을 배당주에 넣는다면, 당신의 '달걀 농장'은 몇 년 뒤에 월 생활비를 감당할 수 있을까요?<br>그리고 그때까지 가장 무너지기 쉬운 가정은 무엇일까요?</p>
+    </div>
+  </section>
+
+  <footer>
+    <p style="font-weight:500;color:var(--ink);">출처 및 참고자료 <span style="font-weight:300;">(2026년 6월 기준 확인)</span></p>
+    <p class="src">
+      · 국세청, "고배당기업 배당소득 과세특례" 보도자료 (2026.03) ·
+      삼일PwC, "금융소득종합과세 절세 전략" (2025.12) ·
+      토스뱅크, "배당소득 분리과세"·"금융소득종합과세" 해설 (2025.11–2026.04) ·
+      창의회계법인 뉴스레터 "2026 배당소득 분리과세" (2026.01) ·
+      나무위키 "금융소득종합과세"·"배당소득 분리과세" ·
+      KB캐피탈 "국내 주식 세금 총정리" ·
+      DealSite경제TV "KT&G 컨콜" (2026.02) ·
+      Company Guide/FnGuide "KT&G Snapshot" ·
+      W. Bengen (1994) 《Journal of Financial Planning》 / Wikipedia·Bankrate·CNBC "4% rule" 해설 (2025) ·
+      NH투자증권 리서치 인용(블로그) "2026 배당수익률 순위" (2026.03) ·
+      대한금융신문 "3년 연속 배당 늘린 금융주" (2025.12) ·
+      Business Post "4대 금융지주 실적·배당" (2026.01) ·
+      한국리츠협회(KAREIT) 상장리츠 현황 ·
+      이데일리 "월배당 ETF·ACE 리츠부동산인프라" / 미래에셋 TIGER ETF 상품정보 ·
+      Fundsfort "SK리츠 배당 분석" (2026.04) ·
+      dividend-nomad "월배당 ETF 6유형"·"은행 vs 통신 vs 우선주" (2026.04–05)
+    </p>
+    <p class="src" style="margin-top:14px;color:var(--berry);">⚠ 본 자료는 교육·학습 목적의 발표 자료이며 특정 종목의 매수·매도 권유나 투자 자문이 아닙니다. 수치·세율·전망은 시점에 따라 달라질 수 있으니 투자 전 최신 공식 자료(한국거래소 data.krx.co.kr, 국세청 홈택스)를 확인하시기 바랍니다. 전망은 '확정이 아닌 시나리오'입니다.</p>
+  </footer>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // 진행 막대
+  var progress=document.getElementById('progress');
+  function onScroll(){
+    var h=document.documentElement;
+    var st=h.scrollTop||document.body.scrollTop;
+    var sh=(h.scrollHeight-h.clientHeight)||1;
+    progress.style.width=(st/sh*100)+'%';
+    var topBtn=document.getElementById('top-btn');
+    if(st>500){topBtn.classList.add('show');}else{topBtn.classList.remove('show');}
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+
+  // 스크롤 등장
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target);} });
+  },{threshold:0.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+
+  // 목차 활성화 (scroll-spy)
+  var sections=Array.prototype.slice.call(document.querySelectorAll('main section'));
+  var tocLinks=Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var spy=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        var id=e.target.id;
+        tocLinks.forEach(function(a){
+          a.classList.toggle('active',a.getAttribute('href')==='#'+id);
+        });
+      }
+    });
+  },{rootMargin:'-40% 0px -55% 0px'});
+  sections.forEach(function(s){spy.observe(s);});
+
+  // 목차 모바일 토글
+  var toc=document.getElementById('toc');
+  var tocToggle=document.querySelector('.toc-mobile-toggle');
+  tocToggle.addEventListener('click',function(){
+    var open=toc.classList.toggle('open');
+    tocToggle.setAttribute('aria-expanded',open?'true':'false');
+  });
+  tocLinks.forEach(function(a){a.addEventListener('click',function(){
+    if(window.innerWidth<=900){toc.classList.remove('open');tocToggle.setAttribute('aria-expanded','false');}
+  });});
+
+  // 퀴즈
+  document.querySelectorAll('.quiz').forEach(function(quiz){
+    var answer=parseInt(quiz.getAttribute('data-answer'),10);
+    var opts=Array.prototype.slice.call(quiz.querySelectorAll('.opt'));
+    var explain=quiz.querySelector('.explain');
+    opts.forEach(function(opt,i){
+      opt.addEventListener('click',function(){
+        if(quiz.dataset.done==='1')return;
+        quiz.dataset.done='1';
+        opts.forEach(function(o,j){
+          o.classList.add('disabled');
+          if(j===answer){o.classList.add('correct');}
+        });
+        if(i!==answer){opt.classList.add('wrong');}
+        explain.classList.add('show');
+      });
+    });
+  });
+
+  // 맨 위로
+  document.getElementById('top-btn').addEventListener('click',function(){
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  // 사이드 패널
+  var panel=document.getElementById('side-panel');
+  var overlay=document.getElementById('overlay');
+  function openPanel(){panel.classList.add('open');overlay.classList.add('show');loadList();}
+  function closePanel(){panel.classList.remove('open');overlay.classList.remove('show');}
+  document.getElementById('panel-btn').addEventListener('click',openPanel);
+  document.getElementById('panel-close').addEventListener('click',closePanel);
+  overlay.addEventListener('click',closePanel);
+  var edge=document.getElementById('edge-trigger');
+  edge.addEventListener('mouseenter',openPanel);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closePanel();});
+
+  var listed=false;
+  function loadList(){
+    if(listed)return; listed=true;
+    var box=document.getElementById('sp-list');
+    fetch('../../presentations.json').then(function(r){return r.json();}).then(function(data){
+      var items=Array.isArray(data)?data:(data.presentations||[]);
+      if(!items.length){box.textContent='목록이 비어 있습니다.';return;}
+      box.innerHTML='';
+      var here=location.pathname;
+      items.forEach(function(p){
+        var a=document.createElement('a');
+        a.textContent=p.title||p.slug;
+        a.href='../'+p.slug+'/';
+        if(here.indexOf('/'+p.slug+'/')>-1){a.className='current';}
+        box.appendChild(a);
+      });
+    }).catch(function(){
+      box.innerHTML='<span style="font-size:13px;color:#9fb3a6;">목록을 불러올 수 없습니다.<br>(허브에 배포된 뒤 표시됩니다.)</span>';
+    });
+  }
+
+  onScroll();
+})();
+</script>
+</body>
+</html>

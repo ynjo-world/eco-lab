@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>개미는 왜 지는가 — 개인투자자가 실패하는 패턴과 하지 말아야 할 10계명</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#10141c;          /* 거의 검은 잉크 배경 */
+    --panel:#171c26;        /* 패널 */
+    --panel-2:#1f2632;      /* 밝은 패널 */
+    --line:#2c3543;         /* 경계선 */
+    --paper:#f3efe6;        /* 본문용 종이톤 */
+    --muted:#9aa6b6;        /* 흐린 글자 */
+    --text:#e8ecf2;         /* 기본 글자 */
+    --gain:#37d39a;         /* 상승/이익 */
+    --loss:#ff5d6c;         /* 하락/손실 */
+    --amber:#f5b53d;        /* 경고/하이라이트 */
+    --amber-deep:#caa13a;
+    --accent:#7aa2ff;       /* 차분한 강조 블루 */
+    --radius:14px;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--ink);color:var(--text);
+    font-family:"IBM Plex Sans KR",system-ui,sans-serif;
+    font-weight:400;line-height:1.75;letter-spacing:-0.01em;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"IBM Plex Mono",monospace;font-feature-settings:"tnum"}
+
+  /* 진행 막대 */
+  #progress{position:fixed;top:0;left:0;height:3px;width:0%;
+    background:linear-gradient(90deg,var(--gain),var(--amber),var(--loss));
+    z-index:120;transition:width .12s ease-out}
+
+  /* 목록으로 버튼 (인라인 스타일로도 보강) */
+  .back-btn{position:fixed;top:14px;left:14px;z-index:130;
+    text-decoration:none;font-size:14px;font-weight:600;
+    background:#0c0f15;color:#f3efe6;
+    border:1px solid #3a4452;border-radius:999px;padding:8px 14px;
+    box-shadow:0 4px 18px rgba(0,0,0,.45)}
+
+  /* 맨 위로 */
+  #toTop{position:fixed;right:18px;bottom:18px;z-index:115;
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+    background:var(--panel-2);color:var(--text);font-size:18px;cursor:pointer;
+    opacity:0;pointer-events:none;transition:opacity .25s;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+  #toTop.show{opacity:1;pointer-events:auto}
+  #toTop:hover{border-color:var(--amber)}
+
+  /* 사이드 패널 (다른 발표 보기) */
+  #edge{position:fixed;top:0;left:0;width:14px;height:100%;z-index:100}
+  #sidepanel{position:fixed;top:0;left:0;height:100%;width:300px;max-width:84vw;
+    background:var(--panel);border-right:1px solid var(--line);z-index:140;
+    transform:translateX(-105%);transition:transform .3s ease;padding:64px 18px 24px;overflow-y:auto}
+  #sidepanel.open{transform:translateX(0)}
+  #sidepanel h3{font-family:"Gowun Batang",serif;font-size:17px;margin:0 0 4px;color:var(--paper)}
+  #sidepanel .sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+  #sidepanel a.plink{display:block;text-decoration:none;color:var(--text);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;
+    font-size:13px;line-height:1.5;background:var(--panel-2);transition:border-color .2s}
+  #sidepanel a.plink:hover{border-color:var(--amber)}
+  #sidepanel a.plink b{display:block;font-weight:600;margin-bottom:2px}
+  #panelToggle{position:fixed;top:14px;left:120px;z-index:130;cursor:pointer;
+    background:#0c0f15;color:#f3efe6;border:1px solid #3a4452;border-radius:999px;
+    padding:8px 13px;font-size:13px;font-weight:600;font-family:inherit}
+  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:135;opacity:0;
+    pointer-events:none;transition:opacity .3s}
+  #overlay.show{opacity:1;pointer-events:auto}
+
+  /* 레이아웃 */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  header.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:90px 0 60px;position:relative;overflow:hidden}
+  .hero-grid{position:absolute;inset:0;z-index:0;opacity:.5;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:42px 42px;
+    -webkit-mask-image:radial-gradient(ellipse at 30% 25%,#000 0%,transparent 72%);
+    mask-image:radial-gradient(ellipse at 30% 25%,#000 0%,transparent 72%)}
+  .hero-inner{position:relative;z-index:1}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:22px}
+  h1.title{font-family:"Gowun Batang",serif;font-weight:700;
+    font-size:clamp(34px,7vw,62px);line-height:1.14;margin:0 0 22px;color:#fff;letter-spacing:-0.02em}
+  h1.title .lo{color:var(--loss)}
+  .lede{font-size:clamp(16px,2.3vw,19px);color:var(--muted);max-width:600px;margin:0 0 30px}
+  .hero-tape{display:flex;gap:10px;flex-wrap:wrap;font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+  .tape{border:1px solid var(--line);border-radius:8px;padding:6px 11px;color:var(--muted)}
+  .tape .dn{color:var(--loss)}
+  .scrollcue{margin-top:42px;font-size:13px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+  .scrollcue span{display:inline-block;animation:bob 1.8s infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+  /* 목차 */
+  nav.toc{position:sticky;top:0;z-index:90;background:rgba(16,20,28,.92);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .toc-head{display:none}
+  .toc-list{max-width:var(--maxw);margin:0 auto;padding:11px 22px;display:flex;gap:6px;
+    flex-wrap:wrap;list-style:none}
+  .toc-list a{text-decoration:none;font-size:12.5px;color:var(--muted);
+    padding:5px 11px;border-radius:999px;border:1px solid transparent;transition:.2s;display:block}
+  .toc-list a:hover{color:var(--text);border-color:var(--line)}
+  .toc-list a.active{color:var(--ink);background:var(--amber);font-weight:600}
+
+  section{padding:74px 0;border-bottom:1px solid var(--line)}
+  .sec-num{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--amber);letter-spacing:.1em}
+  h2{font-family:"Gowun Batang",serif;font-weight:700;font-size:clamp(26px,4.5vw,38px);
+    line-height:1.25;margin:8px 0 8px;color:#fff;letter-spacing:-0.01em}
+  .sec-sub{color:var(--muted);font-size:15px;margin:0 0 28px;max-width:640px}
+  p{margin:0 0 18px}
+  p.big{font-size:17px}
+  strong{color:#fff;font-weight:600}
+  .hl{color:var(--amber);font-weight:600}
+  .gain{color:var(--gain);font-weight:600}
+  .loss{color:var(--loss);font-weight:600}
+  a.ext{color:var(--accent)}
+
+  /* 정의 박스 */
+  .def{background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-left:4px solid var(--amber);
+    border-radius:var(--radius);padding:22px 24px;margin:26px 0}
+  .def .tag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+  .def .body{font-family:"Gowun Batang",serif;font-size:19px;line-height:1.6;color:var(--paper)}
+
+  /* 비유 박스 */
+  .analogy{background:#13223a;border:1px solid #294064;border-radius:var(--radius);
+    padding:20px 22px;margin:24px 0;position:relative}
+  .analogy .tag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .analogy p{margin:0;color:#dbe6f7;font-size:15.5px}
+
+  /* 질문 박스 */
+  .ask{background:#231a0c;border:1px dashed var(--amber-deep);border-radius:var(--radius);
+    padding:18px 22px;margin:26px 0}
+  .ask .tag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:6px}
+  .ask p{margin:0;color:#f0e4cc;font-size:15.5px;font-style:italic}
+
+  /* 카드 그리드 */
+  .grid{display:grid;gap:14px;margin:26px 0}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card h4{margin:0 0 6px;font-size:15px;color:#fff}
+  .card p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6}
+  .card .ic{font-size:20px;margin-bottom:8px;display:block}
+
+  /* 타임라인 */
+  .timeline{position:relative;margin:30px 0;padding-left:26px}
+  .timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
+    background:linear-gradient(var(--amber),var(--line))}
+  .tl{position:relative;margin-bottom:24px}
+  .tl::before{content:"";position:absolute;left:-23px;top:6px;width:12px;height:12px;
+    border-radius:50%;background:var(--ink);border:2px solid var(--amber)}
+  .tl .yr{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--amber);font-size:14px}
+  .tl h4{margin:3px 0 5px;font-size:16px;color:#fff}
+  .tl p{margin:0;font-size:14px;color:var(--muted)}
+
+  /* 비교 표 */
+  .tbl{width:100%;border-collapse:collapse;margin:24px 0;font-size:14px;
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .tbl th,.tbl td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line)}
+  .tbl th{background:var(--panel-2);color:#fff;font-weight:600;font-size:13px}
+  .tbl td{color:var(--muted)}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl .mono{color:var(--text)}
+
+  /* 통계 강조 */
+  .statrow{display:flex;gap:14px;flex-wrap:wrap;margin:26px 0}
+  .stat{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px}
+  .stat .num{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:600;line-height:1;color:#fff}
+  .stat .num.lo{color:var(--loss)}
+  .stat .num.up{color:var(--gain)}
+  .stat .lbl{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+  /* 퀴즈 */
+  .quiz{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;margin:30px 0}
+  .quiz .qtag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gain);margin-bottom:8px}
+  .quiz .q{font-size:16px;font-weight:600;color:#fff;margin-bottom:14px;line-height:1.5}
+  .opt{display:block;width:100%;text-align:left;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:9px;
+    color:var(--text);font-size:14.5px;cursor:pointer;font-family:inherit;line-height:1.5;
+    transition:border-color .15s,background .15s;min-height:46px}
+  .opt:hover{border-color:var(--muted)}
+  .opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .opt.correct{border-color:var(--gain);background:rgba(55,211,154,.13);color:#bff3df}
+  .opt.wrong{border-color:var(--loss);background:rgba(255,93,108,.12);color:#ffd2d7}
+  .opt.dim{opacity:.5}
+  .explain{display:none;margin-top:12px;padding:14px 16px;border-radius:10px;
+    background:#0e1420;border:1px solid var(--line);font-size:14px;color:var(--paper);line-height:1.65}
+  .explain.show{display:block}
+  .explain b{color:var(--amber)}
+
+  /* 10계명 리스트 */
+  .cmd{display:flex;gap:16px;align-items:flex-start;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:11px}
+  .cmd .no{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600;
+    color:var(--loss);line-height:1;min-width:34px}
+  .cmd h4{margin:0 0 4px;font-size:16px;color:#fff}
+  .cmd p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.6}
+
+  /* 마무리 */
+  .closer{background:linear-gradient(180deg,#1a1206,#13161e);border:1px solid var(--amber-deep)}
+  .keep{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:8px 0;margin:24px 0}
+  .keep .item{display:flex;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:baseline}
+  .keep .item:last-child{border-bottom:none}
+  .keep .k{font-family:"IBM Plex Mono",monospace;color:var(--amber);font-weight:600;min-width:26px}
+  .keep .item p{margin:0;font-size:14.5px}
+
+  .debate{background:#231a0c;border:1px solid var(--amber);border-radius:var(--radius);
+    padding:24px;margin-top:26px}
+  .debate .tag{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:10px}
+  .debate p{font-family:"Gowun Batang",serif;font-size:18px;color:var(--paper);margin:0 0 10px;line-height:1.6}
+
+  footer{padding:40px 0 70px;color:var(--muted);font-size:12px;line-height:1.7}
+  footer h5{color:var(--text);font-size:13px;margin:0 0 8px;font-family:"IBM Plex Mono",monospace}
+  footer a{color:var(--accent);word-break:break-all}
+  .disc{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;margin-bottom:20px;color:var(--paper);font-size:12.5px}
+
+  /* 스크롤 등장 */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:680px){
+    .g2,.g3{grid-template-columns:1fr}
+    .toc-list{gap:4px;padding:10px 14px;overflow-x:auto;flex-wrap:nowrap}
+    .toc-list a{white-space:nowrap}
+    #panelToggle{left:auto;right:14px}
+    .back-btn{font-size:13px;padding:7px 12px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .reveal{opacity:1;transform:none;transition:none}
+    .scrollcue span{animation:none}
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- 목록으로 (인라인 스타일 보강) -->
+<a class="back-btn" href="../../" style="position:fixed;top:14px;left:14px;z-index:130;text-decoration:none;font-size:14px;font-weight:600;background:#0c0f15;color:#f3efe6;border:1px solid #3a4452;border-radius:999px;padding:8px 14px;box-shadow:0 4px 18px rgba(0,0,0,.45)">← 목록으로</a>
+
+<button id="panelToggle" aria-label="다른 발표 목록 열기">≡ 다른 발표</button>
+<div id="edge" aria-hidden="true"></div>
+<div id="overlay"></div>
+<aside id="sidepanel" aria-label="다른 발표 목록">
+  <h3>eco-lab 발표 목록</h3>
+  <div class="sub">다른 주제로 이동</div>
+  <div id="plist"><div class="sub">불러오는 중…</div></div>
+</aside>
+
+<button id="toTop" aria-label="맨 위로">↑</button>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    <div class="eyebrow">eco-lab · 행동재무학 스터디</div>
+    <h1 class="title">개미는 왜 <span class="lo">지는가</span><br />— 그리고 이것만은 하지 말자</h1>
+    <p class="lede">시장은 사기지 않았다. 우리는 대개 우리 자신에게 진다. 개인투자자가 반복해서 빠지는 함정과, 피하면 살아남는 10가지 원칙을 20분에 정리합니다.</p>
+    <div class="hero-tape" aria-hidden="true">
+      <span class="tape">매매 多 가구 수익률 <span class="dn">11.4%</span> / 시장 17.9%</span>
+      <span class="tape">손실의 고통 = 이익 기쁨의 <span class="dn">약 2배</span></span>
+      <span class="tape">국내 빚투 잔고 <span class="dn">38조원대</span></span>
+    </div>
+    <div class="scrollcue">스크롤해서 시작 <span>↓</span></div>
+  </div>
+</header>
+
+<!-- TOC -->
+<nav class="toc" aria-label="목차">
+  <ul class="toc-list">
+    <li><a href="#history" class="active">① 왜 생겼나</a></li>
+    <li><a href="#concept">② 개념</a></li>
+    <li><a href="#how">③ 작동 원리</a></li>
+    <li><a href="#cases">④ 실패 사례</a></li>
+    <li><a href="#korea">⑤ 한국 현실</a></li>
+    <li><a href="#pro">⑥ 현업 시각</a></li>
+    <li><a href="#world">⑦ 국제·전망</a></li>
+    <li><a href="#ten">⑧ 10계명</a></li>
+    <li><a href="#wrap">⑨ 정리</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- 1. 탄생 배경 -->
+<section id="history">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">01 / 왜 이 질문이 생겼나</div>
+      <h2>"개미는 진다"는 말은 어디서 왔을까</h2>
+      <p class="sec-sub">처음엔 그저 객장의 푸념이었습니다. 그런데 데이터가 쌓이면서, 그 푸념이 통계로 증명되기 시작했어요.</p>
+    </div>
+
+    <div class="reveal">
+      <p class="big">20세기 초중반까지만 해도 "개인이 기관보다 못 번다"는 건 <strong>심증</strong>일 뿐이었습니다. 누가 언제 얼마에 사고팔았는지를 한 사람씩 추적할 방법이 없었으니까요. 객장에 모여 시세판을 보던 시절, 손해 본 사람은 조용히 사라지고 한 번 크게 번 무용담만 술자리에 남았습니다. 이걸 <span class="hl">생존자 편향(survivorship bias)</span>이라고 부릅니다 — 살아남은 자의 이야기만 들리는 거죠.</p>
+
+      <p>전환점은 <strong>1990년대</strong>였습니다. 미국에서 할인증권사(discount broker)가 등장하면서 수만 명의 개인 계좌 거래내역이 <strong>전산 데이터</strong>로 남기 시작했어요. 이제 연구자들이 "정말 개미가 지는가?"를 숫자로 검증할 수 있게 된 겁니다.</p>
+    </div>
+
+    <div class="timeline reveal">
+      <div class="tl">
+        <div class="yr">1979</div>
+        <h4>카너먼 &amp; 트버스키 — 전망이론(Prospect Theory)</h4>
+        <p>인간은 이익보다 손실을 훨씬 더 크게 느낀다는 걸 실험으로 증명. 훗날 행동경제학의 토대가 되고, 카너먼은 2002년 노벨경제학상을 받습니다.</p>
+      </div>
+      <div class="tl">
+        <div class="yr">1985</div>
+        <h4>셰프린 &amp; 스탯먼 — 처분효과(Disposition Effect) 명명</h4>
+        <p>"오른 건 빨리 팔고, 떨어진 건 끝까지 안 판다"는 개인투자자의 고질병에 처음 이름을 붙입니다.</p>
+      </div>
+      <div class="tl">
+        <div class="yr">2000</div>
+        <h4>바버 &amp; 오딘 — "매매는 당신의 부에 해롭다"</h4>
+        <p>미국 한 할인증권사 66,465개 가구의 1991~96년 거래를 분석. 가장 많이 거래한 그룹의 연 수익률은 시장(17.9%)보다 한참 낮은 수준이었습니다. 학계가 "개미는 진다"를 데이터로 못 박은 기념비적 논문.</p>
+      </div>
+      <div class="tl">
+        <div class="yr">2020~</div>
+        <h4>스마트폰 · 코로나 · 동학개미</h4>
+        <p>누구나 손안에서 1초 만에 매매하는 시대. 진입장벽은 사라졌지만, 인간의 뇌는 1979년 그대로입니다. 그래서 이 주제는 지금 가장 중요해졌습니다.</p>
+      </div>
+    </div>
+
+    <div class="analogy reveal">
+      <div class="tag">비유</div>
+      <p>옛날엔 도박장 안에서 무슨 일이 벌어지는지 밖에서 알 수 없었습니다. 1990년대 전산화는 도박장에 <strong>CCTV</strong>를 단 사건이에요. 그 영상을 돌려보니, 화려한 잭팟 뒤에서 대다수가 조용히 칩을 잃고 있었던 겁니다.</p>
+    </div>
+
+    <div class="ask reveal">
+      <div class="tag">생각해 봅시다</div>
+      <p>여러분 주변에서 "주식으로 돈 잃었다"는 이야기와 "벌었다"는 이야기 중 어느 쪽을 더 자주 듣나요? 그 비율이 진실에 가깝다고 생각하시나요?</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 개념 -->
+<section id="concept">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">02 / 그래서 무엇인가</div>
+      <h2>'개미가 진다'는 건 정확히 무슨 뜻일까</h2>
+      <p class="sec-sub">먼저 오해부터 풀어야 합니다. "개미는 무조건 손해 본다"가 아닙니다.</p>
+    </div>
+
+    <div class="def reveal">
+      <div class="tag">핵심 정의</div>
+      <div class="body">개인투자자의 '실패'란 종목을 못 골라서가 아니라, <strong>인간의 본능적 심리와 행동 습관</strong> 때문에 시장 평균(그냥 지수에 묻어두기)보다 못한 성과를 스스로 만들어내는 것을 말합니다.</div>
+    </div>
+
+    <div class="reveal">
+      <p>핵심은 이겁니다. <strong>패배의 원인은 대개 시장도, 종목도 아닌 '나'입니다.</strong> 같은 삼성전자를 사도 누구는 벌고 누구는 잃습니다. 차이는 <span class="hl">언제 사서 언제 파느냐, 얼마를 거느냐, 얼마나 자주 거래하느냐</span>에서 갈립니다. 그리고 그 결정을 흔드는 건 차트가 아니라 우리 머릿속 감정이에요.</p>
+    </div>
+
+    <div class="analogy reveal">
+      <div class="tag">비유</div>
+      <p>운전을 못해서 사고가 나는 게 아니라, <strong>화가 나서 과속하고, 무서워서 급브레이크를 밟기</strong> 때문에 사고가 납니다. 투자도 똑같아요. 차(종목)가 나빠서가 아니라 운전 습관(행동)이 사고를 부릅니다.</p>
+    </div>
+
+    <div class="grid g3 reveal">
+      <div class="card">
+        <span class="ic">🧠</span>
+        <h4>심리(인지)</h4>
+        <p>손실회피·과신·확증편향처럼 뇌에 새겨진 본능</p>
+      </div>
+      <div class="card">
+        <span class="ic">🔁</span>
+        <h4>행동(습관)</h4>
+        <p>잦은 매매, 추격 매수, 손절 못 함, 몰빵</p>
+      </div>
+      <div class="card">
+        <span class="ic">💸</span>
+        <h4>비용(구조)</h4>
+        <p>수수료·세금·빚의 이자가 수익을 갉아먹음</p>
+      </div>
+    </div>
+
+    <div class="ask reveal">
+      <div class="tag">생각해 봅시다</div>
+      <p>최근 주식을 사고팔았을 때, 그 결정의 근거는 '이 회사가 좋아서'였나요, 아니면 '오를 것 같은 느낌' 혹은 '남들이 사니까'였나요?</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 작동 원리 -->
+<section id="how">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">03 / 어떻게 돌아가나</div>
+      <h2>패배를 만드는 4개의 톱니바퀴</h2>
+      <p class="sec-sub">실패는 한 번의 큰 실수가 아니라, 작은 습관 네 개가 맞물려 천천히 굴러갑니다.</p>
+    </div>
+
+    <!-- 톱니 1 -->
+    <div class="reveal">
+      <h3 style="font-family:'Gowun Batang',serif;color:#fff;font-size:21px;margin:24px 0 6px">① 손실회피 &amp; 처분효과 — "손절은 왜 이렇게 아플까"</h3>
+      <p>인간은 같은 100만 원이라도 <strong>잃었을 때의 고통을 벌었을 때 기쁨의 약 2배</strong>로 느낍니다. 원시시대에 먹잇감을 놓치는 것보다 포식자에게 물리는 게 훨씬 치명적이었던 생존 본능의 잔재예요. 그래서 우리는 손실을 '확정'하기 싫어 떨어진 주식을 끝까지 들고, 반대로 오른 주식은 불안해서 일찍 팔아버립니다.</p>
+      <div class="def" style="border-left-color:var(--loss)">
+        <div class="tag" style="color:var(--loss)">처분효과 (Disposition Effect)</div>
+        <div class="body">오른 종목은 <span class="gain">너무 빨리 팔고</span>, 떨어진 종목은 <span class="loss">너무 오래 들고 있는</span> 경향. 한국·미국·중국 투자자 모두에게서 반복 관찰되는, 가장 잘 입증된 투자 편향 중 하나입니다.</div>
+      </div>
+      <p>결과는 정반대로 작동합니다. <strong>이익은 짧게 자르고 손실은 길게 키우는</strong> 셈이죠. "수익은 짧게, 손실은 길게" — 부자가 되는 공식의 정확히 반대입니다.</p>
+    </div>
+
+    <!-- 톱니 2 -->
+    <div class="reveal">
+      <h3 style="font-family:'Gowun Batang',serif;color:#fff;font-size:21px;margin:30px 0 6px">② 과신(Overconfidence) — "나는 평균보다 잘한다"</h3>
+      <p>운전자의 80%가 "나는 평균 이상 운전을 한다"고 답합니다. 수학적으로 불가능하죠. 투자에서도 똑같습니다. 과신은 <strong>잦은 매매</strong>를 부르고, 매매할 때마다 수수료와 세금이 빠져나갑니다. 바버와 오딘이 밝힌 핵심이 바로 이것 — <span class="hl">많이 거래할수록 성과가 나빠진다</span>는 사실입니다.</p>
+    </div>
+
+    <!-- 톱니 3 -->
+    <div class="reveal">
+      <h3 style="font-family:'Gowun Batang',serif;color:#fff;font-size:21px;margin:30px 0 6px">③ 군중심리 &amp; 추격매수 — "남들 다 버는데 나만"</h3>
+      <p>가격이 오르고 뉴스가 시끄러운 종목일수록 더 사고 싶어집니다. 이를 <strong>주의편향(attention effect)</strong>이라 해요. 문제는, 모두의 눈에 띌 만큼 오른 시점은 대개 <strong>고점 근처</strong>라는 것. 'FOMO(놓칠까 봐 두려움)'에 떠밀려 꼭대기에서 사는 일이 반복됩니다.</p>
+    </div>
+
+    <!-- 톱니 4 -->
+    <div class="reveal">
+      <h3 style="font-family:'Gowun Batang',serif;color:#fff;font-size:21px;margin:30px 0 6px">④ 레버리지 — "빚으로 키운 베팅"</h3>
+      <p>빚(신용·미수)을 쓰면 수익도 2배지만 손실도 2배입니다. 게다가 주가가 일정선 아래로 떨어지면 증권사가 <strong>강제로 팔아버리는 '반대매매'</strong>가 발동돼, 버티면 됐을 자리에서 바닥에 강제 매도당합니다. 감정의 실수에 '시한폭탄'을 단 셈이에요.</p>
+    </div>
+
+    <div class="analogy reveal">
+      <div class="tag">비유</div>
+      <p>네 톱니가 맞물리면 이렇게 굴러갑니다. 과신해서 빚을 내고(④), 남들 따라 고점에 사고(③), 떨어져도 손절 못 하고(①), 그 와중에 자주 사고팔며 수수료를 흘립니다(②). 한 톱니만 빠져도 굴러가지 않는데, 대개 네 개가 한꺼번에 돕니다.</p>
+    </div>
+
+    <!-- 퀴즈 1 -->
+    <div class="quiz reveal" data-answer="1">
+      <div class="qtag">Quiz 01</div>
+      <div class="q">'처분효과'에 빠진 투자자의 전형적인 행동은?</div>
+      <button class="opt" data-i="0">오른 종목은 더 사고, 떨어진 종목은 바로 판다</button>
+      <button class="opt" data-i="1">오른 종목은 서둘러 팔고, 떨어진 종목은 끝까지 안 판다</button>
+      <button class="opt" data-i="2">오르든 떨어지든 정해둔 규칙대로 기계적으로 판다</button>
+      <button class="opt" data-i="3">손실 종목만 골라 빠르게 손절한다</button>
+      <div class="explain"><b>정답: ②</b> — 처분효과의 핵심은 "이익은 빨리 확정하고 손실은 미루는" 것입니다. 손실을 '확정'하는 고통이 너무 커서 떨어진 주식을 못 파는 거죠. 결과적으로 이익은 짧게, 손실은 길게 — 부자 되는 공식의 정반대가 됩니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 실패 사례 -->
+<section id="cases">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">04 / 대표적인 실패 시나리오</div>
+      <h2>객장의 단골 비극 5선</h2>
+      <p class="sec-sub">이름만 들어도 "아 그거…" 싶은, 반복되는 실패의 전형들입니다.</p>
+    </div>
+
+    <div class="grid g2 reveal">
+      <div class="card">
+        <span class="ic">🚀</span>
+        <h4>① 추격매수 → 물림</h4>
+        <p>"이미 3배 올랐지만 더 갈 것 같아." 테마주·급등주를 꼭대기에서 잡고, 거품이 빠질 때 가장 큰 손실을 떠안습니다.</p>
+      </div>
+      <div class="card">
+        <span class="ic">⚓</span>
+        <h4>② 물타기 지옥</h4>
+        <p>"평단가 낮추면 본전 오기 쉽잖아." 떨어지는 칼날을 계속 잡다가, 한 종목에 자산이 묶이고 회복 불능에 빠집니다.</p>
+      </div>
+      <div class="card">
+        <span class="ic">🎰</span>
+        <h4>③ 몰빵 한 방</h4>
+        <p>"이번엔 확실해." 한 종목·한 테마에 전 재산을 겁니다. 맞으면 영웅담, 틀리면 재기 불능. 분산이 없으면 운에 인생을 맡기는 셈.</p>
+      </div>
+      <div class="card">
+        <span class="ic">💳</span>
+        <h4>④ 빚투 &amp; 반대매매</h4>
+        <p>신용·미수로 베팅을 키웠다가 급락장에서 강제 청산. 버티면 됐을 자리에서 바닥에 팔리고, 그 매물이 주가를 더 끌어내립니다.</p>
+      </div>
+      <div class="card">
+        <span class="ic">📱</span>
+        <h4>⑤ 잦은 매매(단타 중독)</h4>
+        <p>하루에도 수십 번 사고팔며 "오늘 좀 벌었다"고 착각. 수수료·세금·슬리피지가 쌓여 1년 뒤 계좌는 조용히 줄어 있습니다.</p>
+      </div>
+      <div class="card">
+        <span class="ic">🗣️</span>
+        <h4>⑥ 리딩방·테마 추종</h4>
+        <p>"전문가가 찍어준 종목." 누군가 미리 사둔 종목에 마지막 매수자로 들어가, 출구 없는 방에 갇힙니다.</p>
+      </div>
+    </div>
+
+    <div class="ask reveal">
+      <div class="tag">생각해 봅시다</div>
+      <p>위 여섯 가지 중, 솔직히 한 번이라도 해본 게 있나요? 그때 결정을 내리게 만든 감정은 무엇이었나요 — 욕심, 두려움, 아니면 조급함?</p>
+    </div>
+
+    <!-- 퀴즈 2 -->
+    <div class="quiz reveal" data-answer="2">
+      <div class="qtag">Quiz 02</div>
+      <div class="q">바버 &amp; 오딘(2000) 연구의 핵심 결론에 가장 가까운 것은?</div>
+      <button class="opt" data-i="0">종목 분석을 많이 한 사람일수록 수익률이 높다</button>
+      <button class="opt" data-i="1">개인은 기관보다 정보가 빨라 단타에 유리하다</button>
+      <button class="opt" data-i="2">자주 거래한 투자자일수록 시장 평균보다 성과가 나빴다</button>
+      <button class="opt" data-i="3">레버리지를 쓸수록 장기 수익률이 좋아진다</button>
+      <div class="explain"><b>정답: ③</b> — 가장 많이 거래한 그룹의 순수익률은 시장 수익률(17.9%)에 한참 못 미쳤습니다. 거래를 많이 할수록 비용이 쌓이고, 그 거래의 동력은 대개 '실력'이 아니라 '과신'이었다는 게 이 논문의 메시지입니다. 그래서 제목이 "매매는 당신의 부에 해롭다"예요.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 한국 현실 -->
+<section id="korea">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">05 / 한국의 현실과 제도</div>
+      <h2>'빚투'와 반대매매, 한국형 위험</h2>
+      <p class="sec-sub">한국 개미는 특히 '급락장을 기회로 여기고 빚을 더 내는' 공격적 성향이 두드러집니다.</p>
+    </div>
+
+    <div class="reveal">
+      <p class="big">2025년 말 21조 원이던 국내 증시 <span class="hl">신용거래융자 잔고(빚투)</span>가, 코스피가 가파르게 오르는 동안 급증해 <strong>2026년 6월 38조 원대</strong>까지 불어났습니다. 코스피가 5,000→9,000선을 차례로 넘는 상승장에서, 개인들은 오른 뒤에도 추가 상승을 기대하며 신용을 늘렸어요 — 저가매수보다 <strong>추격매수</strong> 성격이 강했다는 분석입니다.</p>
+    </div>
+
+    <div class="statrow reveal">
+      <div class="stat">
+        <div class="num lo">38조원대</div>
+        <div class="lbl">2026년 6월 신용거래융자 잔고 (사상 최대권)</div>
+      </div>
+      <div class="stat">
+        <div class="num lo">약 1조원</div>
+        <div class="lbl">급락 한 달간(5/11~6/8) 반대매매 규모</div>
+      </div>
+      <div class="stat">
+        <div class="num">140%</div>
+        <div class="lbl">담보가치가 이 아래로 내려가면 강제 청산(반대매매) 발동</div>
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="tag">반대매매란</div>
+      <div class="body">빚으로 산 주식의 담보가치가 빌린 돈의 일정 비율(통상 약 140%) 아래로 떨어지면, 증권사가 투자자 동의 없이 <strong>강제로 주식을 처분</strong>하는 것. 보통 하한가 주문으로 나가 추가 하락을 부추깁니다.</div>
+    </div>
+
+    <div class="reveal">
+      <p>한국은행도 보고서에서 경고했습니다. <strong>개인 레버리지가 누적된 상태에서 주가가 급락하면, 반대매매가 위험회피 심리를 자극해 연쇄 매물을 부르고, 그 매물이 다시 주가를 떨어뜨리는 악순환</strong>이 생길 수 있다고요. 실제로 2026년 6월 8일엔 코스피가 8% 넘게 급락하며 서킷브레이커가 발동됐고, 신용잔고는 삼성전자·SK하이닉스 같은 AI 반도체 주도주에 집중돼 있었습니다.</p>
+    </div>
+
+    <div class="grid g2 reveal">
+      <div class="card">
+        <h4>누가 감독하나</h4>
+        <p>금융감독원·금융위원회가 신용공여 한도와 투자위험 안내를 감독. 2026년 급등장에서 금감원장은 반대매매·레버리지 ETF 모니터링 강화를 지시했습니다.</p>
+      </div>
+      <div class="card">
+        <h4>어디서 보나</h4>
+        <p>금융투자협회(신용융자·예탁금 통계), 한국거래소(KRX, 시장·공매도 데이터), DART(기업 공시)에서 직접 확인할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="ask reveal">
+      <div class="tag">생각해 봅시다</div>
+      <p>'빚을 내서라도 지금 사야 한다'는 생각이 들 때, 그 근거는 회사의 가치인가요, 아니면 '지금 안 사면 손해'라는 조급함인가요?</p>
+    </div>
+
+    <!-- 퀴즈 3 -->
+    <div class="quiz reveal" data-answer="1">
+      <div class="qtag">Quiz 03</div>
+      <div class="q">'반대매매'가 무서운 가장 큰 이유는?</div>
+      <button class="opt" data-i="0">세금이 두 배로 부과되기 때문에</button>
+      <button class="opt" data-i="1">내 의지와 상관없이 바닥에서 강제로 팔리고, 그 매물이 주가를 더 떨어뜨리기 때문에</button>
+      <button class="opt" data-i="2">증권사가 수수료를 받지 않기 때문에</button>
+      <button class="opt" data-i="3">반드시 다음 날 주가가 오르기 때문에</button>
+      <div class="explain"><b>정답: ②</b> — 반대매매는 '버티는 선택지'를 빼앗습니다. 가장 싸게 팔아야 할 최악의 타이밍에 강제 청산되고, 이런 강제 매물이 시장 전체에 쏟아지면 주가가 더 내려가 다른 빚투 투자자의 반대매매를 또 부르는 악순환이 생깁니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. 현업 시각 -->
+<section id="pro">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">06 / 현업·실무자의 시각</div>
+      <h2>"프로는 종목을 맞히는 게 아니라 실수를 줄인다"</h2>
+      <p class="sec-sub">오래 살아남은 투자자들의 공통점은 화려한 적중이 아니라, 지루할 만큼 일관된 규칙입니다.</p>
+    </div>
+
+    <div class="reveal">
+      <p>흥미로운 연구가 있습니다. <strong>처분효과(손절 못 하는 병)는 아마추어에게서 강하게 나타나지만, 전문 트레이더에게선 거의 사라지거나 합리적인 방향으로 움직입니다.</strong> 왜일까요? 프로는 감정이 없어서가 아니라, <span class="hl">감정이 결정에 끼어들지 못하도록 '규칙'으로 막아두기</span> 때문입니다.</p>
+    </div>
+
+    <div class="grid g2 reveal">
+      <div class="card">
+        <h4>📏 손절선을 미리 정한다</h4>
+        <p>"-8%면 무조건 판다"를 살 때 정해둡니다. 떨어진 뒤 감정으로 정하지 않아요. 규칙이 의지를 대신합니다.</p>
+      </div>
+      <div class="card">
+        <h4>🧩 포지션 크기를 관리한다</h4>
+        <p>한 종목이 망해도 전체가 흔들리지 않을 만큼만 겁니다. '얼마를 거느냐'가 '무엇을 사느냐'보다 중요합니다.</p>
+      </div>
+      <div class="card">
+        <h4>📓 매매 일지를 쓴다</h4>
+        <p>왜 샀는지 기록하면, 나중에 '느낌'이었는지 '근거'였는지 드러납니다. 자기 과신을 깨는 거울이에요.</p>
+      </div>
+      <div class="card">
+        <h4>😴 안 하는 것도 전략</h4>
+        <p>"좋은 기회가 없으면 현금이 정답." 프로는 매일 거래하지 않습니다. 손이 근질거리는 것과 기회는 다릅니다.</p>
+      </div>
+    </div>
+
+    <div class="analogy reveal">
+      <div class="tag">비유</div>
+      <p>다이어트가 실패하는 건 영양 지식이 부족해서가 아니라 밤에 치킨을 시키기 때문입니다. 프로는 <strong>애초에 집에 치킨을 안 둡니다(규칙).</strong> 투자도 의지력 싸움이 아니라 '환경 설계' 싸움이에요.</p>
+    </div>
+
+    <!-- 퀴즈 4 -->
+    <div class="quiz reveal" data-answer="3">
+      <div class="qtag">Quiz 04</div>
+      <div class="q">전문 트레이더에게서 처분효과가 약하게 나타나는 핵심 이유는?</div>
+      <button class="opt" data-i="0">손실을 봐도 아무 감정이 없어서</button>
+      <button class="opt" data-i="1">미래 주가를 정확히 예측할 수 있어서</button>
+      <button class="opt" data-i="2">세금 혜택을 더 많이 받아서</button>
+      <button class="opt" data-i="3">감정이 끼어들기 전에 '규칙'으로 행동을 묶어두기 때문에</button>
+      <div class="explain"><b>정답: ④</b> — 프로도 손실은 아픕니다. 다만 손절선·포지션 크기 같은 규칙을 <b>미리</b> 정해두고 기계적으로 따릅니다. 감정과 싸워 이기는 게 아니라, 감정이 결정권을 잡지 못하게 시스템으로 막는 거죠.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 국제 비교 & 전망 -->
+<section id="world">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">07 / 국제 비교와 향후 전망</div>
+      <h2>이건 한국만의 문제가 아니다</h2>
+      <p class="sec-sub">미국·중국·한국, 시장은 달라도 인간의 뇌는 같습니다.</p>
+    </div>
+
+    <table class="tbl reveal">
+      <thead>
+        <tr><th>구분</th><th>관찰된 사실</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>🇺🇸 미국</td><td class="mono">바버·오딘: 잦은 매매 가구의 순수익률이 시장(17.9%)에 크게 못 미침</td></tr>
+        <tr><td>🇨🇳 중국</td><td class="mono">3만여 신용거래 계좌 분석에서 처분효과 뚜렷하게 확인</td></tr>
+        <tr><td>🇰🇷 한국</td><td class="mono">처분효과 + 급락장에 빚을 더 내는 공격성, 해외주식의 89%가 미국·기술주 쏠림</td></tr>
+      </tbody>
+    </table>
+
+    <div class="reveal">
+      <p>주목할 변화도 있습니다. 국내 개인의 <strong>해외주식 투자가 사상 최대</strong>로 늘었는데(2025년 10월 월 순매수 역대 최대), 대부분이 <span class="hl">미국 빅테크·AI·가상자산</span>에 쏠려 있습니다. 분산 투자처럼 보이지만, 레버리지·인버스 ETF 비중이 커지면 오히려 변동성과 하방 위험을 키울 수 있다는 게 자본시장연구원의 지적이에요.</p>
+    </div>
+
+    <div class="def reveal" style="border-left-color:var(--accent)">
+      <div class="tag" style="color:var(--accent)">전망 — 확정이 아닌 시나리오</div>
+      <div class="body">앞으로의 흐름은 예측이 아니라 <strong>가능성</strong>입니다. 아래는 단정이 아니라 "이렇게 흘러갈 수 있다"는 시나리오로 읽어주세요.</div>
+    </div>
+
+    <div class="grid g3 reveal">
+      <div class="card">
+        <h4>🤖 AI 투자도구 확산</h4>
+        <p>맞춤형 자산배분·로보어드바이저가 늘며 감정 개입을 줄여줄 수 있음. 단, 군중 쏠림을 증폭할 위험도.</p>
+      </div>
+      <div class="card">
+        <h4>⚡ 변동성 상품 증가</h4>
+        <p>단일종목 레버리지 ETF 등 고변동 상품이 늘며, 급락 시 반대매매·연쇄청산 위험이 커질 수 있음.</p>
+      </div>
+      <div class="card">
+        <h4>🛡️ 규제·안내 강화</h4>
+        <p>당국의 신용·레버리지 모니터링과 투자위험 안내가 강화되는 흐름. 개인 보호장치가 늘어날 가능성.</p>
+      </div>
+    </div>
+
+    <div class="ask reveal">
+      <div class="tag">생각해 봅시다</div>
+      <p>AI가 대신 투자해 주는 시대가 오면, 개미의 '심리 실수'는 사라질까요? 아니면 새로운 형태로 옮겨갈 뿐일까요?</p>
+    </div>
+
+    <!-- 퀴즈 5 -->
+    <div class="quiz reveal" data-answer="0">
+      <div class="qtag">Quiz 05</div>
+      <div class="q">처분효과·과신 같은 투자 편향에 대해 데이터가 보여주는 것은?</div>
+      <button class="opt" data-i="0">미국·중국·한국 등 나라를 가리지 않고 반복 관찰된다</button>
+      <button class="opt" data-i="1">한국 투자자에게만 나타나는 고유 현상이다</button>
+      <button class="opt" data-i="2">교육 수준이 높으면 완전히 사라진다</button>
+      <button class="opt" data-i="3">2000년대 이후로는 더 이상 나타나지 않는다</button>
+      <div class="explain"><b>정답: ①</b> — 이 편향들은 특정 국가나 시대의 문제가 아니라 <b>인간 공통의 심리</b>에서 나옵니다. 그래서 시장이 달라도, 시대가 바뀌어도, 똑같은 패턴이 반복됩니다. 지식이 많아도 완전히 면역되진 않아요 — 그래서 '규칙'이 필요합니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. 10계명 -->
+<section id="ten">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">08 / 이것만은 하지 말자</div>
+      <h2>개미 생존을 위한 10계명</h2>
+      <p class="sec-sub">맞히는 법이 아니라 <strong>망하지 않는 법</strong>입니다. 살아남으면 기회는 또 옵니다.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="cmd"><div class="no">01</div><div><h4>빚으로 투자하지 마라</h4><p>신용·미수는 수익도 손실도 키우고, 최악의 순간에 반대매매로 강제 청산당한다. 버틸 권리를 스스로 버리지 말 것.</p></div></div>
+      <div class="cmd"><div class="no">02</div><div><h4>한 종목에 몰빵하지 마라</h4><p>확신이 클수록 위험하다. 한 종목이 0이 돼도 인생이 흔들리지 않을 만큼만.</p></div></div>
+      <div class="cmd"><div class="no">03</div><div><h4>손절선을 정하지 않고 사지 마라</h4><p>팔 이유는 '살 때' 정한다. 떨어진 뒤 감정으로 정하면 이미 늦다.</p></div></div>
+      <div class="cmd"><div class="no">04</div><div><h4>물타기로 평단가에 집착하지 마라</h4><p>'본전 심리'는 떨어지는 칼날을 잡게 한다. 회사가 나빠졌다면 평단가가 아니라 사실을 봐라.</p></div></div>
+      <div class="cmd"><div class="no">05</div><div><h4>이미 급등한 테마를 추격매수하지 마라</h4><p>모두의 눈에 띌 만큼 올랐다면 대개 늦었다. FOMO는 고점에서 가장 강하다.</p></div></div>
+      <div class="cmd"><div class="no">06</div><div><h4>너무 자주 사고팔지 마라</h4><p>매매할 때마다 비용이 샌다. '활동'과 '수익'은 다르다. 가만히 있는 것도 전략.</p></div></div>
+      <div class="cmd"><div class="no">07</div><div><h4>리딩방·찍어주는 종목을 믿지 마라</h4><p>공짜로 돈 버는 비법을 남이 줄 리 없다. 당신이 마지막 매수자일 수 있다.</p></div></div>
+      <div class="cmd"><div class="no">08</div><div><h4>모르는 것에 투자하지 마라</h4><p>한 문장으로 설명 못 하는 회사·상품엔 넣지 마라. 이해 못 하면 흔들릴 때 못 버틴다.</p></div></div>
+      <div class="cmd"><div class="no">09</div><div><h4>감정으로 매매하지 마라</h4><p>두려움에 팔고 욕심에 산다. 규칙을 미리 만들고, 감정이 끓을 땐 하루 쉬어라.</p></div></div>
+      <div class="cmd"><div class="no">10</div><div><h4>잃어도 되는 돈으로만 하라</h4><p>전세금·생활비·등록금은 투자금이 아니다. 시한이 정해진 돈은 시장을 못 기다린다.</p></div></div>
+    </div>
+
+    <div class="analogy reveal">
+      <div class="tag">한 줄 요약</div>
+      <p>10계명은 결국 하나로 줄어듭니다 — <strong>"크게 잃지 마라."</strong> 100을 잃으면 다시 100%가 아니라 100% 넘게 벌어야 본전입니다. 살아남는 게 이기는 겁니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9. 정리 -->
+<section id="wrap" class="closer">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-num">09 / 오늘 기억할 것</div>
+      <h2>오늘 기억할 5가지</h2>
+    </div>
+
+    <div class="keep reveal">
+      <div class="item"><span class="k">1</span><p><strong>적은 대개 시장이 아니라 나다.</strong> 같은 종목이라도 행동이 성과를 가른다.</p></div>
+      <div class="item"><span class="k">2</span><p><strong>손실회피·처분효과</strong> 때문에 이익은 짧게, 손실은 길게 가져가는 게 인간의 본능 — 정확히 거꾸로다.</p></div>
+      <div class="item"><span class="k">3</span><p><strong>잦은 매매와 과신은 비용</strong>으로 돌아온다. 많이 거래할수록 성과는 나빠진다(바버·오딘).</p></div>
+      <div class="item"><span class="k">4</span><p><strong>빚투+반대매매</strong>는 한국형 위험. 버틸 권리를 빼앗고 악순환을 부른다(2026년 빚투 38조원대).</p></div>
+      <div class="item"><span class="k">5</span><p><strong>프로는 규칙으로 감정을 막는다.</strong> 핵심 한 줄: "크게 잃지 마라. 살아남으면 기회는 온다."</p></div>
+    </div>
+
+    <div class="debate reveal">
+      <div class="tag">마무리 토론</div>
+      <p>"개미가 지는 진짜 이유는 정보가 부족해서가 아니라 <strong>심리 때문</strong>이다"라는 오늘의 결론에 동의하시나요?</p>
+      <p>만약 그렇다면 — 우리는 더 많은 '정보'(뉴스·차트·리딩)를 찾는 데 시간을 쓸까요, 아니면 '나의 규칙'을 만드는 데 쓸까요? 여러분이라면 오늘 10계명 중 <strong>가장 먼저 지킬 단 하나</strong>는 무엇인가요?</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="disc reveal">
+      ⚠️ <strong>면책</strong> · 본 자료는 행동재무학 학습용 발표 자료이며 투자 권유나 자문이 아닙니다. '향후 전망'은 확정된 예측이 아닌 <strong>시나리오</strong>입니다. 시점에 따라 달라지는 수치(빚투 잔고·반대매매 규모 등)는 발표 시점(2026년 6월) 기준이며, 투자 판단의 책임은 본인에게 있습니다.
+    </div>
+    <h5>출처 / References</h5>
+    Barber &amp; Odean (2000), "Trading Is Hazardous to Your Wealth," <i>Journal of Finance</i> · <a class="ext" href="https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00226">wiley</a><br />
+    Shefrin &amp; Statman (1985), 처분효과(Disposition Effect) · Kahneman &amp; Tversky (1979), 전망이론<br />
+    파이낸셜뉴스 (2026.06), 신용거래융자·반대매매 보도 · <a class="ext" href="https://www.fnnews.com/news/202606250626060640">fnnews</a><br />
+    한국은행, '개인 레버리지 주식투자 현황 및 평가' 보고서 인용 (뉴시스 2026.06)<br />
+    자본시장연구원(KCMI), 개인투자자 해외투자 특징 및 성과 분석 (2026.02) · <a class="ext" href="https://www.kcmi.re.kr/report/report_view?report_no=2254">kcmi</a><br />
+    국제금융센터/KDI, 개인 해외주식 순매수 동향 · 데이터: 금융투자협회·KRX·DART
+    <p style="margin-top:22px;color:var(--line)">eco-lab · 경제·금융 스터디 발표 자료</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 진행 막대
+  var prog = document.getElementById('progress');
+  function onScroll(){
+    var h = document.documentElement;
+    var sc = h.scrollTop || document.body.scrollTop;
+    var max = h.scrollHeight - h.clientHeight;
+    prog.style.width = (max>0 ? (sc/max*100) : 0) + '%';
+    var tt = document.getElementById('toTop');
+    if(sc > 600) tt.classList.add('show'); else tt.classList.remove('show');
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  // 맨 위로
+  document.getElementById('toTop').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior: reduce ? 'auto':'smooth'});
+  });
+
+  // 스크롤 등장
+  if('IntersectionObserver' in window && !reduce){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{threshold:0.12});
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // 목차 스크롤스파이
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc-list a'));
+  var secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function spy(){
+    var pos = window.scrollY + 130;
+    var idx = 0;
+    for(var i=0;i<secs.length;i++){ if(secs[i] && secs[i].offsetTop <= pos) idx = i; }
+    links.forEach(function(l,i){ l.classList.toggle('active', i===idx); });
+  }
+  window.addEventListener('scroll', spy, {passive:true});
+  spy();
+
+  // 퀴즈
+  document.querySelectorAll('.quiz').forEach(function(q){
+    var ans = parseInt(q.getAttribute('data-answer'),10);
+    var opts = q.querySelectorAll('.opt');
+    var exp = q.querySelector('.explain');
+    var done = false;
+    opts.forEach(function(opt){
+      opt.addEventListener('click', function(){
+        if(done) return; done = true;
+        var pick = parseInt(opt.getAttribute('data-i'),10);
+        opts.forEach(function(o){
+          var i = parseInt(o.getAttribute('data-i'),10);
+          if(i===ans) o.classList.add('correct');
+          else if(i===pick) o.classList.add('wrong');
+          else o.classList.add('dim');
+        });
+        exp.classList.add('show');
+      });
+    });
+  });
+
+  // 사이드 패널
+  var panel = document.getElementById('sidepanel');
+  var overlay = document.getElementById('overlay');
+  var toggle = document.getElementById('panelToggle');
+  var edge = document.getElementById('edge');
+  var loaded = false;
+  function openPanel(){
+    panel.classList.add('open'); overlay.classList.add('show');
+    if(!loaded){ loaded = true; loadList(); }
+  }
+  function closePanel(){ panel.classList.remove('open'); overlay.classList.remove('show'); }
+  toggle.addEventListener('click', openPanel);
+  overlay.addEventListener('click', closePanel);
+  edge.addEventListener('mouseenter', openPanel);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closePanel(); });
+
+  function loadList(){
+    fetch('../../presentations.json').then(function(r){ return r.json(); }).then(function(data){
+      var list = Array.isArray(data) ? data : (data.presentations || []);
+      var el = document.getElementById('plist');
+      if(!list.length){ el.innerHTML = '<div class="sub">목록이 비어 있습니다.</div>'; return; }
+      el.innerHTML = '';
+      list.forEach(function(p){
+        var a = document.createElement('a');
+        a.className = 'plink';
+        a.href = '../' + (p.slug||'') + '/';
+        a.innerHTML = '<b>'+ (p.title||p.slug||'제목 없음') +'</b>' + (p.summary? '<span style="color:var(--muted)">'+p.summary+'</span>':'');
+        el.appendChild(a);
+      });
+    }).catch(function(){
+      document.getElementById('plist').innerHTML = '<div class="sub">목록을 불러오지 못했습니다. (presentations.json 확인)</div>';
+    });
+  }
+})();
+</script>
+</body>
+</html>

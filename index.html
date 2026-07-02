@@ -147,6 +147,73 @@
   }
   .error { color: var(--accent); }
 
+  /* ── Sponsor banner ───────────────────── */
+  .sponsor {
+    margin: 8px 0 56px;
+  }
+  .sponsor-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink-soft);
+    margin-bottom: 10px; opacity: .7;
+  }
+  .sponsor a {
+    display: flex; align-items: center; gap: 22px;
+    flex-wrap: wrap;
+    text-decoration: none;
+    background: var(--ink);
+    background-image: radial-gradient(120% 140% at 100% 0%, rgba(192,86,58,.35), transparent 55%);
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    padding: 26px 28px;
+    color: #fff;
+    box-shadow: var(--shadow);
+    transition: transform .22s cubic-bezier(.2,.7,.3,1), box-shadow .22s;
+  }
+  .sponsor a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 2px 4px rgba(26,34,56,.08), 0 20px 44px rgba(192,86,58,.28);
+  }
+  .sponsor .badge {
+    flex: none;
+    width: 58px; height: 58px; border-radius: 16px;
+    display: grid; place-items: center;
+    background: var(--accent);
+    font-family: "Gowun Batang", serif;
+    font-size: 30px; font-weight: 700; color: #fff;
+    box-shadow: 0 6px 18px rgba(192,86,58,.4);
+  }
+  .sponsor .body { flex: 1; min-width: 200px; }
+  .sponsor .body .kicker {
+    font-size: 12px; font-weight: 600; letter-spacing: .04em;
+    color: var(--accent-soft); margin-bottom: 5px;
+  }
+  .sponsor .body h3 {
+    font-family: "Gowun Batang", serif;
+    font-size: 22px; font-weight: 700; line-height: 1.25;
+    margin-bottom: 6px;
+  }
+  .sponsor .body p {
+    font-size: 14px; color: rgba(255,255,255,.72); line-height: 1.55;
+  }
+  .sponsor .cta {
+    flex: none;
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 14.5px; font-weight: 600; color: #fff;
+    padding: 11px 20px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.28);
+    background: rgba(255,255,255,.08);
+    transition: background .2s, border-color .2s;
+  }
+  .sponsor a:hover .cta {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .sponsor .cta svg { width: 16px; height: 16px; transition: transform .2s; }
+  .sponsor a:hover .cta svg { transform: translateX(3px); }
+  @media (max-width: 560px) {
+    .sponsor a { gap: 16px; padding: 22px 20px; }
+    .sponsor .cta { width: 100%; justify-content: center; }
+  }
+
   footer {
     border-top: 1px solid var(--line);
     padding: 32px 0 48px; font-size: 13px; color: var(--ink-soft);
@@ -182,6 +249,22 @@
 
     <div class="count" id="count"></div>
     <div class="grid" id="grid"></div>
+
+    <!-- ── Sponsor banner ──────────────── -->
+    <aside class="sponsor" aria-label="추천 서비스">
+      <div class="sponsor-label">추천 서비스</div>
+      <a href="https://zipssa.kr/" target="_blank" rel="noopener sponsored">
+        <div class="badge">집</div>
+        <div class="body">
+          <div class="kicker">집사 · ZIPSSA</div>
+          <h3>내 자금으로 살 수 있는 아파트, 얼마일까?</h3>
+          <p>보유 현금·소득·DSR·LTV를 반영해 서울 아파트 매수 예산과 부족금·준비 기간까지 30초 만에 계산해 보세요.</p>
+        </div>
+        <span class="cta">계산기 열기
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+    </aside>
   </main>
 
   <footer>

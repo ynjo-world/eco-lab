@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK하이닉스 ADR — 첫날 결과와 행동강령</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b0c0e;
+  --ink2:#131518;
+  --panel:#1a1d21;
+  --rule:#2a2e34;
+  --rule2:#3a4048;
+  --paper:#eceef1;
+  --mute:#858d99;
+  --dim:#5c6470;
+  --amber:#e8a33d;      /* confirmed / filing stamp */
+  --teal:#4fb8a8;       /* action: favorable */
+  --red:#e05c5c;        /* action: avoid */
+  --blue:#6f92d8;       /* neutral / hold */
+  --max:820px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{
+  background:var(--ink);color:var(--paper);
+  font-family:'IBM Plex Sans KR',sans-serif;font-weight:300;
+  line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+#bar{position:fixed;top:0;left:0;height:2px;width:0;background:var(--amber);z-index:200;transition:width .12s}
+#back{position:fixed;top:12px;left:12px;z-index:160;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  text-decoration:none;color:#d6dae0;background:rgba(11,12,14,.9);border:1px solid var(--rule2);
+  border-radius:4px;padding:8px 13px;backdrop-filter:blur(6px);transition:.15s}
+#back:hover,#back:focus-visible{border-color:var(--amber);color:#fff;outline:none}
+
+section{max-width:var(--max);margin:0 auto;padding:56px 20px 32px}
+h1{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(1.7rem,5vw,2.9rem);
+  line-height:1.15;letter-spacing:-.02em;margin-bottom:18px}
+h2{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:clamp(1.25rem,3.4vw,1.75rem);
+  letter-spacing:-.01em;margin-bottom:6px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h2 .hn{font-size:.72rem;color:var(--amber);font-weight:500;letter-spacing:.14em;flex:0 0 auto}
+h3{font-weight:600;font-size:1.05rem;margin:24px 0 8px;color:#fff}
+p{color:#c2c8d0;margin-bottom:13px;font-size:1rem}
+strong{color:#fff;font-weight:600}
+em{color:var(--amber);font-style:normal;font-weight:500}
+.sub{color:var(--mute);font-size:.95rem;margin-bottom:22px}
+.dimtxt{color:var(--dim);font-size:.86rem}
+.rule{height:1px;background:var(--rule);margin:32px 0}
+
+/* hero: filing header */
+.hero{max-width:var(--max);margin:0 auto;padding:88px 20px 40px}
+.stamp{display:inline-flex;align-items:center;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.16em;color:var(--amber);border:1px solid rgba(232,163,61,.45);
+  padding:6px 12px;border-radius:3px;margin-bottom:26px}
+.stamp .dot{width:5px;height:5px;border-radius:50%;background:var(--amber)}
+.hero .lede{font-size:clamp(1rem,2.4vw,1.15rem);color:#aeb5bf;max-width:600px;margin-top:6px}
+.hero .meta{margin-top:36px;padding-top:16px;border-top:1px solid var(--rule);
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);line-height:2}
+.hero .meta b{color:var(--mute);font-weight:500}
+
+/* fact table — the core device */
+.facts{border:1px solid var(--rule);border-radius:5px;overflow:hidden;margin:20px 0}
+.facts .fr{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--rule)}
+.facts .fr:last-child{border-bottom:none}
+.facts .fk{padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;
+  color:var(--mute);background:var(--ink2);border-right:1px solid var(--rule);text-transform:uppercase;
+  display:flex;align-items:center}
+.facts .fv{padding:14px 16px;font-size:.97rem;color:#dfe3e8;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.facts .fv .num{font-family:'IBM Plex Mono',monospace;font-weight:600;color:#fff;font-size:1.05rem}
+.facts .fv .num.amber{color:var(--amber)}
+.facts .fv .note{font-size:.82rem;color:var(--dim)}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;padding:2px 7px;border-radius:3px;
+  border:1px solid var(--rule2);color:var(--mute)}
+.chip.ok{border-color:rgba(79,184,168,.5);color:var(--teal)}
+.chip.warn{border-color:rgba(224,92,92,.5);color:var(--red)}
+
+/* callouts */
+.box{border:1px solid var(--rule);border-left:2px solid var(--rule2);border-radius:4px;padding:16px 18px;margin:18px 0;background:var(--ink2)}
+.box .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  display:block;margin-bottom:7px;color:var(--mute)}
+.box p:last-child{margin-bottom:0}
+.box.key{border-left-color:var(--amber)}
+.box.key .tag{color:var(--amber)}
+.box.warn{border-left-color:var(--red);background:linear-gradient(100deg,rgba(224,92,92,.05),var(--ink2))}
+.box.warn .tag{color:var(--red)}
+.box.ok{border-left-color:var(--teal);background:linear-gradient(100deg,rgba(79,184,168,.05),var(--ink2))}
+.box.ok .tag{color:var(--teal)}
+
+/* fungibility asymmetry */
+.asym{border:1px solid var(--rule);border-radius:5px;overflow:hidden;margin:18px 0}
+.asym .ah{padding:11px 16px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--mute);background:var(--ink2);border-bottom:1px solid var(--rule);text-transform:uppercase}
+.asym .ar{display:grid;grid-template-columns:1fr 120px 1fr;align-items:center;padding:15px 16px;
+  border-bottom:1px solid var(--rule);gap:8px}
+.asym .ar:last-of-type{border-bottom:none}
+.asym .ae{text-align:center;font-weight:600;color:#fff;font-size:.94rem}
+.asym .ae small{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--dim);font-weight:400;margin-top:2px}
+.asym .am{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.5}
+.asym .am .ag{font-size:1.2rem;display:block;margin-bottom:1px}
+.asym .am.open{color:var(--teal)}
+.asym .am.shut{color:var(--red)}
+.asym .am.shut .ag{opacity:.55}
+.asym .af{padding:13px 16px;background:var(--ink);font-size:.9rem;color:#bcc3cb;line-height:1.6;border-top:1px solid var(--rule)}
+.asym .af b{color:#fff}
+
+/* calculator */
+.calc{border:1px solid var(--rule2);border-radius:5px;background:var(--panel);padding:20px;margin:20px 0}
+.calc .cin{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.calc label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;
+  color:var(--mute);margin-bottom:6px;text-transform:uppercase}
+.calc input{width:100%;background:var(--ink);border:1px solid var(--rule2);border-radius:3px;color:#fff;
+  font-family:'IBM Plex Mono',monospace;font-size:1.02rem;padding:11px 12px;min-height:46px}
+.calc input:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 2px rgba(232,163,61,.12)}
+.calc .hint{font-size:.72rem;color:var(--dim);margin-top:4px}
+.out{border-top:1px solid var(--rule);padding-top:16px;text-align:center}
+.out .work{font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--dim);margin-bottom:10px;word-break:break-word;line-height:1.7}
+.out .work b{color:var(--mute)}
+.out .pct{font-family:'IBM Plex Mono',monospace;font-size:2.5rem;font-weight:600;line-height:1;margin-bottom:8px}
+.out .pct.buy{color:var(--teal)}.out .pct.hold{color:var(--blue)}.out .pct.skip{color:var(--red)}
+.out .verd{display:inline-block;font-weight:600;font-size:.93rem;padding:7px 18px;border-radius:3px;
+  font-family:'IBM Plex Sans KR'}
+.out .verd.buy{background:rgba(79,184,168,.13);color:var(--teal);border:1px solid rgba(79,184,168,.4)}
+.out .verd.hold{background:rgba(111,146,216,.13);color:var(--blue);border:1px solid rgba(111,146,216,.4)}
+.out .verd.skip{background:rgba(224,92,92,.13);color:var(--red);border:1px solid rgba(224,92,92,.4)}
+.out .why{font-size:.86rem;color:var(--mute);margin-top:11px;line-height:1.6}
+.scale{position:relative;height:30px;border-radius:3px;margin:16px 0 4px;overflow:hidden;border:1px solid var(--rule);
+  background:linear-gradient(90deg,rgba(79,184,168,.3) 0%,rgba(79,184,168,.12) 30%,rgba(111,146,216,.12) 52%,rgba(224,92,92,.14) 74%,rgba(224,92,92,.3) 100%)}
+.scale .needle{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;transition:left .22s}
+.scale .ticks{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center;padding:0 7px;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9aa2ad;pointer-events:none}
+
+/* action cards */
+.acts{display:grid;gap:12px;margin:20px 0}
+.act{border:1px solid var(--rule);border-radius:5px;background:var(--ink2);overflow:hidden}
+.act .ah2{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid var(--rule)}
+.act .badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.06em;
+  padding:4px 9px;border-radius:3px;flex:0 0 auto}
+.act.now .badge{background:rgba(79,184,168,.15);color:var(--teal)}
+.act.wait .badge{background:rgba(232,163,61,.15);color:var(--amber)}
+.act.dont .badge{background:rgba(224,92,92,.15);color:var(--red)}
+.act .at{font-weight:600;color:#fff;font-size:.99rem}
+.act .ab{padding:14px 16px}
+.act .ab ul{list-style:none;padding:0;margin:0}
+.act .ab li{font-size:.93rem;color:#c2c8d0;padding-left:16px;position:relative;margin-bottom:9px;line-height:1.55}
+.act .ab li:last-child{margin-bottom:0}
+.act .ab li::before{content:"—";position:absolute;left:0;color:var(--dim)}
+.act .ab li b{color:#fff}
+
+/* steps */
+.steps{counter-reset:s;margin:18px 0}
+.step{display:grid;grid-template-columns:34px 1fr;gap:13px;padding:14px 0;border-bottom:1px solid var(--rule);align-items:start}
+.step:last-child{border-bottom:none}
+.step .sn{counter-increment:s;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber);
+  border:1px solid rgba(232,163,61,.4);border-radius:3px;height:26px;display:flex;align-items:center;justify-content:center}
+.step .sn::before{content:counter(s,decimal-leading-zero)}
+.step .sb{font-size:.96rem;color:#c2c8d0;line-height:1.6}
+.step .sb b{color:#fff}
+.step .sb .sm{display:block;font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--dim);margin-top:3px}
+
+/* details */
+details.more{border:1px solid var(--rule);border-radius:4px;margin:14px 0;background:var(--ink2)}
+details.more>summary{cursor:pointer;padding:13px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--mute);list-style:none;display:flex;align-items:center;gap:9px;min-height:46px;transition:.15s}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:"+";color:var(--amber);font-weight:600}
+details.more[open]>summary::before{content:"−"}
+details.more>summary:hover,details.more>summary:focus-visible{color:#fff;background:rgba(232,163,61,.04);outline:none}
+details.more .mb{padding:2px 16px 16px;border-top:1px solid var(--rule)}
+details.more .mb>*:first-child{margin-top:13px}
+details.more .mb p{font-size:.93rem}
+
+/* timeline */
+.tl2{margin:18px 0}
+.tl2 .ti{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.tl2 .ti:last-child{border-bottom:none}
+.tl2 .ti.hot{background:linear-gradient(90deg,rgba(232,163,61,.07),transparent)}
+.tl2 .td{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--amber);font-weight:600}
+.tl2 .td small{display:block;color:var(--dim);font-weight:400;font-size:10px;margin-top:1px}
+.tl2 .te{font-size:.94rem;color:#c2c8d0;line-height:1.55}
+.tl2 .te b{color:#fff}
+
+.src{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--dim);
+  border:1px solid var(--rule);border-radius:2px;padding:1px 5px;margin-left:3px;white-space:nowrap}
+
+footer{max-width:var(--max);margin:36px auto 0;padding:28px 20px 60px;border-top:1px solid var(--rule)}
+footer h4{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--mute);
+  margin-bottom:10px;text-transform:uppercase;font-weight:500}
+footer li{font-size:.79rem;color:var(--dim);margin-bottom:6px;line-height:1.5;list-style:none}
+.disc{margin-top:18px;font-size:.79rem;color:var(--dim);line-height:1.7;padding:13px;
+  border:1px solid var(--rule);border-radius:4px;background:var(--ink2)}
+
+@media(max-width:600px){
+  section{padding:44px 16px 26px}
+  .facts .fr{grid-template-columns:1fr}
+  .facts .fk{border-right:none;border-bottom:1px solid var(--rule)}
+  .asym .ar{grid-template-columns:1fr}
+  .asym .am .ag{transform:rotate(90deg)}
+  .tl2 .ti{grid-template-columns:1fr;gap:3px}
+  .out .pct{font-size:2rem}
+}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<a id="back" href="../../">← 목록으로</a>
+
+<header class="hero">
+  <div class="stamp"><span class="dot"></span>거래 개시 · 첫날 종료 · 2026.07.11</div>
+  <h1>SK하이닉스 ADR<br>첫날 결과와 행동강령</h1>
+  <p class="lede">나스닥 데뷔 첫날 <strong>공모가 대비 +13%, 본주 대비 약 +16% 프리미엄</strong>으로 마감했습니다. 확정된 사실 위에서, 13일 정규거래를 앞두고 무엇을 할지 정리합니다.</p>
+  <div class="meta">
+    <b>확정</b> 시초가 $170 · 종가 $168.49(+13.08%) · 본주 대비 약 +16%<br>
+    <b>다음</b> 7/13 정규거래(SKHY) 전환 · 국내 본주와 첫 동시거래 · 12월 나스닥100 편입 기대
+  </div>
+</header>
+
+<!-- 1. 확정 사실 -->
+<section id="facts">
+  <h2><span class="hn">01</span>확정된 사실</h2>
+  <p class="sub">첫날 거래 결과와 회사 공시·SEC 서류로 확인된 내용입니다.</p>
+
+  <div class="facts">
+    <div class="fr">
+      <div class="fk" style="color:var(--amber)">첫날 종가</div>
+      <div class="fv"><span class="num amber">$168.49</span><span class="chip ok">+13.08% vs 공모가</span>
+        <span class="note">시초가 $170(+14%), 장중 최고 $177. 원화 환산 약 <strong>253만원</strong>(환율 1,500 기준)<span class="src">파이낸셜뉴스·뉴스1</span></span></div>
+    </div>
+    <div class="fr">
+      <div class="fk" style="color:var(--amber)">본주 대비 프리미엄</div>
+      <div class="fv"><span class="num amber">약 +16%</span>
+        <span class="note">ADR 환산 253만원 vs 본주 종가 218.6만원. <strong>'역김치 프리미엄'</strong><span class="src">뉴시스</span></span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">첫날 거래량</div>
+      <div class="fv"><span class="num">1억 600만주</span><span class="note">개장 30분 만에 5,200만주 — 하루 물량의 절반이 초반에 집중<span class="src">WSJ·CBOE</span></span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">공모가</div>
+      <div class="fv"><span class="num">$149.00</span><span class="chip">확정</span>
+        <span class="note">본주 3거래일 평균 대비 약 <strong>+2.7% 할증</strong>. 할인이 관행인 외국기업 상장에서 이례적<span class="src">한경</span></span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">전환 비율</div>
+      <div class="fv"><span class="num">ADR 10주 = 본주 1주</span><span class="src">SEC · ADS 기준</span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">티커</div>
+      <div class="fv"><span class="num">SKHYV</span><span class="chip warn">7/10 조건부</span>
+        <span class="num">→ SKHY</span><span class="chip ok">7/13 정규</span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">조달 · 시총</div>
+      <div class="fv"><span class="num">265억 달러</span><span class="note">≈40조원. 첫날 시총 약 <strong>1조 2,700억 달러</strong>(미국 상장사 11위권, 테슬라 아래·릴리 위)<span class="src">위키트리</span></span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">수요예측</div>
+      <div class="fv"><span class="num amber">7배 초과청약</span><span class="note">코너스톤 투자자(베일리기포드·코투 등) 약 50억$ 매수<span class="src">로이터</span></span></div>
+    </div>
+    <div class="fr">
+      <div class="fk">향후 일정</div>
+      <div class="fv"><span class="num" style="font-size:.92rem">공모 7/14 마무리</span><span class="note">신규 보통주 <strong>7/29 코스피 추가상장</strong>. 12월 <strong>나스닥100 편입</strong> 기대<span class="src">위키트리</span></span></div>
+    </div>
+  </div>
+
+  <div class="box ok">
+    <span class="tag">첫날 총평 — 흥행 성공</span>
+    <p>미국 투자자들이 HBM 1위 기업에 높은 프리미엄을 부여했습니다. 공모가가 이미 할증(+2.7%)이었는데도 첫날 종가는 그보다 13% 더 높았고, 본주와의 격차는 약 16%까지 벌어졌습니다. 핵심 고객 엔비디아(+4%)·메타(+6%)도 동반 강세, 반면 경쟁사 마이크론은 자금 분산 우려로 약세(−1%)였습니다.</p>
+  </div>
+
+  <div class="box warn">
+    <span class="tag">아직 확정 안 된 것 — 13일이 첫 시험대</span>
+    <p>첫날은 국내 증시가 닫힌 상태에서 <strong>ADR만</strong> 거래됐습니다. <strong>7/13에 처음으로 본주와 ADR이 동시에 열립니다.</strong> 이때 ① 미국의 +16% 프리미엄이 유지될지 ② 본주가 그 온기를 받아 오를지 ③ 격차가 좁혀질지가 판가름납니다. 신한 노동길: <strong>"첫날 상승률보다, 미국에서 형성된 높은 가격이 한국 본주로 얼마나 전달되는지가 관건."</strong></p>
+  </div>
+</section>
+
+<div class="rule" style="max-width:820px;margin-left:auto;margin-right:auto"></div>
+
+<!-- 2. 프리미엄 -->
+<section id="premium">
+  <h2><span class="hn">02</span>프리미엄은 0에서 시작하지 않았다</h2>
+  <p class="sub">첫 체결가 $170이 뜬 순간, 이미 본주 대비 두 자릿수 프리미엄이 붙어 있었습니다.</p>
+
+  <p>프리미엄은 누가 정해주는 값이 아니라 <strong>두 시장 가격을 비교해 계산되는 값</strong>입니다. ADR 가격은 나스닥이, 본주 가격은 코스피가 각각 독립적으로 매깁니다. 첫날도 그랬어요 — 시초가 $170은 공모가 대비 이미 +14%였고, 본주 환산으로도 두 자릿수 프리미엄으로 <em>출발</em>했습니다. "0에서 시작해 붙는" 게 아니었죠.</p>
+
+  <div class="box key">
+    <span class="tag">계산식</span>
+    <p style="font-family:'IBM Plex Mono',monospace;color:#fff;font-size:1rem;line-height:1.6">프리미엄(%) = [ ADR 가격($) × 10 × 환율(₩) ] ÷ 본주 종가(₩) − 1</p>
+    <p style="margin-top:9px;font-size:.9rem">ADR 1주 = 본주 0.1주라 <strong>×10</strong>을 해야 본주 1주와 비교됩니다.</p>
+  </div>
+
+  <div class="box">
+    <span class="tag">첫날 실제로 검산</span>
+    <p>첫날 종가 $168.49, 환율 약 1,500원을 넣으면 → $168.49 × 10 × 1,500 = 약 <strong>252.7만원</strong>. 본주 종가 218.6만원으로 나누면 <strong>약 +16%</strong>. 언론이 보도한 '역김치 프리미엄 16%'와 정확히 일치합니다. <em>공모가 기준(+13%)과 본주 기준(+16%)이 다른 이유</em>는 분모가 다르기 때문 — 공모가는 3거래일 평균, 본주 프리미엄은 최근 종가 대비입니다.</p>
+  </div>
+
+  <h3>지금 계산해 보세요</h3>
+  <p class="dimtxt" style="margin-bottom:10px">본주 종가는 확정값(218.6만)입니다. ADR 가격과 환율만 넣으면 프리미엄과 판단이 즉시 나옵니다.</p>
+
+  <div class="calc">
+    <div class="cin">
+      <div>
+        <label>ADR 가격 ($)</label>
+        <input type="number" id="iAdr" value="168.49" step="0.5" min="1" aria-label="ADR 가격 달러">
+        <div class="hint">첫날 종가 168.49</div>
+      </div>
+      <div>
+        <label>원/달러 환율</label>
+        <input type="number" id="iFx" value="1500" step="1" min="500" aria-label="원달러 환율">
+        <div class="hint">첫날 약 1,500</div>
+      </div>
+      <div>
+        <label>본주 종가 (₩)</label>
+        <input type="number" id="iWon" value="2186000" step="1000" min="1000" aria-label="본주 종가">
+        <div class="hint">7/9 확정 218.6만</div>
+      </div>
+    </div>
+    <div class="out">
+      <div class="work" id="oWork"></div>
+      <div class="pct" id="oPct">+0.00%</div>
+      <div class="verd" id="oVerd">—</div>
+      <div class="scale">
+        <div class="ticks"><span>−5%</span><span>0%</span><span>+5%</span><span>+12%</span><span>+25%</span></div>
+        <div class="needle" id="oNeedle" style="left:50%"></div>
+      </div>
+      <div class="why" id="oWhy"></div>
+    </div>
+  </div>
+</section>
+
+<div class="rule" style="max-width:820px;margin-left:auto;margin-right:auto"></div>
+
+<!-- 3. 펀저빌리티 -->
+<section id="fung">
+  <h2><span class="hn">03</span>펀저빌리티 — 프리미엄이 유지되는 이유</h2>
+  <p class="sub">SEC 서류에 명시된 비대칭 구조. 이것이 프리미엄의 지속성을 결정합니다.</p>
+
+  <p><strong>펀저빌리티(Fungibility)</strong>는 ADR과 본주를 서로 바꿀 수 있는가를 말합니다. 차익거래가 가격을 붙이려면 이 전환이 <em>양방향으로</em> 열려 있어야 합니다. 그런데 SEC 서류상 한 방향이 막혀 있습니다.</p>
+
+  <div class="asym">
+    <div class="ah">SEC 제출서류 기준 · 전환 방향</div>
+    <div class="ar">
+      <div class="ae">미국 ADR<small>NASDAQ</small></div>
+      <div class="am open"><span class="ag">→</span>취소하고 전환 가능</div>
+      <div class="ae">한국 본주<small>KOSPI</small></div>
+    </div>
+    <div class="ar">
+      <div class="ae">한국 본주<small>KOSPI</small></div>
+      <div class="am shut"><span class="ag">⇸</span>당국 승인 필요<br>제약 있음</div>
+      <div class="ae">미국 ADR<small>NASDAQ</small></div>
+    </div>
+    <div class="af">SEC 서류에 따르면 <b>ADR 보유자는 이를 취소하고 한국 상장주를 받을 수 있지만, 보통주를 ADR로 전환하려면 한국 당국의 승인 등이 필요해 제약이 따를 수 있습니다.</b><span class="src">블룸버그·SEC</span></div>
+  </div>
+
+  <div class="box key">
+    <span class="tag">첫날 프리미엄의 공식 설명</span>
+    <p>뉴시스는 첫날 +16% 격차의 원인을 <strong>"본주와 ADR 간 상호전환의 비대칭성"</strong>으로 명시했습니다 — ADR을 취소해 본주를 받는 건 가능하지만, 본주를 ADR로 전환하려면 회사 동의·예탁기관 절차가 개입해 <strong>공급이 즉각 늘기 어렵다</strong>는 것입니다. 프리미엄을 깎아내리는 방향(본주 사서 ADR 만들어 팔기)이 막혀 있으니 격차가 유지된 셈입니다. TSMC가 수년간 이 구조로 프리미엄을 유지했습니다.</p>
+  </div>
+
+  <div class="box warn">
+    <span class="tag">단, 단정은 금물</span>
+    <p>신한투자증권 노동길 연구원: SK하이닉스도 완전히 자유로운 전환 구조는 아니지만, <strong>현재 공개된 정보만으로 TSMC와 같은 구조적 공급 제약을 단정하기는 어렵다</strong>고 봅니다. 초기엔 프리미엄이 형성될 가능성이 크지만, <strong>장기적으로 TSMC 수준의 고착화된 프리미엄이 나타날지는 불확실</strong>합니다.<span class="src">파이낸셜뉴스</span></p>
+  </div>
+
+  <details class="more">
+    <summary>증권가 전망 — 엇갈리는 시각</summary>
+    <div class="mb">
+      <p><strong>UBS (프리미엄 강세):</strong> "첫날부터 예탁증서를 매수하고 국내 라인을 공매도하는 것은 너무나 당연한 선택." 디스카운트로 거래될 가능성은 매우 낮다고 봄. 단, 이는 <em>기관의 롱숏 차익거래 전략</em>이지 개인의 방향성 베팅이 아닙니다.</p>
+      <p><strong>KB증권 김동원:</strong> TSMC 사례처럼 본주와 ADR이 <strong>함께 재평가되는 선순환</strong>을 기대. ADR 상장으로 글로벌 투자자 접근성이 확대된다는 논리.</p>
+      <p><strong>신한 노동길:</strong> 상장 초기 ADR이 본주 환산가보다 높게 거래될 가능성이 높다고 봄. 다만 <strong>"미국에서 형성된 가격이 국내 본주로 이어질지, 미국에만 반영될지가 국내 투자자 수익률을 좌우"</strong>한다고 지적.</p>
+    </div>
+  </details>
+</section>
+
+<div class="rule" style="max-width:820px;margin-left:auto;margin-right:auto"></div>
+
+<!-- 4. 행동강령 -->
+<section id="action">
+  <h2><span class="hn">04</span>행동강령</h2>
+  <p class="sub">지금 상황별로 무엇을 할지. 헷갈리지 않게, 하나씩.</p>
+
+  <div class="box ok">
+    <span class="tag">이미 본주를 보유 중이라면 (첫날 이후)</span>
+    <p><strong>그대로 두는 것이 여전히 기본값입니다.</strong> 오히려 첫날 결과는 본주 보유자에게 우호적입니다 — ADR이 +16% 프리미엄을 형성했으니, 13일 국내 장에서 <em>본주 재평가 기대(온기 전달)</em>가 생길 수 있습니다. 양도세 0%·환율 무위험도 그대로고요. <strong>급하게 ADR로 갈아탈 이유는 더더욱 없어졌습니다</strong> — 지금 ADR은 +16%로 비싼 구간이니까요.</p>
+  </div>
+
+  <div class="acts">
+    <div class="act now">
+      <div class="ah2"><span class="badge">지금 한다</span><span class="at">13일 첫 동시거래를 관찰</span></div>
+      <div class="ab">
+        <ul>
+          <li>7/13은 <b>본주와 ADR이 처음 동시에 열리는 날</b>. 최대 관전 포인트</li>
+          <li>확인할 것: ① ADR +16% 프리미엄이 <b>유지되나</b> ② 본주가 <b>온기를 받아 오르나</b> ③ 격차가 <b>좁혀지나</b></li>
+          <li>본주가 따라 오르면 → 보유 포지션에 이득. 서두를 필요 없음</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="act dont">
+      <div class="ah2"><span class="badge">지금 안 한다</span><span class="at">+16% 프리미엄에 ADR 추격</span></div>
+      <div class="ab">
+        <ul>
+          <li>현재 ADR은 본주보다 <b>약 16% 비쌉니다</b>. 추격은 비싸게 사는 것</li>
+          <li>첫날 장중 $177 → $168로 밀린 것처럼 <b>초기 변동성이 큽니다</b></li>
+          <li>13일부터 레버리지 ETF도 거래 → <b>기계적 매매로 변동성 증폭</b></li>
+          <li>해외 양도세 22%까지 겹침</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="act dont">
+      <div class="ah2"><span class="badge">하지 않는다</span><span class="at">본주 팔고 ADR 갈아타기</span></div>
+      <div class="ab">
+        <ul>
+          <li>UBS의 "ADR 매수·본주 공매도"는 <b>기관 롱숏 차익거래</b>. 개인이 흉내 내면 양쪽에서 깨질 수 있음</li>
+          <li>본주를 팔면 재매수 시 거래세, ADR 수익엔 양도세 22%</li>
+          <li>프리미엄이 +16%인 지금 갈아타면 <b>비싼 쪽으로 이동</b>하는 것</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="act wait">
+      <div class="ah2"><span class="badge">기다린다</span><span class="at">남은 달러가 있다면</span></div>
+      <div class="ab">
+        <ul>
+          <li>달러 보유분으로 ADR을 노린다면, <b>프리미엄이 내려온 뒤</b>(+5% 이하)가 유리</li>
+          <li>13일 이후 본주-ADR 격차가 좁혀지는지 보고 판단</li>
+          <li>12월 <b>나스닥100 편입</b> 시 패시브 수요가 프리미엄을 다시 밀 수 있음 — 급하지 않게 분할</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>프리미엄 구간별 판단</h3>
+  <div class="facts" style="margin-top:12px">
+    <div class="fr">
+      <div class="fk" style="color:var(--teal)">0 ~ +5%</div>
+      <div class="fv">본주와 큰 차이 없음. <strong>달러 보유자라면 ADR 매수 고려 가능</strong><span class="note">패시브 편입 시 상승 여지 + 환노출</span></div>
+    </div>
+    <div class="fr">
+      <div class="fk" style="color:var(--blue)">+5 ~ +12%</div>
+      <div class="fv">애매한 구간. <strong>기존 본주 보유자는 그대로</strong>, 신규는 서두를 필요 없음<span class="note">첫날 이후 프리미엄이 이 구간까지 내려오면 재검토</span></div>
+    </div>
+    <div class="fr">
+      <div class="fk" style="color:var(--red)">+12% 이상</div>
+      <div class="fv"><strong>추격 금지.</strong> 비싸게 사는 데다 양도세 22%까지<span class="note">첫날 종가가 이 구간(본주 대비 약 +16%)</span></div>
+    </div>
+  </div>
+
+  <div class="box warn">
+    <span class="tag">경고</span>
+    <p>이 구간표는 <strong>판단의 틀이지 매수·매도 권유가 아닙니다.</strong> 프리미엄이 높다고 반드시 떨어지지도, 낮다고 반드시 오르지도 않습니다. 특히 <strong>본주→ADR 전환 제약</strong> 때문에 프리미엄이 예상보다 오래 유지될 수 있습니다. 최종 판단과 책임은 본인에게 있습니다.</p>
+  </div>
+</section>
+
+<div class="rule" style="max-width:820px;margin-left:auto;margin-right:auto"></div>
+
+<!-- 5. 타임라인 -->
+<section id="when">
+  <h2><span class="hn">05</span>다음 일정 — 13일이 분수령</h2>
+  <p class="sub">첫날은 끝났습니다. 이제 국내 본주와의 첫 동시거래가 관건입니다.</p>
+
+  <div class="tl2">
+    <div class="ti">
+      <div class="td">7/10 (금)<small>완료</small></div>
+      <div class="te"><b>나스닥 데뷔 (SKHYV)</b> — 시초가 $170, 종가 $168.49(+13%). 거래량 1억주 돌파<span class="src">완료</span></div>
+    </div>
+    <div class="ti hot">
+      <div class="td">7/13 (월)<small>핵심</small></div>
+      <div class="te"><b>정규거래 전환(SKHY) + 국내 본주와 첫 동시거래</b> — 프리미엄 유지·전달 여부의 첫 시험대. 레버리지 ETF도 거래 시작</div>
+    </div>
+    <div class="ti">
+      <div class="td">7/14 (화)</div>
+      <div class="te">ADR 공모 절차 마무리</div>
+    </div>
+    <div class="ti">
+      <div class="td">7/29 (화)</div>
+      <div class="te">ADR 기초자산인 <b>신규 보통주가 코스피에 추가상장</b> — 국내 유통물량 증가</div>
+    </div>
+    <div class="ti hot">
+      <div class="td">12월<small>전망</small></div>
+      <div class="te"><b>나스닥100 지수 편입 기대</b> — 편입 시 패시브 자금 유입으로 프리미엄 재점화 가능</div>
+    </div>
+  </div>
+
+  <div class="box warn">
+    <span class="tag">7/13 관찰 포인트</span>
+    <p>① ADR +16% 프리미엄이 <strong>유지되는가</strong>, 좁혀지는가<br>
+       ② 본주가 미국발 온기를 받아 <strong>오르는가</strong> (외국인 수급 주목)<br>
+       ③ 정규거래 전환 후 <strong>레버리지 ETF의 기계적 매매</strong>가 변동성을 키우는지<br>
+       ④ 신한 노동길 지적대로, <strong>"미국 가격이 한국 본주로 전달되는지"</strong>가 국내 투자자 수익률을 좌우</p>
+  </div>
+</section>
+
+<div class="rule" style="max-width:820px;margin-left:auto;margin-right:auto"></div>
+
+<!-- 6. 한 장 요약 -->
+<section id="tldr">
+  <h2><span class="hn">06</span>한 장 요약</h2>
+
+  <div class="steps">
+    <div class="step"><div class="sn"></div><div class="sb"><b>첫날 흥행 성공.</b> 시초가 $170, 종가 $168.49 — 공모가 대비 +13%, 본주 대비 약 +16%.<span class="sm">개장 30분 만에 5,200만주, 하루 1억주 돌파</span></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>프리미엄은 0에서 시작하지 않았다.</b> 첫 체결부터 두 자릿수로 출발.<span class="sm">본주→ADR 전환 제약(비대칭)이 격차의 공식 원인으로 지목됨</span></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>본주 보유자는 그대로 두는 것이 기본값.</b> 첫날 결과는 오히려 우호적.<span class="sm">ADR 프리미엄 → 본주 재평가 기대. 양도세 0%·환율 무위험 유지</span></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>지금 +16%에 ADR 추격은 금물.</b> 비싸게 사는 구간 + 양도세 22%.<span class="sm">달러 보유자는 프리미엄이 내려오거나 나스닥100 편입 시점을 노려 분할</span></div></div>
+    <div class="step"><div class="sn"></div><div class="sb"><b>7/13이 분수령.</b> 본주와 ADR이 처음 동시에 열린다.<span class="sm">미국 프리미엄이 유지되나, 본주로 전달되나, 격차가 좁혀지나</span></div></div>
+  </div>
+
+  <div class="box key">
+    <span class="tag">한 줄</span>
+    <p style="font-size:1.05rem;color:#fff">첫날은 <strong>흥행(+16% 프리미엄)</strong>으로 확정됐습니다. 이제 질문은 <strong>"그 프리미엄이 13일 이후 유지되고, 본주로 전달되느냐"</strong>입니다. 보유자는 그 답을 확인하며 기다리면 됩니다.</p>
+  </div>
+</section>
+
+<footer>
+  <h4>출처</h4>
+  <ul>
+    <li>첫날 결과(시초가 $170·종가 $168.49·+13.08%·본주 대비 +16%) — 파이낸셜뉴스·뉴스1·뉴시스·한경비즈니스·위키트리(2026.7.11)</li>
+    <li>거래량·시총(1억600만주·1.27조$) — WSJ / CBOE(JJ 키나한) · 위키트리</li>
+    <li>공모가 $149·+2.7% 할증·7배 초과청약·265억$ 조달 — 로이터 / 한경 / 라디오서울(2026.7.10~11)</li>
+    <li>펀저빌리티 비대칭(첫날 프리미엄 원인) — 뉴시스 '역김치 프리미엄'(2026.7.11) / 블룸버그·SEC F-1(ADS 기준)</li>
+    <li>향후 일정(7/29 코스피 추가상장·12월 나스닥100 편입 기대) — 위키트리 / 뉴시스</li>
+    <li>증권가 전망 — 신한투자증권 노동길, KB증권 김동원 / 파이낸셜뉴스 · UBS 고객노트(7/7)</li>
+  </ul>
+  <div class="disc">
+    본 자료는 <strong>학습·토론용</strong>이며 특정 종목의 매수·매도 권유가 아닙니다. 수치는 2026년 7월 11일(첫 거래일 종료) 기준이며, 이후 프리미엄·환율·본주 가격은 계속 변합니다. 공식 명칭은 ADS(American Depositary Shares)이며 통상 ADR로 불립니다. 펀저빌리티 세부 운영규정은 조율 중이라 변경될 수 있습니다. 투자 판단과 책임은 투자자 본인에게 있으며, 실행 전 거래 증권사의 세금·수수료 안내와 최신 공시(DART·SEC EDGAR)를 확인하시기 바랍니다.
+  </div>
+</footer>
+
+<script>
+// progress bar
+var bar=document.getElementById('bar');
+window.addEventListener('scroll',function(){
+  var h=document.documentElement, sc=h.scrollTop||document.body.scrollTop, mx=h.scrollHeight-h.clientHeight;
+  bar.style.width=(mx>0?(sc/mx*100):0)+'%';
+},{passive:true});
+
+// premium calculator
+(function(){
+  var a=document.getElementById('iAdr'), f=document.getElementById('iFx'), w=document.getElementById('iWon');
+  if(!a) return;
+  var pct=document.getElementById('oPct'), verd=document.getElementById('oVerd'),
+      work=document.getElementById('oWork'), needle=document.getElementById('oNeedle'), why=document.getElementById('oWhy');
+  function calc(){
+    var adr=parseFloat(a.value), fx=parseFloat(f.value), won=parseFloat(w.value);
+    if(!(adr>0&&fx>0&&won>0)){ pct.textContent='—'; work.textContent='값을 입력하세요'; verd.textContent='—'; why.textContent=''; return; }
+    var conv=adr*10*fx;
+    var p=(conv/won-1)*100;
+    work.innerHTML='$'+adr.toLocaleString()+' × 10 × '+fx.toLocaleString()+'원 = <b>'+Math.round(conv).toLocaleString()+'원</b> &nbsp;÷&nbsp; 본주 <b>'+Math.round(won).toLocaleString()+'원</b>';
+    pct.textContent=(p>=0?'+':'')+p.toFixed(2)+'%';
+    var c,v,y;
+    if(p<=5){ c='buy'; v='ADR 매수 고려 가능';
+      y='본주와 큰 차이 없거나 저렴합니다. 달러를 이미 보유했다면 소액 분할로 접근할 수 있는 구간입니다.'; }
+    else if(p<=12){ c='hold'; v='애매 — 서두르지 않는다';
+      y='기존 본주 보유자는 그대로 두는 것이 기본값입니다. 신규 진입이라면 프리미엄이 안정되는 지점을 확인한 뒤 판단하세요.'; }
+    else { c='skip'; v='추격 금지 — 본주 보유';
+      y='비싸게 사는 구간입니다. 해외 양도세 22%까지 겹칩니다. 다만 본주→ADR 전환 제약 탓에 프리미엄이 오래 유지될 수도 있으니, 하락에 베팅하는 것도 위험합니다.'; }
+    pct.className='pct '+c; verd.className='verd '+c; verd.textContent=v; why.textContent=y;
+    var pos=(p+5)/30*100; needle.style.left=Math.max(0,Math.min(100,pos))+'%';
+  }
+  [a,f,w].forEach(function(el){ el.addEventListener('input',calc); });
+  calc();
+})();
+</script>
+</body>
+</html>

@@ -284,19 +284,6 @@
 
   const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
-  // 숨김 처리: hidden 값이 true(불리언) 또는 "Y"/"true"(문자열)면 목록에서 제외.
-  // "N"/"false"/없음/null 은 모두 공개.
-  function isHidden(p){
-    const h = p.hidden;
-    if (h === true) return true;
-    if (typeof h === 'string'){
-      const v = h.trim().toLowerCase();
-      return v === 'y' || v === 'true';
-    }
-    return false;
-  }
-  function visible(){ return DATA.filter(p => !isHidden(p)); }
-
   function fmtDate(s){
     const d = new Date(s);
     if (isNaN(d)) return s;
@@ -330,10 +317,10 @@
       </a>`;
   }
 
-  // 계층 구조를 깊이우선으로 펼쳐서, 부모 아래 자식이 들여쓰기되어 나오게 (숨김 글 제외)
+  // 계층 구조를 깊이우선으로 펼쳐서, 부모 아래 자식이 들여쓰기되어 나오게
   function flattenTree(){
     const childrenOf = {};
-    visible().forEach(p => {
+    DATA.forEach(p => {
       const key = p.parent || '__root__';
       (childrenOf[key] = childrenOf[key] || []).push(p);
     });
@@ -356,7 +343,7 @@
     let rows;
 
     if (filtering){
-      rows = visible().filter(matches)
+      rows = DATA.filter(matches)
         .sort((a,b) => new Date(b.date) - new Date(a.date))
         .map(p => ({ p, depth: 0 }));
     } else {
@@ -374,7 +361,7 @@
   }
 
   function buildTags(){
-    const all = [...new Set(visible().flatMap(p => p.tags || []))].sort();
+    const all = [...new Set(DATA.flatMap(p => p.tags || []))].sort();
     tagsEl.innerHTML = '';
     const mk = (label, val) => {
       const b = document.createElement('button');

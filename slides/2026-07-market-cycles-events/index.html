@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식시장의 계절과 사건 — 지수는 언제 오르고 언제 내릴까</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c1424;--ink2:#13203a;--paper:#f3eee2;--paper2:#e9e1cf;--line:#c9bd9f;
+  --gold:#c69b46;--gold-bright:#e0b65c;--up:#1f9d6b;--down:#d8463f;--muted:#6b6453;--ink-soft:#33405a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans KR',sans-serif;
+  font-weight:400;line-height:1.75;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+#progress{position:fixed;top:0;left:0;height:4px;width:0%;
+  background:linear-gradient(90deg,var(--down),var(--gold-bright),var(--up));z-index:1000;transition:width .12s ease-out;}
+.backbtn{position:fixed;top:14px;left:14px;z-index:1001;display:inline-flex;align-items:center;gap:6px;
+  padding:9px 15px;border-radius:2px;background:#0c1424;color:#f3eee2;text-decoration:none;
+  font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;border:1px solid #c69b46;
+  box-shadow:0 2px 10px rgba(0,0,0,.25);transition:transform .15s ease, background .15s ease;}
+.backbtn:hover,.backbtn:focus-visible{background:#c69b46;color:#0c1424;transform:translateY(-1px);outline:none}
+#topbtn{position:fixed;right:18px;bottom:18px;z-index:1001;width:46px;height:46px;border-radius:50%;
+  border:1px solid var(--gold);background:var(--ink);color:var(--paper);cursor:pointer;font-size:18px;
+  opacity:0;pointer-events:none;transition:opacity .25s ease, transform .15s ease;}
+#topbtn.show{opacity:1;pointer-events:auto}
+#topbtn:hover,#topbtn:focus-visible{background:var(--gold);color:var(--ink);outline:none;transform:translateY(-2px)}
+#edge{position:fixed;top:0;left:0;width:14px;height:100vh;z-index:998}
+#panel{position:fixed;top:0;left:0;height:100vh;width:300px;max-width:84vw;z-index:1002;
+  background:var(--ink);color:var(--paper);transform:translateX(-105%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:6px 0 30px rgba(0,0,0,.4);
+  padding:64px 22px 30px;overflow-y:auto;}
+#panel.open{transform:translateX(0)}
+#panel h3{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--gold-bright);margin-bottom:18px;font-weight:600}
+#panel a{display:block;color:var(--paper);text-decoration:none;padding:10px 12px;border-radius:3px;
+  font-size:14px;line-height:1.45;border-left:2px solid transparent;transition:.15s}
+#panel a:hover,#panel a:focus-visible{background:var(--ink2);border-left-color:var(--gold);outline:none}
+#panel .pdate{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold)}
+#panelClose{position:absolute;top:16px;right:16px;background:none;border:1px solid var(--gold);
+  color:var(--paper);width:32px;height:32px;border-radius:3px;cursor:pointer;font-size:16px}
+#panelClose:hover,#panelClose:focus-visible{background:var(--gold);color:var(--ink);outline:none}
+#panelTab{position:fixed;top:50%;left:0;transform:translateY(-50%);z-index:999;writing-mode:vertical-rl;
+  background:var(--ink);color:var(--gold-bright);border:1px solid var(--gold);border-left:none;
+  border-radius:0 4px 4px 0;padding:14px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.15em;cursor:pointer}
+#panelTab:hover{background:var(--ink2)}
+#overlay{position:fixed;inset:0;background:rgba(8,12,20,.5);z-index:1001;opacity:0;pointer-events:none;transition:.3s}
+#overlay.show{opacity:1;pointer-events:auto}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.layout{display:grid;grid-template-columns:215px 1fr;gap:42px;max-width:1180px;margin:0 auto;padding:0 22px}
+#toc{position:sticky;top:90px;align-self:start;height:max-content}
+#toc .toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+#toc ol{list-style:none}
+#toc li{margin:1px 0}
+#toc a{display:block;text-decoration:none;color:var(--ink-soft);font-size:13.5px;padding:6px 10px;
+  border-left:2px solid transparent;border-radius:0 3px 3px 0;transition:.15s;line-height:1.4}
+#toc a:hover{background:var(--paper2);color:var(--ink)}
+#toc a.active{border-left-color:var(--gold);background:var(--paper2);color:var(--ink);font-weight:600}
+#toc .num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);margin-right:7px}
+.toc-toggle{display:none}
+header.hero{background:radial-gradient(900px 380px at 78% -8%, rgba(198,155,70,.16), transparent),
+  linear-gradient(180deg,#0c1424 0%,#13203a 100%);color:var(--paper);padding:118px 22px 70px;
+  position:relative;overflow:hidden;border-bottom:3px solid var(--gold);}
+header.hero .tape{position:absolute;top:0;left:0;width:100%;font-family:'IBM Plex Mono',monospace;
+  font-size:12px;letter-spacing:.1em;color:rgba(243,238,226,.32);white-space:nowrap;padding:8px 0;
+  border-bottom:1px solid rgba(198,155,70,.25);}
+.hero-inner{max-width:1080px;margin:0 auto}
+.hero .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--gold-bright);margin-bottom:22px}
+.hero h1{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(2.1rem,5.6vw,3.7rem);
+  line-height:1.18;letter-spacing:-.01em;margin-bottom:20px}
+.hero h1 em{font-style:normal;color:var(--gold-bright)}
+.hero .sub{font-size:clamp(1rem,2vw,1.18rem);color:rgba(243,238,226,.82);max-width:620px;font-weight:300}
+.hero .ticker{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap}
+.hero .tk{background:rgba(255,255,255,.05);border:1px solid rgba(198,155,70,.35);border-radius:4px;
+  padding:10px 16px;font-family:'IBM Plex Mono',monospace}
+.hero .tk .nm{font-size:11px;letter-spacing:.1em;color:rgba(243,238,226,.6);display:block}
+.hero .tk .vl{font-size:1.15rem;font-weight:600;color:var(--paper)}
+.hero .tk .ch{font-size:12px;font-weight:500}
+.hero .tk .ch.up{color:#4fd39a}.hero .tk .ch.dn{color:#f08078}
+.hero .meta{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;color:rgba(243,238,226,.55)}
+.hero .meta b{color:var(--gold-bright);font-weight:600}
+main{padding:60px 0 40px}
+section{margin-bottom:78px;scroll-margin-top:80px}
+.kicker{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold);display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.kicker::before{content:attr(data-n);font-weight:600;color:var(--ink);background:var(--gold);
+  padding:2px 8px;border-radius:2px;font-size:11px}
+h2{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(1.6rem,3.6vw,2.35rem);
+  line-height:1.25;margin-bottom:18px;letter-spacing:-.01em}
+h3{font-family:'Gowun Batang',serif;font-weight:700;font-size:1.28rem;margin:30px 0 12px}
+p{margin-bottom:16px;font-size:1.02rem}
+p.lead{font-size:1.12rem;color:var(--ink-soft)}
+strong{font-weight:600}
+.hl{background:linear-gradient(transparent 62%, rgba(198,155,70,.42) 62%);padding:0 1px}
+.def{background:var(--ink);color:var(--paper);border-radius:5px;padding:26px 28px;margin:26px 0;
+  border-left:4px solid var(--gold);position:relative}
+.def .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--gold-bright);margin-bottom:8px}
+.def p{margin:0;font-size:1.08rem;color:var(--paper)}
+.def p em{color:var(--gold-bright);font-style:normal;font-weight:600}
+.analogy{background:#fff;border:1px solid var(--line);border-radius:5px;padding:22px 24px;margin:24px 0;
+  position:relative;box-shadow:0 2px 0 var(--paper2)}
+.analogy .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;font-weight:600}
+.analogy p:last-child{margin-bottom:0}
+.ask{background:linear-gradient(180deg,#fbf8f0,#f3eee2);border:1px dashed var(--gold);border-radius:5px;
+  padding:20px 24px;margin:26px 0}
+.ask .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--down);margin-bottom:6px;font-weight:600}
+.ask p{margin:0;font-style:italic;color:var(--ink-soft);font-size:1.05rem}
+.note{font-size:.9rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6}
+.timeline{position:relative;margin:30px 0 10px;padding-left:30px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(var(--down),var(--gold),var(--up))}
+.tl-item{position:relative;margin-bottom:26px}
+.tl-item::before{content:"";position:absolute;left:-30px;top:5px;width:14px;height:14px;border-radius:50%;
+  background:var(--paper);border:3px solid var(--gold);transform:translateX(1px)}
+.tl-item .yr{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--down);font-size:.92rem;letter-spacing:.04em}
+.tl-item h4{font-family:'Gowun Batang',serif;font-size:1.12rem;margin:2px 0 5px}
+.tl-item p{margin:0;font-size:.98rem;color:var(--ink-soft)}
+.tl-item .drop{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;
+  color:#fff;background:var(--down);padding:1px 7px;border-radius:2px;margin-top:6px}
+.tl-item .rec{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;
+  color:#fff;background:var(--up);padding:1px 7px;border-radius:2px;margin-top:6px;margin-left:5px}
+.tbl{width:100%;border-collapse:collapse;margin:24px 0;font-size:.96rem;background:#fff;
+  border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.tbl th{background:var(--ink);color:var(--paper);text-align:left;padding:12px 14px;font-weight:600;
+  font-family:'IBM Plex Sans KR';font-size:.9rem}
+.tbl td{padding:11px 14px;border-top:1px solid var(--paper2)}
+.tbl tr:nth-child(even) td{background:#faf7ee}
+.tbl .pos{color:var(--up);font-weight:600;font-family:'IBM Plex Mono',monospace}
+.tbl .neg{color:var(--down);font-weight:600;font-family:'IBM Plex Mono',monospace}
+.tbl .zero{color:var(--muted);font-weight:600;font-family:'IBM Plex Mono',monospace}
+.tbl .mono{font-family:'IBM Plex Mono',monospace}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:26px 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:5px;padding:20px;transition:.18s}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(12,20,36,.1)}
+.card .ic{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--gold);
+  letter-spacing:.1em;margin-bottom:8px}
+.card h4{font-family:'Gowun Batang',serif;font-size:1.1rem;margin-bottom:6px}
+.card p{font-size:.93rem;margin:0;color:var(--ink-soft)}
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:26px 0}
+.phase{border-radius:5px;padding:18px;color:var(--paper);position:relative;overflow:hidden}
+.phase .y{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.12em;opacity:.85}
+.phase h4{font-family:'Gowun Batang',serif;font-size:1.08rem;margin:4px 0 8px;color:#fff}
+.phase .ret{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:600}
+.phase p{font-size:.86rem;margin:6px 0 0;color:rgba(255,255,255,.85);line-height:1.5}
+.phase.y1{background:#2a6f97}.phase.y2{background:#9c3f3a}.phase.y3{background:#1f7a52}.phase.y4{background:#9a7a2e}
+.chartwrap{background:#fff;border:1px solid var(--line);border-radius:5px;padding:22px;margin:26px 0}
+.chartwrap .ct{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em;color:var(--muted);
+  text-transform:uppercase;margin-bottom:6px}
+.chartwrap .cs{font-size:.92rem;color:var(--ink-soft);margin-bottom:14px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px;color:var(--ink-soft)}
+.legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+svg{display:block;width:100%;height:auto}
+.quiz{background:#fff;border:1px solid var(--gold);border-radius:6px;padding:24px;margin:30px 0;
+  box-shadow:0 3px 0 rgba(198,155,70,.25)}
+.quiz .qtag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--gold);font-weight:600;margin-bottom:10px}
+.quiz .q{font-family:'Gowun Batang',serif;font-size:1.15rem;font-weight:700;margin-bottom:16px;line-height:1.4}
+.opt{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);
+  border-radius:4px;padding:13px 16px;margin-bottom:9px;cursor:pointer;font-family:inherit;font-size:1rem;
+  color:var(--ink);transition:.15s;min-height:48px;line-height:1.4}
+.opt:hover:not(.done){background:var(--paper2);border-color:var(--gold)}
+.opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.opt.correct{background:rgba(31,157,107,.16);border-color:var(--up);color:#125e40;font-weight:600}
+.opt.wrong{background:rgba(216,70,63,.14);border-color:var(--down);color:#9a2a25}
+.opt .mark{float:right;font-weight:700}
+.explain{display:none;margin-top:14px;padding:16px 18px;background:var(--ink);color:var(--paper);
+  border-radius:4px;font-size:.97rem;line-height:1.65}
+.explain.show{display:block;animation:fade .4s ease}
+.explain b{color:var(--gold-bright)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.takeaways{background:var(--ink);color:var(--paper);border-radius:6px;padding:34px 30px;margin:30px 0;
+  border-top:3px solid var(--gold)}
+.takeaways h3{color:var(--gold-bright);margin-top:0}
+.takeaways ol{list-style:none;counter-reset:t}
+.takeaways li{counter-increment:t;padding:13px 0 13px 48px;position:relative;
+  border-bottom:1px solid rgba(243,238,226,.13);font-size:1.03rem}
+.takeaways li:last-child{border-bottom:none}
+.takeaways li::before{content:counter(t);position:absolute;left:0;top:11px;width:30px;height:30px;
+  background:var(--gold);color:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.9rem}
+.closer{background:linear-gradient(135deg,#13203a,#0c1424);color:var(--paper);border-radius:6px;
+  padding:40px 32px;margin:36px 0;text-align:center;border:1px solid var(--gold)}
+.closer .tag{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold-bright);margin-bottom:14px}
+.closer p{font-family:'Gowun Batang',serif;font-size:clamp(1.2rem,2.6vw,1.6rem);line-height:1.5;margin:0;font-weight:700}
+footer{background:var(--ink);color:rgba(243,238,226,.6);padding:40px 22px;font-size:.82rem;line-height:1.7;
+  font-family:'IBM Plex Mono',monospace}
+footer .wrap{max-width:1080px}
+footer a{color:var(--gold-bright);word-break:break-all}
+footer h4{color:var(--paper);font-family:'IBM Plex Sans KR';font-size:.95rem;margin-bottom:10px;letter-spacing:.05em}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease, transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;gap:0}
+  #toc{position:relative;top:0;margin:24px 0 8px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:14px 16px}
+  .toc-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;
+    cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink);padding:0}
+  #toc ol{display:none;margin-top:12px}
+  #toc.open ol{display:block}
+  .backbtn{font-size:12px;padding:7px 12px}
+  header.hero{padding:96px 20px 54px}
+  .hero .meta{gap:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<a href="../../" class="backbtn" aria-label="목록으로 돌아가기">← 목록으로</a>
+
+<div id="edge" aria-hidden="true"></div>
+<button id="panelTab" aria-label="다른 발표 보기">발표 목록 ▸</button>
+<div id="overlay"></div>
+<nav id="panel" aria-label="다른 발표">
+  <button id="panelClose" aria-label="닫기">×</button>
+  <h3>eco-lab · 다른 발표</h3>
+  <div id="panelList"><p style="font-size:13px;color:#9a937f">불러오는 중…</p></div>
+</nav>
+
+<button id="topbtn" aria-label="맨 위로">↑</button>
+
+<header class="hero">
+  <div class="tape" aria-hidden="true">▲ S&amp;P500 7,543.64 &nbsp;·&nbsp; ▲ NASDAQ 26,281.01 &nbsp;·&nbsp; ▲ QQQ $298.72 &nbsp;·&nbsp; ▲ DOW 52,637 &nbsp;·&nbsp; ▲ KOSPI 7,475.94 &nbsp;·&nbsp; ▼ 1987 −20.4% &nbsp;·&nbsp; ▲ 중간선거 다음해 평균 +16.3% &nbsp;·&nbsp; ▼ 2008 −57% &nbsp;·&nbsp; ▲ QQQ 2023 +53.8% &nbsp;·&nbsp; ▲ S&amp;P500 7,543.64</div>
+  <div class="hero-inner">
+    <div class="eyebrow">eco-lab · 경제 스터디</div>
+    <h1>주식시장에도 <em>계절</em>이 있을까?<br>지수는 언제 오르고, 언제 내릴까</h1>
+    <p class="sub">대통령 선거, 중간선거, 전쟁, 여름과 연말… 특정 사건과 시기마다 시장이 보여 온 '버릇'을 데이터로 풀어봅니다. 점쟁이 이야기가 아니라, 100년치 기록이 들려주는 경향성에 대해서요.</p>
+    <div class="ticker">
+      <div class="tk"><span class="nm">S&amp;P 500</span><span class="vl">7,543.64</span> <span class="ch up">▲ 0.81%</span></div>
+      <div class="tk"><span class="nm">NASDAQ 종합</span><span class="vl">26,281.01</span> <span class="ch up">▲ 0.28%</span></div>
+      <div class="tk"><span class="nm">QQQ (나스닥100)</span><span class="vl">$298.72</span> <span class="ch up">▲ 0.32%</span></div>
+      <div class="tk"><span class="nm">DOW</span><span class="vl">52,637.01</span> <span class="ch up">▲ 0.29%</span></div>
+      <div class="tk"><span class="nm">KOSPI</span><span class="vl">7,475.94</span> <span class="ch up">▲ 2.52%</span></div>
+    </div>
+    <div class="meta">
+      <span><b>대상</b> 주식 입문자</span>
+      <span><b>분량</b> 약 20분</span>
+      <span><b>시세 기준</b> 2026.07.10 종가</span>
+      <span><b>작성</b> 2026.07.12</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+  <nav id="toc" aria-label="목차">
+    <button class="toc-toggle" aria-expanded="false">목차 <span>▾</span></button>
+    <div class="toc-title">CONTENTS</div>
+    <ol>
+      <li><a href="#s1"><span class="num">01</span>왜 이런 걸 따지기 시작했나</a></li>
+      <li><a href="#s2"><span class="num">02</span>'주기'와 '계절성'이란</a></li>
+      <li><a href="#s3"><span class="num">03</span>대통령 4년 주기의 비밀</a></li>
+      <li><a href="#s4"><span class="num">04</span>달력이 만드는 패턴</a></li>
+      <li><a href="#s4b"><span class="num">05</span>허쉬의 4대 시그널</a></li>
+      <li><a href="#s5"><span class="num">06</span>사건이 시장을 칠 때</a></li>
+      <li><a href="#s6"><span class="num">07</span>한국 시장은 어떻게 움직이나</a></li>
+      <li><a href="#s7"><span class="num">08</span>현업의 시선 · 국제 비교</a></li>
+      <li><a href="#s8"><span class="num">09</span>내 자산에 미치는 영향</a></li>
+      <li><a href="#s9"><span class="num">10</span>오늘 기억할 N가지</a></li>
+    </ol>
+  </nav>
+  </aside>
+
+  <main>
+  <!-- 01 -->
+  <section id="s1" class="reveal">
+    <div class="kicker" data-n="01">탄생 배경 · 왜 생겼나</div>
+    <h2>"시장에 규칙이 있다"는 생각은 어디서 왔을까</h2>
+    <p class="lead">사람은 무질서한 것에서도 패턴을 찾으려 합니다. 주식시장처럼 매일 출렁이는 곳이라면 더더욱요. "왜 항상 9월만 되면 불안하지?" 같은 의문이 모이고 모여, 하나의 연구 전통이 되었습니다.</p>
+    <p>그 출발점은 한 사람의 집요한 기록벽입니다. 1967년 가을, 미국의 증권 분석가 <strong>예일 허쉬(Yale Hirsch)</strong>가 <strong>《주식 트레이더 연감(Stock Trader's Almanac) 1968》</strong> 초판을 펴냈습니다. 그는 시장의 역사·주기·패턴에 평생 매료돼 있었고, 흩어진 통계를 <span class="hl">'달력(calendar) 형식'</span>으로 한데 묶어 일반 투자자도 쓸 수 있는 실용 도구로 만들고자 했죠. 이 달력형 편집이 워낙 특징적이라, 훗날 마켓워치의 한 기자는 이 책을 "월스트리트 농부들이 계절에 맞춰 투자를 심고 거두는 안내서"라고 비유하기도 했습니다.</p>
+    <div class="def">
+      <div class="tag">《주식 트레이더 연감》에 실제로 담긴 것</div>
+      <p>1년 열두 달을 한 장씩 넘기는 달력 형태로, 각 페이지에 그날그날의 역사적 통계와 매매 팁을 적어둡니다. 허쉬가 이 책에서 발굴하거나 이름 붙인 대표 개념들:<br>
+      · <em>1월 바로미터</em> — "1월이 오르면 그 해도 오른다"<br>
+      · <em>산타 랠리(Santa Claus Rally)</em> — 연말연시 상승 경향<br>
+      · <em>베스트 식스 먼스</em> — 11~4월에 수익이 집중된다<br>
+      · <em>대통령 4년 주기</em> — 오늘 발표의 핵심 주제<br>
+      2026년판이 <strong>59번째 연례 개정판</strong>일 만큼, 50년 넘게 이어져 온 스테디셀러입니다. (아래 05장에서 이 시그널들을 하나씩 뜯어봅니다.)</p>
+    </div>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>날씨를 생각해보세요. 내일 비가 올지 100% 맞히긴 어렵지만, "장마철엔 비가 잦다"는 건 통계적으로 분명합니다. 시장 패턴 연구도 똑같습니다. <span class="hl">특정 날짜에 무슨 일이 생긴다는 예언이 아니라, "이 시기엔 평균적으로 이런 경향이 있었다"는 기후 같은 이야기</span>입니다.</p>
+    </div>
+    <p>이런 연구가 필요했던 이유는 분명합니다. 패턴을 모르면 사람들은 <strong>가장 나쁜 타이밍에 감정적으로 움직입니다.</strong> 폭락하면 무서워서 팔고, 다 오른 뒤에야 욕심내서 삽니다. "9월이 원래 약한 달"이라는 사실 하나만 알아도, 9월의 하락에 덜 놀라고 덜 흔들릴 수 있죠. 패턴 연구는 점을 치기 위한 게 아니라, <span class="hl">공포와 탐욕에 휘둘리지 않기 위한 '예방주사'</span>로 시작된 셈입니다.</p>
+    <div class="ask">
+      <div class="tag">▶ 생각해보기</div>
+      <p>여러분은 뉴스에서 "증시 폭락"이라는 단어를 보면 어떤 기분이 드나요? 그 기분이 실제 투자 결정에 영향을 준 적이 있나요?</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s2" class="reveal">
+    <div class="kicker" data-n="02">개념 정의 · 그래서 뭔가</div>
+    <h2>'주기'와 '계절성', 두 단어부터 정리하면</h2>
+    <div class="def">
+      <div class="tag">한 문장 정의</div>
+      <p><em>시장 계절성·주기</em>란, 특정 시기(달력·정치 일정)나 사건이 반복될 때 주가지수가 <em>평균적으로 보여 온 방향성</em>을 통계로 정리한 것입니다.</p>
+    </div>
+    <p>여기서 세 가지를 구분하면 이해가 쉽습니다.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ic">CYCLE</div><h4>주기 (사이클)</h4>
+        <p>몇 년 단위로 반복되는 큰 흐름. 대표선수는 <strong>미국 대통령 4년 주기</strong>. 선거 → 취임 → 중간선거 → 재선의 리듬에 시장이 반응합니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">SEASONALITY</div><h4>계절성</h4>
+        <p>1년 안에서 달·요일별로 나타나는 버릇. "5월에 팔아라", "9월은 약하다", "연말 산타 랠리" 등이 여기 속합니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">EVENT</div><h4>사건 충격</h4>
+        <p>전쟁·금융위기·팬데믹처럼 갑자기 닥치는 일회성 충격. 주기와 달리 예측이 거의 불가능하지만, <strong>회복 패턴</strong>에는 공통점이 있습니다.</p>
+      </div>
+    </div>
+    <p>중요한 전제 하나. 이 모든 건 <strong>'경향(tendency)'이지 '법칙(law)'이 아닙니다.</strong> 중력처럼 항상 작동하는 게 아니라, 동전을 100번 던지면 대략 반반이 나오더라는 식의 통계적 쏠림입니다. 어떤 해는 정반대로 가기도 합니다. 그걸 잊으면 패턴은 독이 됩니다.</p>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>지하철 혼잡도와 비슷합니다. "출근 8시대는 평균적으로 붐빈다"는 통계는 맞지만, 어느 날은 텅 빌 수도 있죠. 통계를 알면 대비는 되지만, <span class="hl">"오늘 8시엔 무조건 붐빈다"고 확신하면 틀립니다.</span></p>
+    </div>
+    <div class="quiz" data-answer="1">
+      <div class="qtag">QUIZ 01</div>
+      <div class="q">시장 계절성·주기에 대한 설명으로 가장 올바른 것은?</div>
+      <button class="opt" data-i="0">특정 날짜의 주가를 정확히 맞히는 예언 기법이다</button>
+      <button class="opt" data-i="1">시기·사건별로 평균적으로 나타난 방향성의 통계적 경향이다</button>
+      <button class="opt" data-i="2">중력처럼 예외 없이 항상 작동하는 법칙이다</button>
+      <div class="explain"><b>정답: 2번.</b> 계절성·주기는 '평균적 경향'일 뿐, 예언도 법칙도 아닙니다. 어떤 해는 정반대로 흘러가기도 합니다. 날씨로 치면 '장마철 경향'이지 '내일 비 예보'가 아닙니다.</div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s3" class="reveal">
+    <div class="kicker" data-n="03">작동 원리 · 가장 유명한 주기</div>
+    <h2>대통령 4년 주기 — 가장 많이 연구된 리듬</h2>
+    <p class="lead">미국 증시(S&amp;P500)는 전 세계 시장의 기준점입니다. 그래서 4년마다 돌아오는 미국 대통령 임기 리듬이 가장 깊게 연구돼 왔습니다. 임기를 1·2·3·4년차로 나눠 보면 성적표가 꽤 다릅니다.</p>
+
+    <!-- LINE CHART: 4 years overlaid -->
+    <div class="chartwrap">
+      <div class="ct">임기 1~4년차 · 연중 누적 수익 경로 (겹쳐 보기)</div>
+      <div class="cs">각 연도를 1월 초 0%에서 출발시켜, 분기별 평균 수익을 누적한 '전형적인 1년의 모양'입니다. 3년차(초록)가 압도적으로 강하고, 2년차(빨강)는 상반기에 눌렸다가 후반에 회복하는 게 보입니다.</div>
+      <svg viewBox="0 0 640 340" role="img" aria-label="대통령 임기 1~4년차의 연중 누적 수익 경로를 겹쳐 그린 라인 그래프. 3년차가 가장 높고 2년차가 가장 낮다.">
+        <!-- grid -->
+        <line x1="56" y1="30" x2="616" y2="30" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="56" y1="90" x2="616" y2="90" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="56" y1="150" x2="616" y2="150" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="56" y1="210" x2="616" y2="210" stroke="#eee4cf" stroke-width="1"/>
+        <!-- zero line -->
+        <line x1="56" y1="210" x2="616" y2="210" stroke="#c9bd9f" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <!-- y labels (0 at y=210, +16 at y=30 => 11.25px per % ) -->
+        <text x="48" y="34" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">+16%</text>
+        <text x="48" y="94" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">+11%</text>
+        <text x="48" y="154" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">+5%</text>
+        <text x="48" y="214" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">0%</text>
+        <!-- x labels -->
+        <text x="56" y="232" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">1월</text>
+        <text x="196" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">1Q</text>
+        <text x="336" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">2Q</text>
+        <text x="476" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">3Q</text>
+        <text x="616" y="232" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6b6453">연말</text>
+        <!-- lines: x from 56(start) to 616(end), 5 points at 56,196,336,476,616.
+             y = 210 - value*11.25 ;
+             Y3: 0,4,9,13,16.3   Y1: 0,2,4,6,7.5   Y4: 0,1.5,3,4.5,6.1   Y2: 0,1,-1,3.5,5.8 -->
+        <!-- Year 2 (down/red) -->
+        <polyline fill="none" stroke="#d8463f" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+          points="56,210 196,199 336,221 476,171 616,145"/>
+        <!-- Year 4 (gold) -->
+        <polyline fill="none" stroke="#9a7a2e" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+          points="56,210 196,193 336,176 476,159 616,141"/>
+        <!-- Year 1 (blue) -->
+        <polyline fill="none" stroke="#2a6f97" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+          points="56,210 196,188 336,165 476,143 616,126"/>
+        <!-- Year 3 (green, strongest) -->
+        <polyline fill="none" stroke="#1f7a52" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"
+          points="56,210 196,165 336,109 476,64 616,27"/>
+        <!-- end dots + labels -->
+        <circle cx="616" cy="27" r="4" fill="#1f7a52"/><text x="610" y="20" text-anchor="end" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#1f7a52">3년차 +16.3%</text>
+        <circle cx="616" cy="126" r="4" fill="#2a6f97"/><text x="610" y="119" text-anchor="end" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#2a6f97">1년차 +7.5%</text>
+        <circle cx="616" cy="141" r="4" fill="#9a7a2e"/>
+        <circle cx="616" cy="145" r="4" fill="#d8463f"/>
+      </svg>
+      <div class="legend">
+        <span><i style="background:#2a6f97"></i>1년차 (취임)</span>
+        <span><i style="background:#d8463f"></i>2년차 (중간선거)</span>
+        <span><i style="background:#1f7a52"></i>3년차 (선거 전해)</span>
+        <span><i style="background:#9a7a2e"></i>4년차 (대선)</span>
+      </div>
+    </div>
+    <p class="note">※ 1932~2024년 S&amp;P500 가격수익률 기준 연평균값(배당 제외)과 분기별 경로를 단순화해 도식화. 연말 도착점 = 1년차 +7.5%, 2년차 +5.8%, 3년차 +16.3%, 4년차 +6.1%. 출처: RBC Wealth Management·Mackenzie·Bloomberg. 표본·기간에 따라 달라질 수 있습니다.</p>
+
+    <h3>평균은 그럴듯한데, 실제 정권들은 어땠나?</h3>
+    <p>평균은 매끈하지만, 개별 정권을 뜯어보면 '패턴이 잘 맞은 경우'와 '완전히 빗나간 경우'가 공존합니다. 최근 세 정권의 연도별 실제 성적(S&amp;P500 배당 포함 총수익)을 나란히 보죠.</p>
+
+    <div class="chartwrap">
+      <div class="ct">최근 3개 정권 · 임기 1~4년차 연간 수익률 (S&amp;P500 총수익)</div>
+      <div class="cs">막대가 위(초록)면 상승, 아래(빨강)면 하락. <b>트럼프 1기·바이든</b>은 교과서대로 2년차가 마이너스·3년차가 급반등했지만, <b>오바마 2기</b>는 오히려 3년차(2015)가 가장 약했습니다 — 패턴이 항상 맞는 게 아니라는 증거죠.</div>
+      <svg viewBox="0 0 640 320" role="img" aria-label="오바마 2기, 트럼프 1기, 바이든 정권의 임기 1~4년차 S&P500 연간 수익률 막대그래프">
+        <!-- baseline y=210; scale 3px per 1%. +35%->y105, -18%->y264 -->
+        <line x1="40" y1="210" x2="628" y2="210" stroke="#c9bd9f" stroke-width="1.5"/>
+        <line x1="40" y1="120" x2="628" y2="120" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="40" y1="165" x2="628" y2="165" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="40" y1="255" x2="628" y2="255" stroke="#eee4cf" stroke-width="1"/>
+        <text x="34" y="124" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">+30%</text>
+        <text x="34" y="169" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">+15%</text>
+        <text x="34" y="214" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">0</text>
+        <text x="34" y="259" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">−15%</text>
+        <!-- 3 groups of 4 bars. group width ~180, bar width 34, gap 8. start x=56 -->
+        <!-- Obama2: 2013 +32.39(h97) 2014 +13.69(h41) 2015 +1.38(h4) 2016 +11.96(h36) -->
+        <g>
+          <rect x="56" y="113" width="34" height="97" fill="#1f9d6b" rx="1.5"/>
+          <rect x="98" y="169" width="34" height="41" fill="#1f9d6b" rx="1.5"/>
+          <rect x="140" y="206" width="34" height="4" fill="#5aa77f" rx="1.5"/>
+          <rect x="182" y="174" width="34" height="36" fill="#1f9d6b" rx="1.5"/>
+          <text x="73" y="108" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#1f7a52">+32</text>
+          <text x="157" y="201" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#9a7a2e">+1.4</text>
+          <text x="136" y="300" text-anchor="middle" font-family="IBM Plex Sans KR" font-size="11" font-weight="600" fill="#33405a">오바마 2기</text>
+          <text x="136" y="315" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6b6453">2013–2016</text>
+        </g>
+        <!-- Trump1: 2017 +21.83(h65) 2018 -4.38(h13 down) 2019 +31.49(h94) 2020 +18.40(h55) -->
+        <g>
+          <rect x="248" y="145" width="34" height="65" fill="#1f9d6b" rx="1.5"/>
+          <rect x="290" y="210" width="34" height="13" fill="#d8463f" rx="1.5"/>
+          <rect x="332" y="116" width="34" height="94" fill="#1f9d6b" rx="1.5"/>
+          <rect x="374" y="155" width="34" height="55" fill="#1f9d6b" rx="1.5"/>
+          <text x="307" y="236" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#d8463f">−4.4</text>
+          <text x="349" y="111" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#1f7a52">+31</text>
+          <text x="328" y="300" text-anchor="middle" font-family="IBM Plex Sans KR" font-size="11" font-weight="600" fill="#33405a">트럼프 1기</text>
+          <text x="328" y="315" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6b6453">2017–2020</text>
+        </g>
+        <!-- Biden: 2021 +28.71(h86) 2022 -18.11(h54 down) 2023 +26.29(h79) 2024 +25.02(h75) -->
+        <g>
+          <rect x="440" y="124" width="34" height="86" fill="#1f9d6b" rx="1.5"/>
+          <rect x="482" y="210" width="34" height="54" fill="#d8463f" rx="1.5"/>
+          <rect x="524" y="131" width="34" height="79" fill="#1f9d6b" rx="1.5"/>
+          <rect x="566" y="135" width="34" height="75" fill="#1f9d6b" rx="1.5"/>
+          <text x="457" y="119" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#1f7a52">+29</text>
+          <text x="499" y="277" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#d8463f">−18</text>
+          <text x="520" y="300" text-anchor="middle" font-family="IBM Plex Sans KR" font-size="11" font-weight="600" fill="#33405a">바이든</text>
+          <text x="520" y="315" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#6b6453">2021–2024</text>
+        </g>
+        <!-- year-in-term labels under each bar -->
+        <g font-family="IBM Plex Mono" font-size="8.5" fill="#9a937f" text-anchor="middle">
+          <text x="73" y="222">1년</text><text x="115" y="222">2년</text><text x="157" y="222">3년</text><text x="199" y="222">4년</text>
+          <text x="265" y="222">1년</text><text x="307" y="248">2년</text><text x="349" y="222">3년</text><text x="391" y="222">4년</text>
+          <text x="457" y="222">1년</text><text x="499" y="278">2년</text><text x="541" y="222">3년</text><text x="583" y="222">4년</text>
+        </g>
+      </svg>
+    </div>
+    <p class="note">※ S&amp;P500 연간 총수익률(배당 포함). 오바마2: +32.4/+13.7/+1.4/+12.0 · 트럼프1: +21.8/−4.4/+31.5/+18.4 · 바이든: +28.7/−18.1/+26.3/+25.0. 출처: Slickcharts(S&amp;P Dow Jones Indices), 2026.07.10 기준.</p>
+
+    <div class="analogy">
+      <div class="tag">여기서 배울 점</div>
+      <p>트럼프 1기(2018 −4.4% → 2019 +31.5%)와 바이든(2022 −18.1% → 2023 +26.3%)은 "2년차 고통 → 3년차 반등"을 <span class="hl">거의 완벽하게</span> 재현했습니다. 하지만 오바마 2기는 3년차(2015)가 +1.4%로 4년 중 가장 약했죠. <strong>패턴은 '자주 맞는 경향'이지 '항상 맞는 법칙'이 아니다</strong>라는 이 발표의 핵심을, 실제 데이터가 그대로 보여줍니다.</p>
+    </div>
+
+    <h3>같은 패턴, 더 큰 진폭 — S&amp;P500 vs QQQ(나스닥100)</h3>
+    <p>기술주 중심의 <strong>QQQ(나스닥100)</strong>는 S&amp;P500과 같은 리듬을 타되, 오르고 내리는 폭이 훨씬 큽니다. 같은 해를 비교하면 '증폭기'라는 게 한눈에 보입니다.</p>
+    <table class="tbl">
+      <thead><tr><th>연도</th><th>국면</th><th>S&amp;P 500</th><th>QQQ(나스닥100)</th></tr></thead>
+      <tbody>
+        <tr><td>2022</td><td>중간선거 해(하락)</td><td class="neg mono">−18.1%</td><td class="neg mono">−33.0%</td></tr>
+        <tr><td>2023</td><td>선거 전해(반등)</td><td class="pos mono">+26.3%</td><td class="pos mono">+53.8%</td></tr>
+        <tr><td>2024</td><td>대선해</td><td class="pos mono">+25.0%</td><td class="pos mono">+24.9%</td></tr>
+        <tr><td>2025</td><td>취임 첫해</td><td class="pos mono">+17.9%</td><td class="pos mono">+20.2%</td></tr>
+        <tr><td>2026*</td><td>중간선거 해(진행)</td><td class="pos mono">+11.4%</td><td class="pos mono">+18.1%</td></tr>
+      </tbody>
+    </table>
+    <p class="note">※ 연간 총수익률(QQQ는 나스닥100 지수 기준). *2026년은 2026.07.10까지 YTD. 출처: Slickcharts. QQQ 상장은 1999년으로 역사가 S&amp;P500보다 짧습니다.</p>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>S&amp;P500이 '세단'이라면 QQQ는 '스포츠카'입니다. 같은 길(주기·계절)을 달려도 <span class="hl">가속과 제동이 훨씬 강하죠.</span> 2022년 −33%로 더 깊이 빠졌지만 2023년 +54%로 더 세게 튀어올랐습니다. 패턴은 같아도, 변동성을 견딜 수 있느냐가 관건입니다.</p>
+    </div>
+
+    <div class="phases">
+      <div class="phase y1"><div class="y">YEAR 1 · 취임 첫해</div><h4>허니문</h4><div class="ret">+7.5%</div><p>새 정부 기대감. 무난하게 오르는 편</p></div>
+      <div class="phase y2"><div class="y">YEAR 2 · 중간선거</div><h4>가장 험난</h4><div class="ret">+5.8%</div><p>변동성 최대. 큰 조정이 자주 옴</p></div>
+      <div class="phase y3"><div class="y">YEAR 3 · 선거 전해</div><h4>최고의 해</h4><div class="ret">+16.3%</div><p>네 해 중 가장 강한 반등</p></div>
+      <div class="phase y4"><div class="y">YEAR 4 · 대선해</div><h4>긍정적이나 들쭉</h4><div class="ret">+6.1%</div><p>정책 불확실성에 출렁임</p></div>
+    </div>
+
+    <h3>왜 2년차(중간선거 해)가 가장 험할까</h3>
+    <p>이유는 '정치 시간표'에 있습니다. 새 정부는 인기 없는 어려운 정책(증세·긴축 등)을 보통 임기 초·중반에 몰아서 합니다. 재선을 앞둔 후반부엔 표를 의식해 아픈 결정을 피하죠. 그래서 <span class="hl">고통은 2년차에 집중되고(위 그래프에서 빨간 선이 상반기에 0 아래로 눌린 구간), 그 진통이 끝나면 3년차에 시장이 크게 반등</span>하는 흐름이 반복돼 왔습니다. 실제 2년차 평균 최대 낙폭은 약 −19%로 네 해 중 가장 컸습니다.</p>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>새 회사 CEO를 떠올려보세요. 취임하자마자 구조조정·비용절감 같은 욕먹을 일을 먼저 해치웁니다(2년차의 고통). 그게 정리되면 실적이 살아나고 주가가 오르죠(3년차의 반등). 그리고 임기 말, 연임을 노릴 땐 무리한 결정을 안 합니다.</p>
+    </div>
+    <h3>중간선거의 '마법' 같은 통계</h3>
+    <p>가장 인상적인 숫자가 하나 있습니다. 미국 은행 US Bank 분석에 따르면, <strong>중간선거 직후 12개월간 S&amp;P500 평균 상승률은 약 16.3%</strong>로, 선거 전 12개월(약 0.3%)을 압도했습니다. 더 놀라운 건 <span class="hl">1938년 이후 중간선거 다음해가 마이너스였던 적이 사실상 없다는 점</span>입니다. 정치 불확실성이 해소되면서 시장이 안도하는 거죠. 2026년이 바로 그 중간선거 해입니다.</p>
+    <div class="ask">
+      <div class="tag">▶ 생각해보기</div>
+      <p>"불확실성이 해소되면 시장이 오른다"는 논리. 그렇다면 시장이 가장 싫어하는 건 '나쁜 소식'일까요, 아니면 '모르는 상태' 그 자체일까요?</p>
+    </div>
+    <div class="quiz" data-answer="2">
+      <div class="qtag">QUIZ 02</div>
+      <div class="q">위 그래프에서 임기 중 상반기에 0% 아래로 눌렸다가 후반에 회복하는 '가장 험한 해'는?</div>
+      <button class="opt" data-i="0">취임 첫해 (1년차)</button>
+      <button class="opt" data-i="1">선거 전해 (3년차)</button>
+      <button class="opt" data-i="2">중간선거 해 (2년차)</button>
+      <div class="explain"><b>정답: 3번.</b> 2년차(빨간 선)는 변동성이 가장 크고 상반기에 조정이 잦았습니다. 다만 그 진통 직후, 중간선거 다음 12개월은 평균 +16.3%로 가장 강한 반등을 보여 왔습니다. '고통 뒤 반등'이 핵심 리듬입니다.</div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s4" class="reveal">
+    <div class="kicker" data-n="04">달력 패턴 · 1년 안의 리듬</div>
+    <h2>달력이 만드는 패턴 — 여름은 '약세'지 '손실'이 아니다</h2>
+    <p class="lead">여기서 흔한 오해 하나를 바로잡고 갑니다. "5~10월은 팔고 떠나라"는 말 때문에 <strong>여름 내내 주가가 마이너스인 줄 아는 분이 많은데, 사실이 아닙니다.</strong> 실제로 마이너스인 달은 딱 하나 — 9월뿐입니다.</p>
+
+    <!-- BAR CHART: monthly returns -->
+    <div class="chartwrap">
+      <div class="ct">S&amp;P500 월별 평균 수익률 (1928~2025)</div>
+      <div class="cs">여름달(5~8월)은 '작은 플러스'로 미미할 뿐, 마이너스가 아닙니다. 오히려 7월(+1.7%)은 1년 중 가장 좋은 달입니다. 유일하게 뚜렷한 마이너스는 <b style="color:#d8463f">9월(−1.2%)</b>입니다.</div>
+      <svg viewBox="0 0 640 300" role="img" aria-label="1월부터 12월까지 S&P500 월평균 수익률 막대그래프. 9월만 마이너스이고 나머지는 플러스.">
+        <!-- baseline at y=210; scale 40px per 1% -->
+        <line x1="40" y1="210" x2="628" y2="210" stroke="#c9bd9f" stroke-width="1.5"/>
+        <text x="34" y="130" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">+2%</text>
+        <text x="34" y="170" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">+1%</text>
+        <text x="34" y="214" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">0</text>
+        <text x="34" y="254" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">−1%</text>
+        <line x1="40" y1="130" x2="628" y2="130" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="40" y1="170" x2="628" y2="170" stroke="#eee4cf" stroke-width="1"/>
+        <line x1="40" y1="250" x2="628" y2="250" stroke="#eee4cf" stroke-width="1"/>
+        <!-- bars: 12 months, each slot 48px wide starting x=48, bar width 34
+             values: J1.2 F-0.1 M0.5 A1.2 M0.1 J0.8 J1.7 A0.7 S-1.2 O0.5 N1.0 D1.3
+             y_top = 210 - v*40 (v>0). height=v*40. for neg: y=210,h=v*40 down -->
+        <!-- 1 Jan +1.2 -->
+        <rect x="48" y="162" width="34" height="48" fill="#1f9d6b" rx="1.5"/>
+        <!-- 2 Feb -0.1 -->
+        <rect x="96" y="210" width="34" height="4" fill="#d8463f" rx="1.5"/>
+        <!-- 3 Mar +0.5 -->
+        <rect x="144" y="190" width="34" height="20" fill="#5aa77f" rx="1.5"/>
+        <!-- 4 Apr +1.2 -->
+        <rect x="192" y="162" width="34" height="48" fill="#1f9d6b" rx="1.5"/>
+        <!-- 5 May +0.1 -->
+        <rect x="240" y="206" width="34" height="4" fill="#9ec4b0" rx="1.5"/>
+        <!-- 6 Jun +0.8 -->
+        <rect x="288" y="178" width="34" height="32" fill="#5aa77f" rx="1.5"/>
+        <!-- 7 Jul +1.7 (best) -->
+        <rect x="336" y="142" width="34" height="68" fill="#1f9d6b" rx="1.5"/>
+        <!-- 8 Aug +0.7 -->
+        <rect x="384" y="182" width="34" height="28" fill="#5aa77f" rx="1.5"/>
+        <!-- 9 Sep -1.2 (worst) -->
+        <rect x="432" y="210" width="34" height="48" fill="#d8463f" rx="1.5"/>
+        <!-- 10 Oct +0.5 -->
+        <rect x="480" y="190" width="34" height="20" fill="#5aa77f" rx="1.5"/>
+        <!-- 11 Nov +1.0 -->
+        <rect x="528" y="170" width="34" height="40" fill="#1f9d6b" rx="1.5"/>
+        <!-- 12 Dec +1.3 -->
+        <rect x="576" y="158" width="34" height="52" fill="#1f9d6b" rx="1.5"/>
+        <!-- value labels for extremes -->
+        <text x="353" y="136" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="#1f7a52">+1.7</text>
+        <text x="449" y="272" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="#d8463f">−1.2</text>
+        <!-- month labels -->
+        <g font-family="IBM Plex Mono" font-size="10" fill="#6b6453" text-anchor="middle">
+          <text x="65" y="226">1</text><text x="113" y="226">2</text><text x="161" y="226">3</text>
+          <text x="209" y="226">4</text><text x="257" y="290">5</text><text x="305" y="226">6</text>
+          <text x="353" y="226">7</text><text x="401" y="226">8</text><text x="449" y="290">9</text>
+          <text x="497" y="226">10</text><text x="545" y="226">11</text><text x="593" y="226">12</text>
+        </g>
+        <text x="257" y="290" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6b6453">5</text>
+      </svg>
+      <div class="legend">
+        <span><i style="background:#1f9d6b"></i>강한 달 (+1%↑)</span>
+        <span><i style="background:#5aa77f"></i>완만한 플러스</span>
+        <span><i style="background:#9ec4b0"></i>거의 0 (약세)</span>
+        <span><i style="background:#d8463f"></i>마이너스</span>
+      </div>
+    </div>
+    <p class="note">※ 1928~2025년 S&amp;P500 월별 평균 가격수익률. 출처: RBC Wealth Management·Bloomberg(1928~2025.7). 월평균은 J+1.2 / F−0.1 / M+0.5 / A+1.2 / M+0.1 / J+0.8 / J+1.7 / A+0.7 / S−1.2 / O+0.5 / N+1.0 / D+1.3. 데이터 벤더별로 소수점 차이가 있을 수 있습니다.</p>
+
+    <p>그럼 "Sell in May"는 틀린 말일까요? 아닙니다. <strong>11월~4월(+7.2%)이 5월~10월(+2.1%)보다 확연히 낫다</strong>는 건 사실입니다(1950~2024, 배당 포함). 다만 그 차이의 정체는 '여름의 큰 손실'이 아니라 <span class="hl">'여름의 밋밋함'</span>입니다. 위험은 그대로 지면서 보상만 적은 '데드존'인 거죠. 그리고 9월만 유일하게 진짜로 마이너스입니다.</p>
+
+    <table class="tbl">
+      <thead><tr><th>달력 패턴</th><th>내용</th><th>실제 성격</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Sell in May</strong></td><td>여름(5~10월) 반년은 겨울 반년보다 부진</td><td class="zero">약세(손실 아님)</td></tr>
+        <tr><td><strong>여름달(5·6·8월)</strong></td><td>0에 가까운 미미한 플러스</td><td class="zero">데드존</td></tr>
+        <tr><td><strong>7월</strong></td><td>월평균 +1.7% — 1년 중 최고의 달</td><td class="pos">강세</td></tr>
+        <tr><td><strong>9월 효과</strong></td><td>유일하게 뚜렷한 마이너스(−1.2%), 55% 확률로 하락</td><td class="neg">유일한 마이너스</td></tr>
+        <tr><td><strong>11월·12월</strong></td><td>선거 정리·연말 포지셔닝으로 가장 강한 구간</td><td class="pos">강세</td></tr>
+        <tr><td><strong>산타 랠리</strong></td><td>12월 말~1월 초, 약 78% 확률로 상승</td><td class="pos">상승 경향</td></tr>
+      </tbody>
+    </table>
+
+    <div class="analogy">
+      <div class="tag">중요 · 비유로 풀기</div>
+      <p>이 패턴들은 '약해지는 중'입니다. 알고리즘·퀀트 매매가 시장을 지배하면서, 뻔한 달력 패턴은 빠르게 차익거래로 사라집니다. <span class="hl">맛집이 유명해지면 줄이 길어져 더 이상 '숨은 맛집'이 아니게 되는 것</span>과 같습니다. 그래서 오늘날 계절성은 '매매 신호'라기보다 '마음의 준비' 용도에 가깝습니다.</p>
+    </div>
+    <p>실제로 2025년 9월 S&amp;P500은 +3.8%로 <strong>15년 만의 최고의 9월</strong>을 기록했습니다. "9월은 약하다"는 통계를 믿고 9월에 시장을 떠났던 사람은, 더 비싼 가격에 다시 들어와야 했죠. 패턴을 맹신하면 안 되는 생생한 사례입니다.</p>
+
+    <h3>계절성과 정권 주기가 만나는 지점 — '2년차'</h3>
+    <p>달력 패턴(여름·9월 약세)이 가장 극적으로 드러나는 때가 바로 <strong>임기 2년차(중간선거 해)</strong>입니다. 이 해엔 상반기 약세가 더 깊어져, 연중 한 번은 큰 조정이 오는 경향이 있죠. 최근 세 정권의 '2년차 성적'과 '3년차 반등'을 나란히 보면, 계절성과 주기가 어떻게 겹치는지 보입니다.</p>
+
+    <table class="tbl">
+      <thead><tr><th>정권</th><th>2년차(중간선거 해)</th><th>→ 3년차(선거 전해)</th><th>패턴 적중?</th></tr></thead>
+      <tbody>
+        <tr><td>오바마 2기</td><td class="pos mono">2014 +13.7%</td><td class="pos mono">2015 +1.4%</td><td class="neg">✕ 빗나감</td></tr>
+        <tr><td>트럼프 1기</td><td class="neg mono">2018 −4.4%</td><td class="pos mono">2019 +31.5%</td><td class="pos">✓ 적중</td></tr>
+        <tr><td>바이든</td><td class="neg mono">2022 −18.1%</td><td class="pos mono">2023 +26.3%</td><td class="pos">✓ 적중</td></tr>
+        <tr><td><strong>트럼프 2기</strong></td><td class="mono">2026 +11.4%*</td><td class="mono">2027 ?</td><td class="zero">진행 중</td></tr>
+      </tbody>
+    </table>
+    <p class="note">※ S&amp;P500 연간 총수익률. *2026년은 7/10까지의 연초 대비 수익률(YTD)로, 연말 확정치가 아닙니다. 2년차 최대 낙폭(연중 고점→저점)은 역사 평균 약 −19%. 출처: Slickcharts, RBC.</p>
+
+    <div class="analogy">
+      <div class="tag">솔직하게 · 데이터의 한계</div>
+      <p>여기서 짚을 점. "2년차 여름·9월이 특히 약하다"는 <em>월 단위 정권별 데이터</em>는 표본이 너무 적어(정권당 몇 개월뿐) 신뢰하기 어렵습니다. 그래서 위 표는 <span class="hl">검증 가능한 연간 수치</span>만 담았습니다. 계절성은 '수십 년 평균'에서만 또렷하고, 특정 정권 한 번에 그대로 나타나리란 보장은 없습니다.</p>
+    </div>
+
+    <div class="quiz" data-answer="1">
+      <div class="qtag">QUIZ 03</div>
+      <div class="q">S&amp;P500 월별 평균 수익률에 대한 설명으로 옳은 것은?</div>
+      <button class="opt" data-i="0">5월부터 9월까지 다섯 달 모두 평균 마이너스다</button>
+      <button class="opt" data-i="1">여름달은 대체로 미미한 플러스이고, 유일하게 뚜렷한 마이너스는 9월이다</button>
+      <button class="opt" data-i="2">7월은 1년 중 가장 나쁜 달이다</button>
+      <div class="explain"><b>정답: 2번.</b> 5·6·8월은 0에 가까운 작은 플러스, 7월은 오히려 최고의 달(+1.7%)입니다. 진짜 마이너스는 9월(−1.2%) 하나뿐이죠. "Sell in May"는 '여름의 손실'이 아니라 '여름의 밋밋함'을 말하는 겁니다.</div>
+    </div>
+  </section>
+
+  <!-- 05 : Hirsch's four signals -->
+  <section id="s4b" class="reveal">
+    <div class="kicker" data-n="05">허쉬의 4대 시그널 · 연감의 핵심</div>
+    <h2>허쉬가 남긴 네 개의 달력 시그널</h2>
+    <p class="lead">앞서 본 《주식 트레이더 연감》이 60년 가까이 사랑받은 건, 허쉬가 발굴하거나 이름 붙인 몇 개의 '시그널' 덕분입니다. 그중 가장 유명한 넷을 하나씩 뜯어보죠. 공통점은 <strong>"자주 맞지만 절대적이진 않다"</strong>는 것 — 최근 실패 사례까지 솔직하게 봅니다.</p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="ic">SIGNAL 01</div>
+        <h4>1월 바로미터</h4>
+        <p><em>"1월이 오르면 그 해도 오른다"</em>(As January goes, so goes the year). 1월 수익률의 방향이 그 해 전체를 예고한다는 겁니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">SIGNAL 02</div>
+        <h4>산타 랠리</h4>
+        <p>12월 마지막 5거래일 + 1월 첫 2거래일, 이 <em>7일</em> 동안 시장이 오르는 경향. "산타가 안 오면 곰(하락장)이 온다"는 격언까지 있죠.</p>
+      </div>
+      <div class="card">
+        <div class="ic">SIGNAL 03</div>
+        <h4>베스트 식스 먼스</h4>
+        <p>11월~4월에 수익이 몰린다. 반대로 5~10월은 밋밋. "Sell in May"의 학술적 뿌리이자, 허쉬가 1986년 만든 '스위칭 전략'의 토대.</p>
+      </div>
+      <div class="card">
+        <div class="ic">SIGNAL 04</div>
+        <h4>대통령 4년 주기</h4>
+        <p>선거→취임→중간선거→재선의 리듬. 이미 03장에서 깊이 다룬, 오늘 발표의 핵심 주제입니다.</p>
+      </div>
+    </div>
+
+    <h3>① 1월 바로미터 — 화려하지만 함정이 있다</h3>
+    <p>겉보기엔 대단합니다. 2차대전 이후 <strong>1월이 플러스였던 해는 그 해 전체도 86% 확률로 상승</strong>(평균 +16%)했으니까요. 하지만 여기 <span class="hl">통계의 함정</span>이 있습니다. 애초에 <strong>주식시장은 그냥 둬도 매년 약 75%가 오릅니다.</strong> 1월을 봐서 맞힐 확률(약 62%)이 오히려 "무조건 오른다"고 찍는 것(75%)보다 낮다는 분석도 있죠.</p>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>"아침에 해가 뜨면 그날 낮이 밝다"는 예측과 비슷합니다. 적중률은 높지만, <span class="hl">애초에 낮은 원래 밝으니까</span> 대단한 정보가 아니죠. 실제로 1월 바로미터는 2018·2021년에 크게 빗나갔습니다. 참고는 하되 맹신은 금물.</p>
+    </div>
+
+    <h3>② 산타 랠리 — 진짜 있다, 다만 요즘은 자주 결석</h3>
+    <p>이건 통계적으로 꽤 탄탄합니다. 1950년 이후 그 7일간 S&amp;P500은 <strong>평균 +1.3%</strong> 올랐는데, 보통의 7일 평균(+0.2%)의 여섯 배가 넘습니다. 상승 확률은 <strong>약 79%</strong>. 허쉬는 이런 명언을 남겼죠.</p>
+    <div class="def">
+      <div class="tag">예일 허쉬의 경고</div>
+      <p><em>"산타가 전화를 걸지 않으면, 곰들이 브로드가와 월가로 몰려올 수 있다."</em><br>— 산타 랠리가 <strong>실패하면</strong> 그 뒤가 위험하다는 경고. 랠리 자체보다 '결석'이 더 의미심장하다는 뜻입니다.</p>
+    </div>
+    <p>흥미롭게도 이 격언은 최근 현실이 됐습니다. <strong>2022·2023·2024년 연말 3년 연속 산타 랠리가 실패</strong>했는데, 특히 2024년 말엔 크리스마스~신년 전 거래일이 모두 하락한 사상 초유의 기록이었죠. 그리고 2025년 1분기 S&amp;P500은 실제로 −4.6%로 약세 출발했습니다.</p>
+
+    <h3>③ 베스트 식스 먼스 — 가장 강력한 달력 패턴</h3>
+    <p>넷 중 데이터가 가장 극적입니다. 허쉬 연감(2026년판)에 따르면, <strong>$10,000를 다우지수의 '11~4월'에만 75년간 투자하면 +$131만</strong>으로 불어나지만, 정반대인 '5~10월'에만 투자하면 <strong>고작 +$4,253</strong>에 그칩니다. 같은 돈, 같은 기간인데 결과가 하늘과 땅이죠.</p>
+
+    <div class="chartwrap">
+      <div class="ct">$10,000를 75년간 · '겨울 반년'에만 vs '여름 반년'에만 (다우지수)</div>
+      <div class="cs">11~4월(겨울 반년)에만 투자했을 때의 누적 이익이, 5~10월(여름 반년)의 <b>약 310배</b>. 시장의 장기 상승분이 사실상 겨울 반년에 몰려 있었다는 뜻입니다.</div>
+      <svg viewBox="0 0 640 220" role="img" aria-label="겨울 반년 투자 시 131만 달러 이익, 여름 반년은 4253달러로 막대 차이가 극단적">
+        <line x1="200" y1="20" x2="200" y2="180" stroke="#c9bd9f" stroke-width="1.5"/>
+        <!-- winter bar: 1,316,635 -> full width 400 -->
+        <rect x="200" y="45" width="400" height="42" fill="#1f9d6b" rx="2"/>
+        <text x="196" y="71" text-anchor="end" font-family="IBM Plex Sans KR" font-size="12" fill="#33405a">11–4월<tspan font-size="10" fill="#6b6453"> (겨울)</tspan></text>
+        <text x="590" y="38" text-anchor="end" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="#1f7a52">+$1,316,635</text>
+        <!-- summer bar: 4253 -> 400*(4253/1316635)=1.3px -> show as sliver 3px -->
+        <rect x="200" y="125" width="3" height="42" fill="#d8463f" rx="1.5"/>
+        <text x="196" y="151" text-anchor="end" font-family="IBM Plex Sans KR" font-size="12" fill="#33405a">5–10월<tspan font-size="10" fill="#6b6453"> (여름)</tspan></text>
+        <text x="212" y="151" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="#d8463f">+$4,253</text>
+        <text x="400" y="205" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#9a937f">막대 길이는 실제 이익 비율(약 310:1)을 그대로 반영</text>
+      </svg>
+    </div>
+    <p>물론 여기엔 <span class="hl">'생존 편향' 같은 함정</span>도 있습니다. 여름에 시장을 완전히 떠나 현금으로 두면, 앞서 04·07장에서 본 "최고의 며칠"을 놓칠 위험이 있죠(여름에도 반등일은 옵니다). 그래서 허쉬조차 "완전히 팔라"가 아니라 <strong>"여름엔 위험을 줄이고 방어적으로"</strong> 정도로 씁니다.</p>
+
+    <div class="def" style="border-left-color:var(--gold-bright)">
+      <div class="tag">왜 하필 '겨울 반년'일까 — 진짜 뿌리</div>
+      <p>허쉬 본인의 설명이 흥미롭습니다. 이 패턴은 <em>2차대전 이후에야</em> 뚜렷해졌는데, 그 전엔 미국 경제의 중심이 <strong>농업</strong>이었기 때문입니다. "봄에 씨 뿌리고 가을에 수확해 시장에 내다 팔면, 그제야 현금이 돌고 주식시장도 움직였다"는 거죠. 전후 산업화로 농업 비중이 줄면서, 여름은 '수확철'에서 '휴가철'로 바뀌었고 — 한때 최고였던 8월이 1950~2015년 사이 다우 기준 1위에서 10위로 추락했습니다. 계절성의 뿌리가 <span class="hl">실제 사람들의 생활 리듬</span>에 있다는 증거입니다.</p>
+    </div>
+
+    <div class="ask">
+      <div class="tag">▶ 생각해보기</div>
+      <p>산타 랠리가 3년 연속 실패한 게 "패턴이 죽었다"는 신호일까요, 아니면 "곰이 온다"는 허쉬의 경고가 맞아떨어진 걸까요? 패턴은 실패할 때조차 무언가를 말해줄까요?</p>
+    </div>
+
+    <div class="quiz" data-answer="1">
+      <div class="qtag">QUIZ 04</div>
+      <div class="q">'1월 바로미터'가 화려한 적중률(86%)에도 함정이 있는 이유는?</div>
+      <button class="opt" data-i="0">1월 데이터는 조작하기 쉬워서</button>
+      <button class="opt" data-i="1">주식시장은 원래 매년 약 75%가 올라, 그냥 "오른다"고 찍는 것과 큰 차이가 없어서</button>
+      <button class="opt" data-i="2">1월은 거래일이 없어서</button>
+      <div class="explain"><b>정답: 2번.</b> 높은 적중률의 상당 부분은 "시장이 원래 자주 오른다"는 사실에서 옵니다. 1월을 봐서 맞힐 확률(약 62%)이 오히려 무조건 상승에 거는 것(75%)보다 낮다는 분석도 있죠. 높은 적중률 ≠ 유용한 정보입니다.</div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s5" class="reveal">
+    <div class="kicker" data-n="06">사건 충격 · 역사의 폭락들</div>
+    <h2>시장을 강타한 사건들, 그리고 회복의 법칙</h2>
+    <p class="lead">주기·계절성이 '예측 가능한 리듬'이라면, 폭락은 '예측 불가능한 사고'입니다. 하지만 100년치를 늘어놓고 보면, 폭락에도 공통된 이야기가 있습니다.</p>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="yr">1929</div><h4>대공황의 시작 (Black Tuesday)</h4>
+        <p>과도한 빚(신용거래)으로 부푼 거품이 터졌습니다. 다우 약 −89%. 시장이 전고점을 회복하는 데 무려 25년이 걸렸습니다.</p>
+        <span class="drop">고점 대비 −89%</span><span class="rec">회복 25년</span>
+      </div>
+      <div class="tl-item">
+        <div class="yr">1987</div><h4>블랙 먼데이</h4>
+        <p>10월 19일 하루 만에 다우 −22.6%(S&amp;P500 −20.4%) — 역사상 최대 하루 낙폭. 자동매매(프로그램)가 하락을 증폭시켰습니다. 경제 자체는 멀쩡해 약 2년 만에 회복.</p>
+        <span class="drop">하루 −20.4%</span><span class="rec">회복 ~2년</span>
+      </div>
+      <div class="tl-item">
+        <div class="yr">2000</div><h4>닷컴 버블 붕괴</h4>
+        <p>인터넷 열풍으로 부푼 기술주 거품. 나스닥 −78%, 5조 달러 증발. 나스닥이 새 고점을 찍기까지 17년.</p>
+        <span class="drop">나스닥 −78%</span><span class="rec">회복 17년</span>
+      </div>
+      <div class="tl-item">
+        <div class="yr">2008</div><h4>글로벌 금융위기</h4>
+        <p>서브프라임 모기지 부실 → 리먼브러더스 파산. S&amp;P500 −57%. 각국 정부·중앙은행의 대규모 개입으로 약 5년 만에 회복.</p>
+        <span class="drop">−57%</span><span class="rec">회복 ~5년</span>
+      </div>
+      <div class="tl-item">
+        <div class="yr">2020</div><h4>코로나 팬데믹</h4>
+        <p>33일 만에 S&amp;P500 −34%, 역대 가장 빠른 폭락. 그러나 사상 최대 부양책으로 단 몇 달 만에 회복 — 가장 빠른 반등.</p>
+        <span class="drop">−34%</span><span class="rec">회복 ~5개월</span>
+      </div>
+    </div>
+    <h3>여기서 보이는 두 가지 법칙</h3>
+    <div class="grid">
+      <div class="card">
+        <div class="ic">LESSON 1</div><h4>폭락은 보통 '빚 잔치' 뒤에 온다</h4>
+        <p>1929·2008 모두 과도한 레버리지(빚)가 원인이었습니다. 빌린 돈이 많을수록 하락은 증폭됩니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">LESSON 2</div><h4>회복 속도는 점점 빨라졌다</h4>
+        <p>1929년 25년 → 2008년 5년 → 2020년 5개월. 중앙은행·정부의 개입이 빠르고 커지면서 회복 시간이 단축돼 왔습니다.</p>
+      </div>
+    </div>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>폭락은 '심장마비', 회복은 '응급실'입니다. 1929년엔 응급실(중앙은행 대응)이 거의 없어 환자가 25년을 앓았습니다. 2020년엔 최첨단 응급의료(천문학적 부양책)가 즉시 투입돼 몇 달 만에 회복했죠. <span class="hl">위기 자체보다, 위기에 누가 어떻게 대응하느냐가 회복 속도를 결정</span>합니다.</p>
+    </div>
+    <div class="quiz" data-answer="1">
+      <div class="qtag">QUIZ 05</div>
+      <div class="q">1929년과 2020년 폭락의 '회복 속도' 차이를 만든 가장 큰 요인은?</div>
+      <button class="opt" data-i="0">폭락의 낙폭 크기 (퍼센트)</button>
+      <button class="opt" data-i="1">중앙은행·정부의 개입 속도와 규모</button>
+      <button class="opt" data-i="2">투자자들의 평균 나이</button>
+      <div class="explain"><b>정답: 2번.</b> 1929년은 회복에 25년, 2020년은 5개월. 낙폭(−89% vs −34%) 차이도 있지만, 결정적 변수는 <b>정책 대응</b>이었습니다. 2020년엔 연준의 금리 인하·유동성 공급과 대규모 재정 부양이 즉시 투입됐습니다.</div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s6" class="reveal">
+    <div class="kicker" data-n="07">한국 시장 · 제도와 현실</div>
+    <h2>그럼 한국 시장(코스피)은 어떻게 움직이나</h2>
+    <p class="lead">한국에는 '대통령 4년 주기' 같은 고유 패턴이 약합니다(임기가 5년 단임이고 시장 역사도 짧죠). 대신 코스피에는 미국 시장보다 더 강력한 두 개의 외부 변수가 있습니다.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ic">FACTOR 1</div><h4>미국 증시 동조화</h4>
+        <p>"미국이 기침하면 한국은 감기"라는 말이 있을 만큼, 코스피는 전날 밤 미국 나스닥·S&amp;P500 흐름을 강하게 따라갑니다. 한국만의 계절성보다 미국 패턴이 더 크게 작동합니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">FACTOR 2</div><h4>외국인 수급</h4>
+        <p>코스피 시가총액의 상당 부분을 외국인이 보유합니다. 이들이 사면 급등, 팔면 급락. 환율·글로벌 위험선호도에 따라 외국인 자금이 들고 나면서 변동성이 증폭됩니다.</p>
+      </div>
+    </div>
+    <h3>2026년의 생생한 사례</h3>
+    <p>이론이 아니라 지금 벌어지는 일입니다. 2026년 들어 코스피는 <strong>AI 반도체 슈퍼사이클</strong>(삼성전자·SK하이닉스의 HBM·D램 호황)에 힘입어 한때 8,000선을 훌쩍 넘겼습니다. 다만 7월 들어선 반도체 고점 논란과 중동(이란) 긴장으로 다시 출렁여, <strong>7월 10일 기준 코스피는 약 7,476p</strong>. 6월 고점 대비로는 조정을 받은 상태입니다.</p>
+    <p>그 과정은 롤러코스터였습니다. 7월 8일엔 하루 −5.35%로 한 달 만의 최저치를 찍었다가, 다음날 SK하이닉스 미국 상장 흥행·유가 안정에 힘입어 +2.5% 반등했습니다. 하루는 사이드카(프로그램 매매 일시중단)가 걸릴 만큼 급등하기도 했죠. <span class="hl">'사건(전쟁·유가)'과 '수급(외국인)'이 코스피를 어떻게 흔드는지</span>를 압축해서 보여준 셈입니다.</p>
+    <div class="def">
+      <div class="tag">주의 · 쏠림 현상</div>
+      <p>2026년 코스피 상승의 그늘도 있습니다. 삼성전자·SK하이닉스 등 <em>상위 4종목이 코스피 시총의 약 절반</em>을 차지하게 됐습니다. 지수는 올라도 종목 다수는 빠지는 '지수와 체감의 괴리'가 커진 상태입니다.</p>
+    </div>
+    <p class="note">※ 코스피 7,476p는 2026.07.10 종가 기준(Yahoo Finance·Trading Economics). 시총 쏠림·반도체 실적은 2025말~2026 시점 추정치로, 시점에 따라 달라집니다.</p>
+    <div class="ask">
+      <div class="tag">▶ 생각해보기</div>
+      <p>지수(코스피)가 크게 올라도 내 계좌는 안 오른다면 — 그건 내 종목 선택의 문제일까요, 아니면 '소수 대형주가 지수를 끌어올리는' 구조의 문제일까요?</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s7" class="reveal">
+    <div class="kicker" data-n="08">현업의 시선 · 국제 비교 · 전망</div>
+    <h2>전문가들은 이 패턴을 실제로 믿을까?</h2>
+    <p>흥미롭게도, 정작 현업 투자 전문가들의 결론은 한결같이 <strong>"패턴으로 매매 타이밍을 잡지 마라"</strong>입니다. 패턴을 매매 신호로 쓰는 순간, 대부분 손해를 본다는 거죠.</p>
+
+    <div class="def">
+      <div class="tag">현업의 핵심 메시지</div>
+      <p>계절성·주기의 진짜 가치는 '언제 사고팔지'를 알려주는 데 있지 않다. <em>변동성이 클 시기를 미리 알고 마음의 준비를 하는 데</em> 있다.</p>
+    </div>
+
+    <h3>왜 '타이밍'이 아니라 '시간'인가 — 숫자로 보기</h3>
+    <p>가장 큰 함정은 이겁니다. 시장에서 <strong>가장 좋은 며칠(폭등일)은 대개 가장 나쁜 며칠(폭락일) 바로 옆에 붙어 있습니다.</strong> 공포에 팔고 나가면, 그 직후의 반등을 통째로 놓칩니다. JP모건 분석이 이걸 정확한 금액으로 보여줍니다.</p>
+
+    <div class="chartwrap">
+      <div class="ct">$10,000를 20년간 뒀을 때 (2003~2022, S&amp;P500 총수익)</div>
+      <div class="cs">그냥 계속 투자한 사람 vs. '가장 좋은 며칠'을 놓친 사람. <b>최고의 10일만 놓쳐도 최종 금액이 절반 이하</b>로 줄어듭니다.</div>
+      <svg viewBox="0 0 640 260" role="img" aria-label="20년 투자 시 최고의 날들을 놓칠수록 최종 금액이 급감하는 막대그래프">
+        <line x1="150" y1="20" x2="150" y2="210" stroke="#c9bd9f" stroke-width="1.5"/>
+        <!-- 4 horizontal bars. max 64844 -> width 440px. scale: 440/64844=0.006785 px per $ -->
+        <!-- Fully invested 64844 -> w440 -->
+        <rect x="150" y="30" width="440" height="30" fill="#1f9d6b" rx="2"/>
+        <text x="146" y="50" text-anchor="end" font-family="IBM Plex Sans KR" font-size="11" fill="#33405a">계속 투자</text>
+        <text x="596" y="50" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1f7a52">$64,844</text>
+        <!-- miss 10: 29708 -> w202 -->
+        <rect x="150" y="75" width="202" height="30" fill="#c69b46" rx="2"/>
+        <text x="146" y="95" text-anchor="end" font-family="IBM Plex Sans KR" font-size="11" fill="#33405a">최고 10일 놓침</text>
+        <text x="358" y="95" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#9a7a2e">$29,708</text>
+        <!-- miss 20: ~17000 -> w115 -->
+        <rect x="150" y="120" width="115" height="30" fill="#d89a46" rx="2"/>
+        <text x="146" y="140" text-anchor="end" font-family="IBM Plex Sans KR" font-size="11" fill="#33405a">최고 20일 놓침</text>
+        <text x="271" y="140" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#9a7a2e">$16,804</text>
+        <!-- miss 30: ~10000 -> w68 -->
+        <rect x="150" y="165" width="68" height="30" fill="#d8463f" rx="2"/>
+        <text x="146" y="185" text-anchor="end" font-family="IBM Plex Sans KR" font-size="11" fill="#33405a">최고 30일 놓침</text>
+        <text x="224" y="185" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#d8463f">$10,042</text>
+      </svg>
+      <div class="legend"><span style="color:#33405a">20년 = 약 5,000거래일 중 '단 10일'의 차이입니다.</span></div>
+    </div>
+    <p><span class="hl">그 최고의 날들은 하필 변동성이 극심한, 다들 도망가고 싶은 시기에 몰려 있습니다.</span> JP모건에 따르면 지난 20년간 <strong>최고의 10일 중 7일이 최악의 10일로부터 15일 이내</strong>에 나왔고, <strong>최고의 날들 중 76%가 하락장(약세장) 또는 반등 첫 두 달에 발생</strong>했습니다. 공포에 팔고 나간 사람이 바로 그 며칠을 놓치는 사람인 거죠.</p>
+    <p class="note">※ $10,000를 2003.1~2022.12 S&amp;P500 총수익지수에 투자했다고 가정한 시뮬레이션(수수료·세금 제외). 출처: JP Morgan Asset Management, Morningstar. 과거 성과가 미래를 보장하지 않습니다.</p>
+
+    <table class="tbl">
+      <thead><tr><th>관점</th><th>초보가 흔히 하는 행동</th><th>현업의 접근</th></tr></thead>
+      <tbody>
+        <tr><td>하락장에서</td><td class="neg">공포에 전량 매도</td><td class="pos">분할 매수 기회로 활용</td></tr>
+        <tr><td>패턴 활용</td><td class="neg">매매 타이밍 신호로 맹신</td><td class="pos">변동성 대비·기대 관리용</td></tr>
+        <tr><td>9월·여름</td><td class="neg">"약하다니 다 팔고 나가자"</td><td class="pos">레버리지만 줄이고 보유 유지</td></tr>
+      </tbody>
+    </table>
+
+    <h3>패턴을 제대로 쓰는 법 — 현업의 절충안</h3>
+    <p>그렇다고 패턴이 쓸모없는 건 아닙니다. 캐나다 RBC가 1934년 이후 22번의 중간선거를 분석했더니, 놀랍도록 일관된 그림이 나왔습니다.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ic">DRAWDOWN</div><h4>중간선거 해의 조정</h4>
+        <p>22번 중 대부분에서, 선거 전 12개월 안에 <strong>평균 −20.6%</strong>의 조정이 왔습니다. 실제 2022년도 1월 고점→6월 저점 −23.6%였죠.</p>
+      </div>
+      <div class="card">
+        <div class="ic">REBOUND</div><h4>그 뒤의 반등</h4>
+        <p>그 저점에서 이후 1년간 <strong>평균 +47%</strong> 반등했고, 22번 중 <strong>77%</strong>가 이전 고점을 넘어섰습니다. 1938년 이후 중간선거 다음해는 마이너스가 없었습니다.</p>
+      </div>
+    </div>
+    <p>노련한 투자자는 이 통계를 이렇게 씁니다: "변동성이 클 시기임을 미리 알고, 하락이 오면 공포에 팔기보다 분할로 사 모을 기회로 본다." <span class="hl">신호가 아니라 '기대 관리와 기회 포착' 도구</span>인 셈입니다.</p>
+    <p class="note">※ 1934년 이후 22번의 중간선거 분석. 출처: RBC Capital Markets·Bloomberg. 평균이며 개별 사례 편차가 큽니다.</p>
+
+    <h3>국제 비교와 향후 전망</h3>
+    <p>2026년은 미국 <strong>중간선거 해(2년차)</strong>입니다. 역사적 패턴대로라면 상반기엔 변동성이 크고 하반기로 갈수록 안정되는 흐름이 예상되며, 실제로 2026년은 중동 분쟁·유가·금리 전망으로 이미 큰 출렁임을 겪었습니다. 또한 1938년 이후 중간선거 다음 12개월(2026년 11월~2027년)이 마이너스였던 적이 없다는 통계는, 변동성 뒤 반등 가능성에 무게를 싣게 합니다. 이 패턴은 미국뿐 아니라 한국·영국·홍콩 등 주요 시장에서도 9월 약세 등 상당 부분 공통으로 관찰됩니다.</p>
+
+    <div class="def" style="border-left-color:var(--down)">
+      <div class="tag" style="color:#ff9b95">⚠ 반드시 기억 · 확정이 아닌 시나리오</div>
+      <p>위 전망은 <em>과거 통계에 근거한 시나리오일 뿐, 확정된 예측이 아닙니다.</em> 2018년(−4.4%)·2022년(−18.1%) 중간선거 해는 2008년 이후 최악의 해였습니다. 패턴은 자주 깨집니다. 시장은 결국 선거가 아니라 <strong>기업 실적·금리·경제</strong>가 움직입니다.</p>
+    </div>
+
+    <div class="quiz" data-answer="2">
+      <div class="qtag">QUIZ 06</div>
+      <div class="q">현업 전문가들이 계절성·주기 패턴을 쓰는 '올바른' 방식은?</div>
+      <button class="opt" data-i="0">패턴이 가리키는 정확한 날짜에 사고팔아 타이밍을 잡는다</button>
+      <button class="opt" data-i="1">9월이 오면 무조건 전량 현금화한다</button>
+      <button class="opt" data-i="2">변동성이 클 시기를 미리 알고, 하락을 분할 매수 기회로 삼는다</button>
+      <div class="explain"><b>정답: 3번.</b> 최고의 반등일은 최악의 폭락일 옆에 붙어 있어, 패턴으로 들락거리면 그 며칠을 놓칩니다(지난 30년 최고 10일만 놓쳐도 수익 반토막). 패턴은 매매 신호가 아니라 '기대 관리·기회 포착' 도구입니다.</div>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s8" class="reveal">
+    <div class="kicker" data-n="09">내 자산 · 실생활 영향</div>
+    <h2>그래서, 내 돈에는 어떤 의미일까</h2>
+    <p class="lead">패턴을 안다고 부자가 되진 않습니다. 하지만 패턴을 '오해'하면 가난해질 수 있습니다. 실생활에 적용할 수 있는 현실적인 교훈을 정리합니다.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ic">CASE A</div><h4>"9월이 약하다니 다 팔까?"</h4>
+        <p>→ 위험한 발상. 2025년 9월은 15년 만에 최고였습니다. 시장에서 나간 사이 가장 좋은 며칠을 놓치면 장기 수익이 반토막 납니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">CASE B</div><h4>"폭락이다, 도망가자!"</h4>
+        <p>→ 가장 흔한 실수. 최고의 반등일은 보통 최악의 폭락일 바로 옆에 붙어 있습니다. 공포 매도는 그 반등을 통째로 놓치게 합니다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">CASE C</div><h4>"여름은 손실이라니 쉬자"</h4>
+        <p>→ 오해에서 나온 실수. 여름은 '손실'이 아니라 '밋밋함'입니다. 7월은 오히려 최고의 달이죠. 괜히 나갔다 재진입 비용만 냅니다.</p>
+      </div>
+    </div>
+    <h3>현실적인 적용 3원칙</h3>
+    <table class="tbl">
+      <thead><tr><th>원칙</th><th>구체적 행동</th></tr></thead>
+      <tbody>
+        <tr><td><strong>① 타이밍보다 시간</strong></td><td>"언제 살까"보다 "얼마나 오래 묻어둘까". 50% 하락도 견딜 수 있는 자산 배분을 미리 짠다.</td></tr>
+        <tr><td><strong>② 변동성은 예고편</strong></td><td>중간선거 해·9월 등 변동성 시기를 미리 알고, 하락에 놀라지 않도록 마음의 준비를 한다.</td></tr>
+        <tr><td><strong>③ 현금 쿠션</strong></td><td>6~12개월치 생활비를 현금으로 두면, 폭락 때 '강제로 싸게 팔아야 하는' 최악을 피한다.</td></tr>
+      </tbody>
+    </table>
+    <div class="analogy">
+      <div class="tag">비유로 풀기</div>
+      <p>주식 투자는 비누 같습니다. <span class="hl">자꾸 만질수록 줄어듭니다.</span> 패턴을 핑계로 사고팔기를 반복하면, 수수료·세금·실수가 쌓여 오히려 손에 남는 게 줄어듭니다. 좋은 패턴 지식은 '더 자주 거래하기 위한 무기'가 아니라 '덜 흔들리기 위한 닻'입니다.</p>
+    </div>
+    <div class="ask">
+      <div class="tag">▶ 생각해보기</div>
+      <p>만약 내일 시장이 −30% 폭락한다면, 나는 팔까요 살까요 그냥 둘까요? 그 답을 '폭락하기 전인 지금' 정해두는 것과 '폭락한 다음' 정하는 것 — 결과가 같을까요?</p>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s9" class="reveal">
+    <div class="kicker" data-n="10">정리 · 토론</div>
+    <h2>오늘 기억할 7가지</h2>
+    <div class="takeaways">
+      <h3>핵심 요약</h3>
+      <ol>
+        <li><strong>패턴은 '날씨', 예언이 아니다.</strong> 평균적 경향일 뿐, 어느 해든 정반대로 갈 수 있다.</li>
+        <li><strong>대통령 4년 주기:</strong> 2년차(중간선거)가 가장 험하고 3년차가 가장 강했다. 트럼프1·바이든은 딱 맞았지만, 오바마 2기는 빗나갔다 — '경향'이지 '법칙'이 아니다.</li>
+        <li><strong>허쉬의 4대 시그널:</strong> 1월 바로미터·산타 랠리·베스트 식스 먼스·대통령 주기. 화려한 적중률 뒤엔 '시장은 원래 자주 오른다'는 함정이 숨어 있다.</li>
+        <li><strong>여름은 '손실'이 아니라 '밋밋함'.</strong> 진짜 마이너스 달은 9월(−1.2%) 하나뿐, 7월은 오히려 최고의 달이다. 계절성의 뿌리는 옛 농경 사회의 생활 리듬에 있다.</li>
+        <li><strong>폭락의 두 법칙:</strong> 보통 빚 잔치 뒤에 오고, 회복 속도는 정책 대응이 좌우한다(1929년 25년 → 2020년 5개월).</li>
+        <li><strong>한국 코스피는 미국 동조화 + 외국인 수급</strong>이 자체 계절성보다 강하게 작동한다.</li>
+        <li><strong>패턴은 매매 신호가 아니라 기대 관리 도구.</strong> '시간'이 '타이밍'을 이긴다(최고의 10일만 놓쳐도 20년 수익 반토막).</li>
+      </ol>
+    </div>
+    <div class="closer">
+      <div class="tag">마무리 토론</div>
+      <p>"시장에 계절이 있다"는 걸 알게 된 지금,<br>이 지식은 우리를 <em>더 자주 거래하게</em> 만들까요,<br>아니면 <em>덜 흔들리게</em> 만들까요?<br><br>여러분이라면 이 패턴들을 어디에, 어떻게 쓰시겠어요?</p>
+    </div>
+  </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <h4>출처 및 참고자료 (2026.07.12 기준 확인)</h4>
+    <p>
+      • 실시간 지수(S&amp;P500 7,543.64 / 나스닥종합 26,281.01 / QQQ $298.72 / 다우 52,637 / 코스피 7,475.94, 2026.07.10 종가) — CNBC, Yahoo Finance, Trading Economics, Invesco<br>
+      • 대통령 4년 주기 연평균·분기 경로 — RBC Wealth Management, Mackenzie Investments, Bloomberg<br>
+      • 정권별·연도별 S&amp;P500·나스닥100 총수익률(2013~2026) — Slickcharts / S&amp;P Dow Jones Indices<br>
+      • 《주식 트레이더 연감》 유래·수록 개념·59번째판 — Stock Trader's Almanac(공식), CMT Association, Wiley, Google Books<br>
+      • 1월 바로미터(86% vs 기저 75%) — Fidelity, Wealthfront, SharePlanner<br>
+      • 산타 랠리(+1.3% vs 0.2%, 79%, 3년 연속 실패) — Britannica, Wikipedia, Motley Fool<br>
+      • 베스트 식스 먼스($10,000→$1,316,635 vs $4,253, 농경 유래) — Jeff Hirsch/STA 2026, Ticker Tape, Cabot<br>
+      • 중간선거 조정 −20.6%·반등 +47%·다음해 무손실(1938~) — U.S. Bank, RBC Capital Markets, Goodreid<br>
+      • '최고의 날 놓침' 시뮬레이션($10,000, 2003~2022) — JP Morgan Asset Management, Morningstar, Hartford Funds<br>
+      • 월별 평균 수익률(9월만 −1.2%, 7월 최고 +1.7%) — RBC Wealth Management/Bloomberg(1928~2025.7), The Trading Tools(1993~)<br>
+      • 계절성(11–4월 +7.2% / 5–10월 +2.1%, 여름 데드존, 산타랠리) — Baldwin Mgmt, SimianX, CME Group<br>
+      • 역대 폭락·회복(1929/1987/2000/2008/2020) — Morningstar, Wikipedia, Motley Fool<br>
+      • 코스피 2026 급등락·반도체 슈퍼사이클·외국인 수급 — Trading Economics, CNBC, 나무위키
+    </p>
+    <p style="margin-top:16px;color:rgba(243,238,226,.45)">
+      ⚠ 본 자료의 전망·시나리오는 과거 통계에 근거한 것으로 <b style="color:#e0b65c">확정된 예측이 아닙니다.</b> 투자 판단의 책임은 투자자 본인에게 있습니다. 수치는 표본·기간·시점에 따라 달라질 수 있습니다.<br>
+      eco-lab 경제 스터디 · 교육용 발표자료
+    </p>
+  </div>
+</footer>
+
+<script>
+const prog=document.getElementById('progress');
+function onScroll(){
+  const h=document.documentElement;
+  const sc=(h.scrollTop)/(h.scrollHeight-h.clientHeight);
+  prog.style.width=(sc*100)+'%';
+  document.getElementById('topbtn').classList.toggle('show',h.scrollTop>600);
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+document.getElementById('topbtn').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+const secs=[...document.querySelectorAll('section[id]')];
+const links=[...document.querySelectorAll('#toc a')];
+const spy=new IntersectionObserver((es)=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.remove('active'));
+      const a=document.querySelector('#toc a[href="#'+e.target.id+'"]');
+      if(a)a.classList.add('active');
+    }
+  });
+},{rootMargin:'-45% 0px -50% 0px'});
+secs.forEach(s=>spy.observe(s));
+const tocNav=document.getElementById('toc');
+const tocToggle=document.querySelector('.toc-toggle');
+tocToggle.addEventListener('click',()=>{
+  const open=tocNav.classList.toggle('open');
+  tocToggle.setAttribute('aria-expanded',open);
+});
+links.forEach(l=>l.addEventListener('click',()=>{if(window.innerWidth<=860){tocNav.classList.remove('open');tocToggle.setAttribute('aria-expanded',false);}}));
+document.querySelectorAll('.quiz').forEach(q=>{
+  const ans=+q.dataset.answer;
+  const opts=[...q.querySelectorAll('.opt')];
+  const exp=q.querySelector('.explain');
+  opts.forEach(o=>{
+    o.addEventListener('click',()=>{
+      if(o.classList.contains('done'))return;
+      const pick=+o.dataset.i;
+      opts.forEach(x=>{
+        x.classList.add('done');x.style.cursor='default';
+        if(+x.dataset.i===ans){x.classList.add('correct');x.querySelector('.mark')||x.insertAdjacentHTML('beforeend','<span class="mark">✓</span>');}
+      });
+      if(pick!==ans){o.classList.add('wrong');o.insertAdjacentHTML('beforeend','<span class="mark">✕</span>');}
+      exp.classList.add('show');
+    });
+  });
+});
+const panel=document.getElementById('panel');
+const overlay=document.getElementById('overlay');
+const tab=document.getElementById('panelTab');
+const edge=document.getElementById('edge');
+function openPanel(){panel.classList.add('open');overlay.classList.add('show');loadList();}
+function closePanel(){panel.classList.remove('open');overlay.classList.remove('show');}
+tab.addEventListener('click',openPanel);
+document.getElementById('panelClose').addEventListener('click',closePanel);
+overlay.addEventListener('click',closePanel);
+edge.addEventListener('mouseenter',openPanel);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+let loaded=false;
+function loadList(){
+  if(loaded)return;loaded=true;
+  fetch('../../presentations.json').then(r=>r.json()).then(data=>{
+    const list=Array.isArray(data)?data:(data.presentations||[]);
+    const box=document.getElementById('panelList');
+    if(!list.length){box.innerHTML='<p style="font-size:13px;color:#9a937f">목록이 비어 있습니다.</p>';return;}
+    box.innerHTML='';
+    list.forEach(p=>{
+      const a=document.createElement('a');
+      a.href='../'+p.slug+'/';
+      a.innerHTML='<span class="pdate">'+(p.date||'')+'</span><br>'+(p.title||p.slug);
+      box.appendChild(a);
+    });
+  }).catch(()=>{
+    document.getElementById('panelList').innerHTML='<p style="font-size:13px;color:#9a937f">목록을 불러올 수 없습니다.<br>(허브에서 열면 정상 작동합니다.)</p>';
+  });
+}
+onScroll();
+</script>
+</body>
+</html>

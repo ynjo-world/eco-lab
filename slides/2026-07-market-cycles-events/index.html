@@ -28,28 +28,6 @@ body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans KR',san
   opacity:0;pointer-events:none;transition:opacity .25s ease, transform .15s ease;}
 #topbtn.show{opacity:1;pointer-events:auto}
 #topbtn:hover,#topbtn:focus-visible{background:var(--gold);color:var(--ink);outline:none;transform:translateY(-2px)}
-#edge{position:fixed;top:0;left:0;width:14px;height:100vh;z-index:998}
-#panel{position:fixed;top:0;left:0;height:100vh;width:300px;max-width:84vw;z-index:1002;
-  background:var(--ink);color:var(--paper);transform:translateX(-105%);
-  transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:6px 0 30px rgba(0,0,0,.4);
-  padding:64px 22px 30px;overflow-y:auto;}
-#panel.open{transform:translateX(0)}
-#panel h3{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--gold-bright);margin-bottom:18px;font-weight:600}
-#panel a{display:block;color:var(--paper);text-decoration:none;padding:10px 12px;border-radius:3px;
-  font-size:14px;line-height:1.45;border-left:2px solid transparent;transition:.15s}
-#panel a:hover,#panel a:focus-visible{background:var(--ink2);border-left-color:var(--gold);outline:none}
-#panel .pdate{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold)}
-#panelClose{position:absolute;top:16px;right:16px;background:none;border:1px solid var(--gold);
-  color:var(--paper);width:32px;height:32px;border-radius:3px;cursor:pointer;font-size:16px}
-#panelClose:hover,#panelClose:focus-visible{background:var(--gold);color:var(--ink);outline:none}
-#panelTab{position:fixed;top:50%;left:0;transform:translateY(-50%);z-index:999;writing-mode:vertical-rl;
-  background:var(--ink);color:var(--gold-bright);border:1px solid var(--gold);border-left:none;
-  border-radius:0 4px 4px 0;padding:14px 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;
-  letter-spacing:.15em;cursor:pointer}
-#panelTab:hover{background:var(--ink2)}
-#overlay{position:fixed;inset:0;background:rgba(8,12,20,.5);z-index:1001;opacity:0;pointer-events:none;transition:.3s}
-#overlay.show{opacity:1;pointer-events:auto}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 .layout{display:grid;grid-template-columns:215px 1fr;gap:42px;max-width:1180px;margin:0 auto;padding:0 22px}
 #toc{position:sticky;top:90px;align-self:start;height:max-content}
@@ -76,13 +54,6 @@ header.hero .tape{position:absolute;top:0;left:0;width:100%;font-family:'IBM Ple
   line-height:1.18;letter-spacing:-.01em;margin-bottom:20px}
 .hero h1 em{font-style:normal;color:var(--gold-bright)}
 .hero .sub{font-size:clamp(1rem,2vw,1.18rem);color:rgba(243,238,226,.82);max-width:620px;font-weight:300}
-.hero .ticker{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap}
-.hero .tk{background:rgba(255,255,255,.05);border:1px solid rgba(198,155,70,.35);border-radius:4px;
-  padding:10px 16px;font-family:'IBM Plex Mono',monospace}
-.hero .tk .nm{font-size:11px;letter-spacing:.1em;color:rgba(243,238,226,.6);display:block}
-.hero .tk .vl{font-size:1.15rem;font-weight:600;color:var(--paper)}
-.hero .tk .ch{font-size:12px;font-weight:500}
-.hero .tk .ch.up{color:#4fd39a}.hero .tk .ch.dn{color:#f08078}
 .hero .meta{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;
   font-size:12.5px;color:rgba(243,238,226,.55)}
 .hero .meta b{color:var(--gold-bright);font-weight:600}
@@ -224,15 +195,6 @@ footer h4{color:var(--paper);font-family:'IBM Plex Sans KR';font-size:.95rem;mar
 <div id="progress"></div>
 <a href="../../" class="backbtn" aria-label="목록으로 돌아가기">← 목록으로</a>
 
-<div id="edge" aria-hidden="true"></div>
-<button id="panelTab" aria-label="다른 발표 보기">발표 목록 ▸</button>
-<div id="overlay"></div>
-<nav id="panel" aria-label="다른 발표">
-  <button id="panelClose" aria-label="닫기">×</button>
-  <h3>eco-lab · 다른 발표</h3>
-  <div id="panelList"><p style="font-size:13px;color:#9a937f">불러오는 중…</p></div>
-</nav>
-
 <button id="topbtn" aria-label="맨 위로">↑</button>
 
 <header class="hero">
@@ -241,13 +203,6 @@ footer h4{color:var(--paper);font-family:'IBM Plex Sans KR';font-size:.95rem;mar
     <div class="eyebrow">eco-lab · 경제 스터디</div>
     <h1>주식시장에도 <em>계절</em>이 있을까?<br>지수는 언제 오르고, 언제 내릴까</h1>
     <p class="sub">대통령 선거, 중간선거, 전쟁, 여름과 연말… 특정 사건과 시기마다 시장이 보여 온 '버릇'을 데이터로 풀어봅니다. 점쟁이 이야기가 아니라, 100년치 기록이 들려주는 경향성에 대해서요.</p>
-    <div class="ticker">
-      <div class="tk"><span class="nm">S&amp;P 500</span><span class="vl">7,543.64</span> <span class="ch up">▲ 0.81%</span></div>
-      <div class="tk"><span class="nm">NASDAQ 종합</span><span class="vl">26,281.01</span> <span class="ch up">▲ 0.28%</span></div>
-      <div class="tk"><span class="nm">QQQ (나스닥100)</span><span class="vl">$298.72</span> <span class="ch up">▲ 0.32%</span></div>
-      <div class="tk"><span class="nm">DOW</span><span class="vl">52,637.01</span> <span class="ch up">▲ 0.29%</span></div>
-      <div class="tk"><span class="nm">KOSPI</span><span class="vl">7,475.94</span> <span class="ch up">▲ 2.52%</span></div>
-    </div>
     <div class="meta">
       <span><b>대상</b> 주식 입문자</span>
       <span><b>분량</b> 약 20분</span>
@@ -1022,35 +977,6 @@ document.querySelectorAll('.quiz').forEach(q=>{
     });
   });
 });
-const panel=document.getElementById('panel');
-const overlay=document.getElementById('overlay');
-const tab=document.getElementById('panelTab');
-const edge=document.getElementById('edge');
-function openPanel(){panel.classList.add('open');overlay.classList.add('show');loadList();}
-function closePanel(){panel.classList.remove('open');overlay.classList.remove('show');}
-tab.addEventListener('click',openPanel);
-document.getElementById('panelClose').addEventListener('click',closePanel);
-overlay.addEventListener('click',closePanel);
-edge.addEventListener('mouseenter',openPanel);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
-let loaded=false;
-function loadList(){
-  if(loaded)return;loaded=true;
-  fetch('../../presentations.json').then(r=>r.json()).then(data=>{
-    const list=Array.isArray(data)?data:(data.presentations||[]);
-    const box=document.getElementById('panelList');
-    if(!list.length){box.innerHTML='<p style="font-size:13px;color:#9a937f">목록이 비어 있습니다.</p>';return;}
-    box.innerHTML='';
-    list.forEach(p=>{
-      const a=document.createElement('a');
-      a.href='../'+p.slug+'/';
-      a.innerHTML='<span class="pdate">'+(p.date||'')+'</span><br>'+(p.title||p.slug);
-      box.appendChild(a);
-    });
-  }).catch(()=>{
-    document.getElementById('panelList').innerHTML='<p style="font-size:13px;color:#9a937f">목록을 불러올 수 없습니다.<br>(허브에서 열면 정상 작동합니다.)</p>';
-  });
-}
 onScroll();
 </script>
 </body>

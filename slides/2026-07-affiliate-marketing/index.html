@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>어필리에이트 이야기 — eco-lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1116;
+    --bg2:#141922;
+    --ink:#e9edf3;
+    --ink-soft:#9aa6b6;
+    --line:#26303d;
+    --neon:#00e5a0;      /* 링크·수익 = 민트 그린 (전환) */
+    --neon-deep:#00b47e;
+    --coral:#ff6b6b;      /* 경고·강조 */
+    --amber:#ffcb52;      /* 데이터·수치 */
+    --violet:#9b8cff;     /* 플랫폼·소셜 */
+    --card:#161c26;
+    --card2:#1b2331;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 40px rgba(0,0,0,.35);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *{animation:none!important;transition:none!important}
+  }
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans KR",sans-serif;font-weight:300;
+    line-height:1.75;font-size:17px;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(1200px 600px at 80% -10%,rgba(0,229,160,.06),transparent 60%),radial-gradient(900px 500px at -10% 20%,rgba(155,140,255,.05),transparent 55%);
+    background-attachment:fixed;
+  }
+
+  /* progress bar */
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:60;
+    background:linear-gradient(90deg,var(--neon),var(--violet),var(--amber));}
+
+  /* ===== side panel (eco-lab nav) — 테마색 교체: 0,229,160 / 155,140,255 ===== */
+  #ecolab-nav,#ecolab-nav *{box-sizing:border-box}
+  #ecolab-edge{position:fixed;top:0;left:0;width:14px;height:100vh;z-index:9997}
+  #ecolab-edge::after{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:64px;border-radius:0 4px 4px 0;background:rgba(0,229,160,.5);transition:background .2s,width .2s}
+  #ecolab-edge:hover::after{background:rgba(0,229,160,.9);width:6px}
+  #ecolab-toggle{position:fixed;top:14px;left:16px;z-index:9999;display:inline-flex;align-items:center;gap:7px;padding:9px 15px 9px 12px;border:none;border-radius:999px;background:rgba(20,25,34,.9);color:#fff;cursor:pointer;font:600 14px/1 'IBM Plex Sans KR',sans-serif;backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,.4);border:1px solid rgba(0,229,160,.35);transition:transform .18s,background .18s}
+  #ecolab-toggle:hover{transform:translateX(-1px);background:rgba(0,180,126,.25)}
+  #ecolab-toggle svg{display:block}
+  #ecolab-nav{position:fixed;top:0;left:0;height:100vh;width:330px;max-width:84vw;background:#121722;border-right:1px solid #26303d;z-index:10000;transform:translateX(-104%);transition:transform .28s cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column;font-family:'IBM Plex Sans KR',sans-serif;color:#e9edf3;box-shadow:8px 0 40px rgba(0,0,0,.5)}
+  #ecolab-nav.open{transform:none}
+  #ecolab-nav .hd{padding:20px 20px 14px;border-bottom:1px solid #26303d;display:flex;align-items:center;justify-content:space-between}
+  #ecolab-nav .hd b{font-family:'Gowun Batang',serif;font-size:18px}
+  #ecolab-nav .hd a{font-size:12.5px;color:var(--neon);text-decoration:none;font-weight:600}
+  #ecolab-nav .srch{padding:12px 16px}
+  #ecolab-nav .srch input{width:100%;padding:9px 13px;font:inherit;font-size:14px;border:1px solid #26303d;border-radius:10px;background:#0e1116;color:#e9edf3}
+  #ecolab-nav .srch input::placeholder{color:#5f6b7c}
+  #ecolab-nav .list{flex:1;overflow-y:auto;padding:4px 10px 20px}
+  #ecolab-nav .item{display:block;padding:10px 12px;border-radius:10px;text-decoration:none;color:#cdd5e0;font-size:14px;line-height:1.45;transition:background .15s}
+  #ecolab-nav .item:hover{background:#1b2331}
+  #ecolab-nav .item .d{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5f6b7c;margin-top:3px}
+  #ecolab-nav .item.current{background:rgba(0,229,160,.12);color:#fff;box-shadow:inset 0 0 0 1px rgba(0,229,160,.4)}
+  #ecolab-nav .item.child{font-size:13px;color:#9aa6b6}
+  #ecolab-nav .item.child::before{content:"↳ ";color:#5f6b7c}
+  #ecolab-nav .msg{padding:16px;color:#5f6b7c;font-size:13px}
+  #ecolab-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;opacity:0;pointer-events:none;transition:opacity .28s}
+  #ecolab-backdrop.open{opacity:1;pointer-events:auto}
+
+  /* wrapper */
+  .wrap{max-width:860px;margin:0 auto;padding:0 22px}
+
+  /* hero */
+  header.hero{padding:120px 0 60px;text-align:center;position:relative}
+  .hero .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--neon);margin-bottom:22px}
+  .hero h1{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(2.3rem,6vw,3.6rem);line-height:1.2;margin:0 0 16px;letter-spacing:-.01em}
+  .hero .sub{font-size:clamp(1rem,2.4vw,1.25rem);color:var(--ink-soft);font-weight:300}
+  .hero .flow{display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin-top:36px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-soft)}
+  .hero .flow span{padding:7px 13px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+  .hero .flow span.me{border-color:var(--neon);color:var(--neon)}
+  .hero .flow em{color:var(--neon);font-style:normal}
+
+  /* TOC */
+  nav.toc{position:sticky;top:0;z-index:40;background:rgba(14,17,22,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-top:30px}
+  nav.toc .toc-inner{max-width:860px;margin:0 auto;padding:0 22px}
+  nav.toc details{margin:0}
+  nav.toc summary{list-style:none;cursor:pointer;padding:13px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;letter-spacing:.05em;color:var(--ink-soft);display:flex;align-items:center;gap:9px}
+  nav.toc summary::-webkit-details-marker{display:none}
+  nav.toc summary .chev{transition:transform .2s}
+  nav.toc details[open] summary .chev{transform:rotate(90deg)}
+  nav.toc .links{display:flex;flex-wrap:wrap;gap:7px;padding:2px 0 15px}
+  nav.toc a{font-size:13px;text-decoration:none;color:var(--ink-soft);padding:5px 11px;border:1px solid var(--line);border-radius:999px;transition:.16s;white-space:nowrap}
+  nav.toc a:hover{color:var(--ink);border-color:var(--neon)}
+  nav.toc a.active{color:var(--bg);background:var(--neon);border-color:var(--neon);font-weight:500}
+
+  /* sections */
+  main{padding:20px 0 40px}
+  section{padding:46px 0;border-bottom:1px solid var(--line);opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+  section.in{opacity:1;transform:none}
+  section:last-of-type{border-bottom:none}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .kicker .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--card2);border:1px solid var(--line);color:var(--neon);font-weight:600}
+  h2{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.15rem);line-height:1.25;margin:0 0 22px;letter-spacing:-.01em}
+  h3{font-family:'IBM Plex Sans KR',sans-serif;font-weight:600;font-size:1.18rem;margin:34px 0 14px;color:#fff}
+  h4{font-weight:600;font-size:1.02rem;margin:24px 0 10px;color:var(--amber)}
+  p{margin:0 0 18px;color:#d4dbe4;font-weight:300}
+  strong,b{font-weight:600;color:#fff}
+  em{font-style:normal;color:var(--ink-soft);font-size:.92em}
+  section p em{display:block;margin-top:-6px}
+  a.inline{color:var(--neon);text-decoration:none;border-bottom:1px solid rgba(0,229,160,.4)}
+  ul,ol{margin:0 0 20px;padding-left:22px;color:#d4dbe4}
+  li{margin:8px 0}
+  li strong{color:#fff}
+
+  /* section chapter divider */
+  .chapter{text-align:center;padding:70px 0 34px;border-bottom:1px solid var(--line)}
+  .chapter .big{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(2rem,7vw,3rem);color:#fff;letter-spacing:.02em}
+  .chapter .lbl{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.24em;color:var(--violet);text-transform:uppercase;margin-bottom:12px}
+
+  /* definition / quote box */
+  .quote{border-left:3px solid var(--neon);background:linear-gradient(180deg,rgba(0,229,160,.07),rgba(0,229,160,.02));padding:20px 22px;border-radius:0 12px 12px 0;margin:22px 0;font-family:'Gowun Batang',serif;font-size:1.16rem;line-height:1.7;color:#fff}
+  .quote.violet{border-left-color:var(--violet);background:linear-gradient(180deg,rgba(155,140,255,.08),rgba(155,140,255,.02))}
+  .quote.coral{border-left-color:var(--coral);background:linear-gradient(180deg,rgba(255,107,107,.08),rgba(255,107,107,.02))}
+  .quote small{display:block;font-family:'IBM Plex Sans KR',sans-serif;font-size:.8rem;color:var(--ink-soft);margin-top:10px;font-weight:300}
+
+  /* stat cards */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:24px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow)}
+  .stat .big{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:2.1rem;color:var(--amber);line-height:1}
+  .stat .lbl{font-size:.9rem;color:var(--ink-soft);margin-top:9px;line-height:1.4}
+  .stat.mint .big{color:var(--neon)}
+  .stat.violet .big{color:var(--violet)}
+  .stat.coral .big{color:var(--coral)}
+
+  /* tables */
+  .tbl{width:100%;border-collapse:collapse;margin:22px 0;font-size:.96rem;overflow:hidden;border-radius:12px;box-shadow:var(--shadow)}
+  .tbl th,.tbl td{padding:13px 15px;text-align:left;border-bottom:1px solid var(--line)}
+  .tbl thead th{background:var(--card2);color:var(--neon);font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.82rem;letter-spacing:.04em;text-transform:uppercase}
+  .tbl tbody tr{background:var(--card)}
+  .tbl tbody tr:nth-child(even){background:var(--card2)}
+  .tbl td strong{color:#fff}
+  .tbl td:first-child{font-weight:500;color:#fff}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* callout */
+  .callout{background:var(--card2);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin:22px 0;box-shadow:var(--shadow)}
+  .callout .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--neon);margin-bottom:9px}
+  .callout.warn{border-color:rgba(255,107,107,.4)}
+  .callout.warn .tag{color:var(--coral)}
+  .callout p:last-child{margin-bottom:0}
+
+  /* formula */
+  .formula{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;color:#fff;background:var(--bg2);border:1px dashed var(--neon-deep);border-radius:12px;padding:20px 16px;margin:22px 0;line-height:1.9;word-break:keep-all}
+  .formula b{color:var(--neon)}
+
+  /* pipeline steps */
+  .pipe{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:10px;margin:24px 0;text-align:center}
+  .pipe .step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 12px;box-shadow:var(--shadow)}
+  .pipe .step b{display:block;color:var(--neon);font-size:1.02rem;margin-bottom:4px}
+  .pipe .step small{color:var(--ink-soft);font-size:.8rem}
+  .pipe .arrow{color:var(--violet);font-size:1.3rem;font-family:'IBM Plex Mono',monospace}
+  @media(max-width:640px){.pipe{grid-template-columns:1fr;}.pipe .arrow{transform:rotate(90deg)}}
+
+  /* two-col compare grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+  .gcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+  .gcard h4{margin-top:0}
+  .gcard.link h4{color:var(--neon)}
+  .gcard.nolink h4{color:var(--ink-soft)}
+  .gcard ul{margin:0;padding-left:18px}
+
+  /* ask box (열린 질문) */
+  .ask{border:1px solid rgba(155,140,255,.4);background:linear-gradient(180deg,rgba(155,140,255,.07),transparent);border-radius:var(--radius);padding:20px 22px;margin:26px 0;display:flex;gap:14px;align-items:flex-start}
+  .ask .ico{flex:0 0 auto;font-size:1.4rem;line-height:1.3}
+  .ask .body{flex:1}
+  .ask .who{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);margin-bottom:6px}
+  .ask p{margin:0;color:#e2e6ee;font-family:'Gowun Batang',serif;font-size:1.08rem;line-height:1.6}
+
+  /* emoji placeholder */
+  .imgph{display:flex;align-items:center;justify-content:center;height:130px;background:var(--card2);border:1px dashed var(--line);border-radius:12px;font-size:2.4rem;margin:20px 0;color:var(--ink-soft)}
+
+  /* back to top */
+  #totop{position:fixed;right:20px;bottom:22px;z-index:55;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--neon);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s,transform .18s;box-shadow:var(--shadow)}
+  #totop.show{opacity:1;pointer-events:auto}
+  #totop:hover{transform:translateY(-2px)}
+
+  /* footer */
+  footer{padding:56px 0 80px;text-align:center;color:var(--ink-soft);font-size:.86rem}
+  footer .src{text-align:left;max-width:860px;margin:0 auto 30px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px}
+  footer .src h4{color:var(--neon);margin-top:0}
+  footer .src ul{font-size:.82rem;color:var(--ink-soft);line-height:1.6}
+  footer .src li{margin:5px 0}
+
+  :focus-visible{outline:2px solid var(--neon);outline-offset:2px;border-radius:4px}
+
+  del{color:var(--ink-soft);text-decoration-color:var(--coral)}
+
+  /* sample gallery */
+  .gallery-block{max-width:860px;margin:0 auto 40px;text-align:left}
+  .gallery-block h3{font-family:'Gowun Batang',serif;font-size:1.3rem;color:#fff;margin:34px 0 4px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .gallery-block h3 .cnt{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.06em;color:var(--neon);font-weight:500}
+  .gallery-block .cap{font-size:.85rem;color:var(--ink-soft);margin:0 0 16px}
+  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .gal .cell{position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card2);cursor:pointer;transition:transform .18s,border-color .18s}
+  .gal .cell:hover,.gal .cell:focus-visible{transform:translateY(-3px);border-color:var(--neon)}
+  .gal .cell img,.gal .cell video{width:100%;height:100%;object-fit:cover;display:block}
+  .gal .cell .name{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 6px;font-size:10.5px;line-height:1.3;color:#e9edf3;background:linear-gradient(transparent,rgba(0,0,0,.82));font-family:'IBM Plex Sans KR',sans-serif;font-weight:400}
+  .gal .cell .badge{position:absolute;top:7px;right:7px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.05em;padding:3px 7px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;text-transform:uppercase}
+  .gal .cell.vid .badge{background:rgba(155,140,255,.85)}
+  .gal .cell .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none}
+  /* lightbox */
+  #lb{position:fixed;inset:0;z-index:10050;background:rgba(6,8,11,.94);display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+  #lb.open{display:flex}
+  #lb .stage{max-width:92vw;max-height:86vh;position:relative}
+  #lb img,#lb video{max-width:92vw;max-height:80vh;border-radius:10px;display:block;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  #lb .lbname{margin-top:12px;text-align:center;color:#e9edf3;font-size:.9rem;font-family:'IBM Plex Sans KR',sans-serif}
+  #lb-close{position:fixed;top:18px;right:22px;z-index:10051;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  #lb-close:hover{border-color:var(--neon)}
+
+  @media(max-width:600px){
+    body{font-size:16px}
+    header.hero{padding:96px 0 44px}
+    section{padding:38px 0}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 글 목록 사이드 패널 ===== -->
+<div id="ecolab-backdrop"></div>
+<div id="ecolab-edge" aria-hidden="true"></div>
+<button id="ecolab-toggle" aria-expanded="false" aria-controls="ecolab-nav">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  글 목록
+</button>
+<nav id="ecolab-nav" aria-label="전체 글 목록">
+  <div class="hd"><b>eco-lab</b><a href="../../">홈으로 →</a></div>
+  <div class="srch"><input id="ecolab-q" type="text" placeholder="글 검색…" aria-label="글 검색"></div>
+  <div class="list" id="ecolab-list"><div class="msg">불러오는 중…</div></div>
+</nav>
+
+<div id="progress"></div>
+<button id="totop" aria-label="맨 위로">↑</button>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">eco-lab · 커머스 &amp; 마케팅</div>
+    <h1>어필리에이트 이야기</h1>
+    <p class="sub">— 링크 하나가 수익이 되는 구조 —</p>
+    <div class="flow">
+      <span>판매자</span><em>→</em><span>플랫폼</span><em>→</em><span class="me">크리에이터(나)</span><em>→</em><span>소비자</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="목차">
+  <div class="toc-inner">
+    <details open>
+      <summary><span class="chev">▸</span> 목차</summary>
+      <div class="links">
+        <a href="#s-tally">집계</a>
+        <a href="#s-what">어필리에이트란?</a>
+        <a href="#s-coupang">쿠팡파트너스</a>
+        <a href="#s-market">시장조사</a>
+        <a href="#s-persona">페르소나 설계</a>
+        <a href="#s-content">콘텐츠 믹스</a>
+        <a href="#s-pipeline">제작 파이프라인</a>
+        <a href="#s-link">링크 → 댓글</a>
+        <a href="#s-season">시즈널 전략</a>
+        <a href="#s-result">실전 결과</a>
+        <a href="#s-next">쿠팡 다음은?</a>
+        <a href="#s-rules">지켜야 할 것</a>
+        <a href="#s-summary">요약</a>
+        <a href="#s-samples">발표샘플</a>
+      </div>
+    </details>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+  <!-- 집계 -->
+  <section id="s-tally">
+    <div class="kicker"><span class="num">01</span> 집계</div>
+    <h2>집계</h2>
+    <div class="stats">
+      <div class="stat mint">
+        <div class="big">63.7%</div>
+        <div class="lbl">SNS 이용자 광고 클릭 경험</div>
+      </div>
+      <div class="stat amber">
+        <div class="big">28.2%</div>
+        <div class="lbl">광고 보고 실제 구매 경험</div>
+      </div>
+    </div>
+    <p><em>(한국언론진흥재단, 2024 소셜미디어 이용자 조사)</em></p>
+  </section>
+
+  <!-- 어필리에이트란 -->
+  <section id="s-what">
+    <div class="kicker"><span class="num">02</span> 개념</div>
+    <h2>어필리에이트란?</h2>
+    <div class="quote">
+      내 링크로 판매가 일어났을 때만, 판매액의 일부를 수수료로 받는 방식
+    </div>
+    <ul>
+      <li><strong>CPS(Cost Per Sale)</strong> — 노출이 아니라 '판매'에만 과금</li>
+      <li>1996년 아마존 어소시에이트 시작, <strong>30년 검증 모델</strong></li>
+      <li>구조: 판매자 → 플랫폼 → <strong>크리에이터(나)</strong> → 소비자</li>
+    </ul>
+    <div class="callout">
+      <div class="tag">본질</div>
+      <p><strong>본질 = 관심이 모이는 곳(SNS)과 상품(커머스)을 잇는 다리</strong></p>
+    </div>
+    <div class="ask">
+      <div class="ico">💬</div>
+      <div class="body">
+        <div class="who">생각해 볼 질문</div>
+        <p>최근에 SNS를 보다가 '이거 어디서 사지?' 하고 링크를 눌러본 적이 있나요? 그 순간, 누군가는 수수료를 벌고 있었을지도 모릅니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 쿠팡파트너스 -->
+  <section id="s-coupang">
+    <div class="kicker"><span class="num">03</span> 플랫폼</div>
+    <h2>쿠팡파트너스(쿠파스)</h2>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>특징</th><th>내용</th></tr></thead>
+        <tbody>
+          <tr><td>진입장벽</td><td>쿠팡 계정만 있으면 가입. 팔로워 조건 없음</td></tr>
+          <tr><td><strong>24시간 쿠키</strong></td><td>클릭 후 24시간 추적. <strong>다른 상품 사도 내 실적</strong></td></tr>
+          <tr><td>정산</td><td>월 단위 집계 → 익월 계좌 입금</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="quote violet">
+      내 링크 = 상품 추천이 아니라 <strong>'쿠팡으로 들어가는 문'</strong>
+    </div>
+    <h3>수익 공식</h3>
+    <div class="formula">
+      수익 = <b>노출</b> × <b>클릭률</b> × <b>전환율</b> × <b>객단가</b> × <b>수수료율</b>
+    </div>
+  </section>
+
+</div>
+
+<!-- CHAPTER: 시장조사 -->
+<div class="chapter">
+  <div class="lbl">Part 2</div>
+  <div class="big">시장조사</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 시장조사 -->
+  <section id="s-market">
+    <div class="kicker"><span class="num">04</span> 시장조사</div>
+    <h2>연령</h2>
+    <p><em>&lt;2024-2025 소셜미디어 이용자 조사&gt;</em></p>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>SNS 경유 구매율</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><strong>19~29세</strong></td><td><strong>44% (1위)</strong></td></tr>
+          <tr><td>30대</td><td>41.7%</td></tr>
+          <tr><td>40대</td><td>34.7%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>성별</h3>
+    <ul>
+      <li>온라인쇼핑 이용률 <strong>30대 여성 69.6% — 전체 1위</strong> <em>(KISDI)</em></li>
+      <li><strong>20대 여성 68% — 2위</strong></li>
+      <li><strong>광고로 전환구매 -&gt; 20~30대 여성</strong></li>
+      <li>온라인쇼핑 거래액 중 <strong>모바일 75%</strong> <em>(통계청)</em></li>
+    </ul>
+    <div class="quote">폰으로 보다가 그 자리에서 산다</div>
+
+    <h3>동성 콘텐츠에 반응</h3>
+    <p>이효정·정예훈·나영주(2024), 감성과학 27권 4호<br>
+    <em>&lt;인플루언서의 특성과 소비자 속성이 팔로우에 미치는 영향&gt;</em></p>
+    <div class="quote violet">
+      "남성은 인플루언서 성별에 영향받지 않으나,<br>
+      <strong>여성은 여성 인플루언서를 유의미하게 팔로우</strong>"
+    </div>
+    <ul>
+      <li>동성 편중 = <strong>여성 소비자에게서 뚜렷</strong></li>
+      <li>여성은 전문성·호감성 + <strong>친밀성</strong> 중시 → 말투 전략의 근거</li>
+    </ul>
+
+    <h3>Threads</h3>
+    <ul>
+      <li>국내 이용자 <strong>382만 명</strong> <em>(2024년 말, 와이즈앱)</em></li>
+      <li>한국에서 가장 빠르게 성장 — <strong>DAU 연 500%↑</strong> <em>(센서타워)</em></li>
+      <li><strong>25~34세가 40.9%</strong> 로 최대 볼륨</li>
+      <li>팔로워 0명이어도 알고리즘이 노출시켜주는 구조</li>
+    </ul>
+    <div class="callout warn">
+      <div class="tag">⚠️ 주의</div>
+      <p>스레드는 남성 55.2% 남초 플랫폼<br>→ 그러나 <strong>플랫폼 인구 ≠ 지갑 여는 인구</strong></p>
+    </div>
+    <div class="ask">
+      <div class="ico">💬</div>
+      <div class="body">
+        <div class="who">생각해 볼 질문</div>
+        <p>'가장 사람이 많은 곳'과 '가장 잘 사는 사람이 있는 곳'이 다르다면, 나는 어디에 콘텐츠를 걸겠습니까?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 페르소나 -->
+  <section id="s-persona">
+    <div class="kicker"><span class="num">05</span> 전략</div>
+    <h2>페르소나 설계</h2>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>요소</th><th>내용</th></tr></thead>
+        <tbody>
+          <tr><td>프로필</td><td>20~30대 여성</td></tr>
+          <tr><td>관심사</td><td><strong>가방 · 옷 · 악세 · 러닝화</strong> (4개 → A/B 테스트)</td></tr>
+          <tr><td>말투</td><td>친구에게 카톡 하듯 &amp;&amp; 스레드 말투</td></tr>
+          <tr><td>일관성</td><td>시간대·답글·이모지까지 한 사람처럼</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 콘텐츠 믹스 -->
+  <section id="s-content">
+    <div class="kicker"><span class="num">06</span> 콘텐츠</div>
+    <h2>콘텐츠 믹스 — 상품글 + 일상글</h2>
+    <div class="imgph">🖼️</div>
+    <div class="grid2">
+      <div class="gcard link">
+        <h4>상품글 (링크 O)</h4>
+        <ul>
+          <li>가방: 샤넬·르메르·롱샴</li>
+          <li>옷: 가디건·트위드·코트</li>
+          <li>신발: 뉴발·아디다스</li>
+        </ul>
+      </div>
+      <div class="gcard nolink">
+        <h4>일상글 (링크 X)</h4>
+        <ul>
+          <li>불닭볶음면</li>
+          <li>아이스커피</li>
+          <li>스탠리 텀블러</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 파이프라인 -->
+  <section id="s-pipeline">
+    <div class="kicker"><span class="num">07</span> 제작</div>
+    <h2>제작 파이프라인 3단계</h2>
+    <div class="pipe">
+      <div class="step"><b>나노바나나</b><small>이미지 생성</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>Grok</b><small>영상화</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>스레드체(Gemini)</b><small>글쓰기</small></div>
+    </div>
+
+    <h3>나노바나나</h3>
+    <ul>
+      <li>"페르소나가 이 상품을 쓰는 장면"을 프롬프트로 생성</li>
+      <li><strong>광고처럼 완벽하게 뽑지 않기</strong></li>
+      <li>일상 스냅처럼 약간 허술하게 = 진짜처럼 보임</li>
+    </ul>
+
+    <h3>Grok</h3>
+    <ul>
+      <li>Grok <strong>사진에 애니메이션 효과 주기</strong> 버튼 하나</li>
+      <li>머리카락 날림, 카메라 미세 흔들림 정도의 움직임</li>
+      <li>움직이는 콘텐츠 = 스크롤을 멈춤 = 체류시간↑ = 노출↑</li>
+    </ul>
+
+    <h3>스레드체</h3>
+    <ul>
+      <li>정보문 ❌ 혼잣말 ⭕</li>
+      <li>스펙 나열 ❌ 경험담 ⭕</li>
+      <li>길게 ❌ 짧게 끊기 ⭕</li>
+    </ul>
+  </section>
+
+  <!-- 링크 -> 댓글 -->
+  <section id="s-link">
+    <div class="kicker"><span class="num">08</span> 동선</div>
+    <h2>링크 -&gt; 댓글</h2>
+    <div class="quote coral">
+      <strong>본문에 링크 ❌ → 발행 즉시 셀프 댓글 ⭕</strong>
+    </div>
+    <ol>
+      <li><strong>알고리즘</strong> — 본문에 외부 링크 있으면 도달 억제 경향</li>
+      <li><strong>동선</strong> — "어디서 사?" 하는 순간 제일 먼저 여는 곳 = 댓글창</li>
+    </ol>
+    <div class="callout">
+      <div class="tag">정리</div>
+      <p>본문은 순수 콘텐츠로 → 알고리즘이 밀어줌<br>
+      첫 댓글에 링크 → 관심 식기 전에 클릭유도</p>
+    </div>
+  </section>
+
+  <!-- 시즈널 -->
+  <section id="s-season">
+    <div class="kicker"><span class="num">09</span> 타이밍</div>
+    <h2>시즈널 전략</h2>
+    <p>특수일 = <strong>노출↑ + 반응↑ + 객단가↑</strong> 가 동시에</p>
+    <h3>어린이날 데이터</h3>
+    <ul>
+      <li>선물 예산 평균 <strong>9.5만 원</strong> (10년 전 4.9만 → <strong>2배</strong>)</li>
+      <li>받고 싶은 선물 1위 = <strong>전자기기 35%</strong> (스마트폰 포함 <strong>44.5%</strong>)</li>
+    </ul>
+    <div class="quote">
+      어린이날 = 수십만~백만 원대 <strong>노트북·가전이 팔리는 날</strong><br>
+      3만 원 티셔츠 vs 100만 원 노트북 → 수수료 자릿수가 다름
+    </div>
+    <div class="callout">
+      <div class="tag">전술</div>
+      <p><strong>D-2주 미리 깔기 · 특수일엔 고단가로 스위칭 · "뭐 사지?"에 답하는 글</strong></p>
+      <p><em>(화이트데이 · 어버이날 · 빼빼로데이 · 블프 · 설/추석 동일 적용)</em></p>
+    </div>
+    <div class="ask">
+      <div class="ico">💬</div>
+      <div class="body">
+        <div class="who">생각해 볼 질문</div>
+        <p>다가오는 특수일 중, 사람들이 '고단가 상품'을 가장 고민하며 검색할 날은 언제일까요?</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 실전 결과 -->
+  <section id="s-result">
+    <div class="kicker"><span class="num">10</span> 결과</div>
+    <h2>실전 결과</h2>
+    <ul>
+      <li>운영 기간: 1.4개월 / 게시물: 70개</li>
+      <li>누적 수익: 원</li>
+    </ul>
+  </section>
+
+  <!-- 쿠팡 다음은 -->
+  <section id="s-next">
+    <div class="kicker"><span class="num">11</span> 확장</div>
+    <h2>쿠팡 다음은?</h2>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>플랫폼</th><th>특징</th><th>수수료</th></tr></thead>
+        <tbody>
+          <tr><td>쿠팡파트너스</td><td>진입장벽 최저, 24h 쿠키</td><td>카테고리별 수 %</td></tr>
+          <tr><td><strong>네이버 쇼핑커넥트</strong></td><td>판매자 자율 요율, 간접실적 1.8%</td><td><strong>3~50%</strong></td></tr>
+          <tr><td>토스</td><td>앱 내 공동구매·제휴, 짧은 결제 동선</td><td>프로그램별</td></tr>
+          <tr><td><strong>겜스고</strong></td><td>구독 공유(유튜브 프리미엄 등), 반복 구매</td><td><strong>약 15%</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="quote violet">
+      <strong>플랫폼이 바뀌어도 공식은 안 바뀐다</strong><br>
+      데이터 → 페르소나 → 콘텐츠 → 동선 → 시즌
+    </div>
+  </section>
+
+  <!-- 지켜야 할 것 -->
+  <section id="s-rules">
+    <div class="kicker"><span class="num">12</span> 컴플라이언스</div>
+    <h2>지켜야 할 것 3가지</h2>
+    <ol>
+      <li><strong>대가성 표시</strong> — "쿠팡 파트너스 활동으로 수수료를 제공받습니다" (미표기 = 제재 사유)</li>
+      <li><strong>플랫폼 정책 준수</strong> — 계정이 날아가면 전부 사라짐</li>
+      <li><strong>과장 금지</strong> — 표시광고법</li>
+    </ol>
+    <div class="quote coral">
+      이건 비용이 아니라 <strong>보험</strong>
+    </div>
+  </section>
+
+  <!-- 요약 -->
+  <section id="s-summary">
+    <div class="kicker"><span class="num">13</span> 요약</div>
+    <h2>요약</h2>
+    <ol>
+      <li>어필리에이트 = <strong>팔릴 때만 과금</strong>되는 30년 모델</li>
+      <li>글보다 <strong>숫자 먼저</strong> — 답은 "2030 여성 + 동성 화자"</li>
+      <li><strong>나노바나나 → Grok → 스레드체</strong> 3단 공정</li>
+      <li>링크는 <strong>1순위 댓글</strong>, 특수일엔 <strong>고단가</strong></li>
+      <li>네이버 · 토스 · 겜스고로 <strong>확장 가능</strong></li>
+    </ol>
+    <div class="quote">
+      감이 아니라 데이터로 시작하면,<br>
+      개인도 마케팅 팀처럼 움직일 수 있다
+    </div>
+    <div class="ask">
+      <div class="ico">🎯</div>
+      <div class="body">
+        <div class="who">마무리 토론</div>
+        <p>오늘 배운 '데이터 → 페르소나 → 콘텐츠 → 동선 → 시즌' 공식을, 내가 잘 아는 관심사 하나에 적용한다면 — 어떤 페르소나로, 어떤 특수일을 노리겠습니까? 그리고 그때 가장 먼저 검증해야 할 '숫자'는 무엇일까요?</p>
+      </div>
+    </div>
+    <p style="text-align:center;font-family:'IBM Plex Mono',monospace;color:var(--neon);letter-spacing:.1em;margin-top:36px">Q&amp;A</p>
+  </section>
+
+</div>
+</main>
+
+<footer>
+  <div class="gallery-block" id="s-samples">
+    <h2 style="font-family:'Gowun Batang',serif;font-size:clamp(1.5rem,4vw,2rem);color:#fff;margin:0 0 6px">(부록) 발표샘플 폴더</h2>
+    <p class="cap" style="margin-bottom:26px">이미지를 클릭하면 크게 볼 수 있어요. 영상은 클릭하면 재생됩니다.</p>
+
+    <h3>1_나노바나나_이미지 <span class="cnt">17장 · 가방 5 · 옷 5 · 신발 3 · 푸드/리빙 4</span></h3>
+    <p class="cap">"페르소나가 이 상품을 쓰는 장면"을 프롬프트로 생성 — 광고처럼 완벽하지 않게, 일상 스냅처럼.</p>
+    <div class="gal" id="gal-nano"></div>
+
+    <h3 style="margin-top:38px">2_grok_영상화 <span class="cnt">4개 · 기능 캡처 1 + 영상 샘플 3</span></h3>
+    <p class="cap">Grok의 '사진에 애니메이션 효과 주기' 기능으로 정지 이미지에 미세한 움직임을 더함.</p>
+    <div class="gal" id="gal-grok"></div>
+  </div>
+
+  <div class="src">
+    <h4>(부록) 출처 — 질문 대비용</h4>
+    <ul>
+      <li><strong>한국언론진흥재단 &lt;2024 소셜미디어 이용자 조사&gt;</strong> — 클릭 63.7% / 구매 28.2% / 19~29세 44%</li>
+      <li><strong>KISDI &lt;전자상거래 이용 현황과 구매 행태&gt;</strong> — 30대 여성 69.6%, 20대 여성 68%</li>
+      <li><strong>통계청 온라인쇼핑동향조사</strong> — 모바일 비중 75%</li>
+      <li><strong>이효정·정예훈·나영주(2024), 감성과학 27(4)</strong> — 여성의 동성 인플루언서 팔로우 편중</li>
+      <li><strong>&lt;버추얼 인플루언서의 의인화 정도와 성별…&gt;, 정보사회와 미디어</strong> — 성별-호감도 상관</li>
+      <li><strong>와이즈앱 / 센서타워 / 비즈니스포스트</strong> — 스레드 382만 명, DAU 500%↑, 25~34세 40.9%</li>
+      <li><strong>이투데이·토스 설문 / 뉴스스페이스</strong> — 어린이날 전자기기 44.5%, 예산 9.5만 원(2배↑)</li>
+      <li><strong>쿠팡파트너스 공식 가이드 / 네이버 보도자료 / 겜스고</strong> — 요율·정책</li>
+    </ul>
+  </div>
+  <p>eco-lab · 스터디 발표 자료<br>
+  <span style="font-size:.78rem;color:#5f6b7c">본 자료는 발표자가 작성한 원문을 eco-lab 레이아웃으로 재구성한 것입니다.</span></p>
+</footer>
+
+<!-- lightbox -->
+<div id="lb" role="dialog" aria-modal="true" aria-label="샘플 확대 보기">
+  <button id="lb-close" aria-label="닫기">✕</button>
+  <div class="stage" id="lb-stage"></div>
+</div>
+
+<script>
+// ===== sample gallery =====
+(function(){
+  var NANO=[
+    ["가방_샤넬_탑핸들_언박싱.jpg","가방"],
+    ["가방_르메르_크루아상백.jpg","가방"],
+    ["가방_롱샴_미니백.jpg","가방"],
+    ["가방_브라운_미니토트_코디.jpg","가방"],
+    ["가방_브라운_미니토트_클로즈업.jpg","가방"],
+    ["옷_트위드자켓_샤넬백_코디.jpg","옷"],
+    ["옷_카멜코트_크루아상백_코디.jpg","옷"],
+    ["옷_민트가디건_거울셀피.jpg","옷"],
+    ["옷_패딩조끼_NB530_코디.jpg","옷"],
+    ["옷_청바지_NB530_코디.jpg","옷"],
+    ["신발_뉴발란스_박스샷.jpg","신발"],
+    ["신발_아디다스_가젤_착용샷.jpg","신발"],
+    ["신발_아디다스_뮬_착용샷.jpg","신발"],
+    ["푸드_불닭볶음면_패키지.jpg","푸드"],
+    ["푸드_불닭볶음면_조리샷.jpg","푸드"],
+    ["리빙_아이스커피_유리컵.jpg","리빙"],
+    ["리빙_스탠리텀블러_헬스장.png","리빙"]
+  ];
+  var GROK=[
+    ["grok_사진에_애니메이션효과_기능화면.png","캡처","img"],
+    ["grok_영상샘플_01.mp4","영상","vid"],
+    ["grok_영상샘플_02.mp4","영상","vid"],
+    ["grok_영상샘플_03.mp4","영상","vid"]
+  ];
+  function cellName(f){return f.replace(/\.[^.]+$/,'').replace(/_/g,' ');}
+  function buildNano(){
+    var html=NANO.map(function(it){
+      var f=it[0],tag=it[1],src='assets/nanobanana/'+encodeURIComponent(f);
+      return '<div class="cell" tabindex="0" role="button" data-type="img" data-src="'+src+'" data-name="'+cellName(f)+'">'+
+        '<img loading="lazy" src="'+src+'" alt="'+cellName(f)+'">'+
+        '<span class="badge">'+tag+'</span>'+
+        '<span class="name">'+cellName(f)+'</span></div>';
+    }).join('');
+    document.getElementById('gal-nano').innerHTML=html;
+  }
+  function buildGrok(){
+    var html=GROK.map(function(it){
+      var f=it[0],tag=it[1],kind=it[2],src='assets/grok/'+encodeURIComponent(f);
+      if(kind==='vid'){
+        return '<div class="cell vid" tabindex="0" role="button" data-type="vid" data-src="'+src+'" data-name="'+cellName(f)+'">'+
+          '<video muted preload="metadata" src="'+src+'#t=0.1"></video>'+
+          '<span class="badge">'+tag+'</span>'+
+          '<span class="play">▶</span>'+
+          '<span class="name">'+cellName(f)+'</span></div>';
+      }
+      return '<div class="cell" tabindex="0" role="button" data-type="img" data-src="'+src+'" data-name="'+cellName(f)+'">'+
+        '<img loading="lazy" src="'+src+'" alt="'+cellName(f)+'">'+
+        '<span class="badge">'+tag+'</span>'+
+        '<span class="name">'+cellName(f)+'</span></div>';
+    }).join('');
+    document.getElementById('gal-grok').innerHTML=html;
+  }
+  buildNano();buildGrok();
+
+  // lightbox
+  var lb=document.getElementById('lb'),stage=document.getElementById('lb-stage'),
+      lbClose=document.getElementById('lb-close');
+  function openLB(type,src,name){
+    if(type==='vid'){
+      stage.innerHTML='<video src="'+src+'" controls autoplay playsinline></video><div class="lbname">'+name+'</div>';
+    }else{
+      stage.innerHTML='<img src="'+src+'" alt="'+name+'"><div class="lbname">'+name+'</div>';
+    }
+    lb.classList.add('open');
+  }
+  function closeLB(){lb.classList.remove('open');stage.innerHTML='';}
+  document.querySelectorAll('.gal .cell').forEach(function(c){
+    function go(){openLB(c.getAttribute('data-type'),c.getAttribute('data-src'),c.getAttribute('data-name'));}
+    c.addEventListener('click',go);
+    c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+  lbClose.addEventListener('click',closeLB);
+  lb.addEventListener('click',function(e){if(e.target===lb)closeLB();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&lb.classList.contains('open'))closeLB();});
+})();
+
+// progress bar + back to top
+(function(){
+  var pb=document.getElementById('progress'),tt=document.getElementById('totop');
+  function onScroll(){
+    var h=document.documentElement,st=h.scrollTop||document.body.scrollTop,
+        sh=(h.scrollHeight-h.clientHeight);
+    var pct=sh>0?(st/sh)*100:0;
+    pb.style.width=pct+'%';
+    if(st>500)tt.classList.add('show');else tt.classList.remove('show');
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  tt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+})();
+
+// reveal on scroll
+(function(){
+  var secs=document.querySelectorAll('section');
+  if(!('IntersectionObserver' in window)){secs.forEach(function(s){s.classList.add('in');});return;}
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+  secs.forEach(function(s){io.observe(s);});
+})();
+
+// scroll-spy TOC
+(function(){
+  var links=Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var map={};links.forEach(function(a){var id=a.getAttribute('href').slice(1);var el=document.getElementById(id);if(el)map[id]=a;});
+  var ids=Object.keys(map);
+  if(!ids.length)return;
+  var spy=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        if(map[e.target.id])map[e.target.id].classList.add('active');
+      }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  ids.forEach(function(id){spy.observe(document.getElementById(id));});
+})();
+
+// side panel
+(function(){
+var CURRENT = location.pathname.replace(/\/index\.html?$/,'').split('/').filter(Boolean).pop();
+var nav=document.getElementById('ecolab-nav'),backdrop=document.getElementById('ecolab-backdrop'),
+toggle=document.getElementById('ecolab-toggle'),edge=document.getElementById('ecolab-edge'),
+listEl=document.getElementById('ecolab-list'),qEl=document.getElementById('ecolab-q'),DATA=[],hoverTimer;
+function open(){nav.classList.add('open');backdrop.classList.add('open');toggle.setAttribute('aria-expanded','true');}
+function close(){nav.classList.remove('open');backdrop.classList.remove('open');toggle.setAttribute('aria-expanded','false');}
+toggle.addEventListener('click',function(){nav.classList.contains('open')?close():open();});
+backdrop.addEventListener('click',close);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+edge.addEventListener('mouseenter',function(){hoverTimer=setTimeout(open,120);});
+edge.addEventListener('mouseleave',function(){clearTimeout(hoverTimer);});
+nav.addEventListener('mouseleave',function(e){if(e.clientX<1)return;close();});
+function fmt(s){var d=new Date(s);return isNaN(d)?s:d.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});}
+function flatten(rows){var byParent={};rows.forEach(function(p){var k=p.parent||'__root__';(byParent[k]=byParent[k]||[]).push(p);});
+Object.keys(byParent).forEach(function(k){byParent[k].sort(function(a,b){return new Date(b.date)-new Date(a.date);});});
+var out=[];(function walk(key,depth){(byParent[key]||[]).forEach(function(p){out.push({p:p,depth:depth});walk(p.slug,depth+1);});})('__root__',0);return out;}
+function draw(filter){var rows;
+if(filter){var q=filter.toLowerCase();rows=DATA.filter(function(p){return (p.title+' '+(p.summary||'')+' '+(p.tags||[]).join(' ')).toLowerCase().indexOf(q)>-1;}).map(function(p){return {p:p,depth:0};});}
+else{rows=flatten(DATA);}
+if(!rows.length){listEl.innerHTML='<div class="msg">결과가 없어요.</div>';return;}
+listEl.innerHTML=rows.map(function(r){var p=r.p,cur=p.slug===CURRENT?' current':'',child=r.depth>0?' child':'',pad=r.depth>0?'margin-left:'+Math.min(r.depth,3)*16+'px;':'';
+return '<a class="item'+cur+child+'" style="'+pad+'" href="../'+p.slug+'/">'+p.title+'<span class="d">'+fmt(p.date)+'</span></a>';}).join('');}
+qEl.addEventListener('input',function(e){draw(e.target.value.trim());});
+fetch('../../presentations.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json();})
+.then(function(d){DATA=Array.isArray(d)?d.filter(function(p){return !p.hidden||p.hidden==='N';}):[];draw('');})
+.catch(function(){listEl.innerHTML='<div class="msg">목록을 불러오지 못했어요. (배포본에서는 정상 작동합니다.)</div>';});
+})();
+</script>
+</body>
+</html>

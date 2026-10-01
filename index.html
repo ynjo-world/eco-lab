@@ -52,6 +52,19 @@
     max-width: 46ch;
   }
 
+  /* ── Hidden mode banner ───────────────── */
+  .mode-banner {
+    display: none;
+    margin-top: 22px;
+    font-size: 13.5px; color: var(--ink-soft);
+    background: var(--paper-2); border: 1px dashed var(--ink-soft);
+    border-radius: 10px; padding: 10px 14px;
+    max-width: fit-content;
+  }
+  .mode-banner a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .mode-banner a:hover { text-decoration: underline; }
+  body.show-hidden .mode-banner { display: block; }
+
   /* ── Controls ─────────────────────────── */
   .controls {
     display: flex; flex-wrap: wrap; gap: 14px;
@@ -114,6 +127,17 @@
     transform: translateY(-4px);
     border-color: var(--accent);
     box-shadow: 0 2px 4px rgba(26,34,56,.05), 0 18px 40px rgba(192,86,58,.13);
+  }
+  .card.is-hidden {
+    border-style: dashed;
+    background: repeating-linear-gradient(135deg, var(--paper-2) 0 14px, #faf7f0 14px 28px);
+  }
+  .card .hidden-badge {
+    align-self: flex-start;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    color: #fff; background: var(--ink-soft);
+    padding: 2px 9px; border-radius: 999px;
+    margin-bottom: 10px;
   }
   .card .date {
     font-size: 12px; font-weight: 600; letter-spacing: .06em;
@@ -232,9 +256,10 @@
 <body>
   <header>
     <div class="wrap">
-      <div class="eyebrow">Study Group · 발표 자료실</div>
+      <div class="eyebrow" id="eyebrow">Study Group · 발표 자료실</div>
       <h1>eco&#8209;lab<span class="dot">.</span></h1>
       <p class="tagline">가볍게 모여 깊이 있게 나누는 이야기. 지금까지의 발표 자료를 한곳에 모았습니다.</p>
+      <div class="mode-banner">숨김 처리된 자료까지 모두 보는 중입니다 · <a href="./">공개 목록으로</a></div>
     </div>
   </header>
 
@@ -274,6 +299,18 @@
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
 
+  // 숨김 보기 모드: 주소/?hidden 또는 주소/#hidden (주소/hidden/ 은 ?hidden 으로 리다이렉트)
+  const SHOW_HIDDEN = new URLSearchParams(location.search).has('hidden')
+                   || location.hash === '#hidden';
+  if (SHOW_HIDDEN){
+    document.body.classList.add('show-hidden');
+    document.getElementById('eyebrow').textContent = 'Study Group · 숨김 자료 포함';
+    document.title = 'eco-lab · 숨김 포함';
+    const robots = document.createElement('meta');
+    robots.name = 'robots'; robots.content = 'noindex';
+    document.head.appendChild(robots);
+  }
+
   let DATA = [];
   let activeTag = null;
   let query = '';
@@ -285,7 +322,7 @@
   const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
   // 숨김 처리: hidden 값이 true(불리언) 또는 "Y"/"true"(문자열)면 목록에서 제외.
-  // "N"/"false"/없음/null 은 모두 공개.
+  // "N"/"false"/없음/null 은 모두 공개. 숨김 보기 모드에서는 전부 표시.
   function isHidden(p){
     const h = p.hidden;
     if (h === true) return true;
@@ -295,7 +332,7 @@
     }
     return false;
   }
-  function visible(){ return DATA.filter(p => !isHidden(p)); }
+  function visible(){ return SHOW_HIDDEN ? DATA : DATA.filter(p => !isHidden(p)); }
 
   function fmtDate(s){
     const d = new Date(s);
@@ -319,9 +356,12 @@
     const childMark = depth > 0
       ? '<span style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px;display:inline-block">↳ 이어지는 글</span>'
       : '';
+    const hid = isHidden(p);
+    const hiddenMark = hid ? '<span class="hidden-badge">숨김</span>' : '';
     return `
-      <a class="card" href="slides/${p.slug}/" style="${indent}animation-delay:${i*55}ms">
+      <a class="card${hid ? ' is-hidden' : ''}" href="slides/${p.slug}/" style="${indent}animation-delay:${i*55}ms">
         ${childMark}
+        ${hiddenMark}
         <span class="date">${fmtDate(p.date)}</span>
         <h2>${p.title}</h2>
         <p>${p.summary || ''}</p>
@@ -330,11 +370,14 @@
       </a>`;
   }
 
-  // 계층 구조를 깊이우선으로 펼쳐서, 부모 아래 자식이 들여쓰기되어 나오게 (숨김 글 제외)
+  // 계층 구조를 깊이우선으로 펼쳐서, 부모 아래 자식이 들여쓰기되어 나오게.
+  // 부모가 목록에 없으면(숨김 등) 자식은 최상위로 올림.
   function flattenTree(){
+    const list = visible();
+    const slugs = new Set(list.map(p => p.slug));
     const childrenOf = {};
-    visible().forEach(p => {
-      const key = p.parent || '__root__';
+    list.forEach(p => {
+      const key = (p.parent && slugs.has(p.parent)) ? p.parent : '__root__';
       (childrenOf[key] = childrenOf[key] || []).push(p);
     });
     Object.values(childrenOf).forEach(arr =>
@@ -363,7 +406,8 @@
       rows = flattenTree();
     }
 
-    countEl.textContent = `발표 ${rows.length}개`;
+    const hc = rows.filter(r => isHidden(r.p)).length;
+    countEl.textContent = `발표 ${rows.length}개` + (SHOW_HIDDEN ? ` (숨김 ${hc}개 포함)` : '');
 
     if (!rows.length){
       grid.innerHTML = '<div class="empty">조건에 맞는 발표가 없어요.</div>';

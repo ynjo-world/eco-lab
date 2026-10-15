@@ -304,8 +304,8 @@
   let activeTag = null;
   let query = '';
 
-  // /hidden 경로로 접근했을 때만 hidden:"Y" 항목까지 노출
-  const SHOW_HIDDEN = /(^|\/)hidden\/?$/i.test(location.pathname)
+  // /hidden 경로(또는 ?hidden=1)로 접근했을 때만 hidden:"Y" 항목까지 노출
+  const SHOW_HIDDEN = /hidden/i.test(location.pathname)
                    || /[?&]hidden=1\b/.test(location.search);
   const isHidden = p => String(p.hidden || '').toUpperCase() === 'Y';
   const visible  = p => SHOW_HIDDEN || !isHidden(p);
@@ -340,7 +340,7 @@
       ? '<span style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px;display:inline-block">↳ 이어지는 글</span>'
       : '';
     return `
-      <a class="card" href="slides/${p.slug}/" style="${indent}animation-delay:${i*55}ms">
+      <a class="card" href="/slides/${p.slug}/" style="${indent}animation-delay:${i*55}ms">
         ${childMark}
         <span class="date">${fmtDate(p.date)}</span>
         <h2>${p.title}</h2>
@@ -409,7 +409,7 @@
 
   document.getElementById('q').addEventListener('input', e => { query = e.target.value; render(); });
 
-  fetch('presentations.json', { cache: 'no-store' })
+  fetch('/presentations.json', { cache: 'no-store' })
     .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(data => { DATA = Array.isArray(data) ? data : []; buildTags(); render(); })
     .catch(err => {

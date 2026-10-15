@@ -304,6 +304,12 @@
   let activeTag = null;
   let query = '';
 
+  // /hidden 경로로 접근했을 때만 hidden:"Y" 항목까지 노출
+  const SHOW_HIDDEN = /(^|\/)hidden\/?$/i.test(location.pathname)
+                   || /[?&]hidden=1\b/.test(location.search);
+  const isHidden = p => String(p.hidden || '').toUpperCase() === 'Y';
+  const visible  = p => SHOW_HIDDEN || !isHidden(p);
+
   const grid = document.getElementById('grid');
   const tagsEl = document.getElementById('tags');
   const countEl = document.getElementById('count');
@@ -317,6 +323,7 @@
   }
 
   function matches(p){
+    if (!visible(p)) return false;
     if (activeTag && !(p.tags||[]).includes(activeTag)) return false;
     if (query){
       const hay = (p.title + ' ' + (p.summary||'') + ' ' + (p.tags||[]).join(' ')).toLowerCase();
@@ -346,7 +353,7 @@
   // 계층 구조를 깊이우선으로 펼쳐서, 부모 아래 자식이 들여쓰기되어 나오게
   function flattenTree(){
     const childrenOf = {};
-    DATA.forEach(p => {
+    DATA.filter(visible).forEach(p => {
       const key = p.parent || '__root__';
       (childrenOf[key] = childrenOf[key] || []).push(p);
     });
@@ -387,7 +394,7 @@
   }
 
   function buildTags(){
-    const all = [...new Set(DATA.flatMap(p => p.tags || []))].sort();
+    const all = [...new Set(DATA.filter(visible).flatMap(p => p.tags || []))].sort();
     tagsEl.innerHTML = '';
     const mk = (label, val) => {
       const b = document.createElement('button');

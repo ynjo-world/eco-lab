@@ -173,7 +173,7 @@
 
   /* ── Sponsor banner ───────────────────── */
   .sponsor {
-    margin: 8px 0 56px;
+    margin: 8px 0 40px;
     display: flex; flex-direction: column; gap: 14px;
   }
   .sponsor-label {
@@ -239,6 +239,34 @@
     .sponsor .cta { width: 100%; justify-content: center; }
   }
 
+  /* ── Reference links ──────────────────── */
+  .ref-links { margin: 0 0 56px; }
+  .ref-links ul {
+    list-style: none;
+    display: grid; gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .ref-links a {
+    display: flex; flex-direction: column; gap: 4px; height: 100%;
+    padding: 16px 18px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    text-decoration: none; color: inherit;
+    transition: border-color .2s, transform .2s cubic-bezier(.2,.7,.3,1);
+  }
+  .ref-links a:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .ref-links strong { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .ref-links .ref-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+  .ref-links .ref-tag {
+    align-self: flex-start;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .ref-links .ref-tag--us { background: #dde5f3; color: #2f4b80; }
+
   footer {
     border-top: 1px solid var(--line);
     padding: 32px 0 48px; font-size: 13px; color: var(--ink-soft);
@@ -277,8 +305,8 @@
     <div class="grid" id="grid"></div>
 
     <!-- ── Sponsor banner ──────────────── -->
-    <aside class="sponsor" aria-label="추천 서비스">
-      <div class="sponsor-label">추천 서비스</div>
+    <aside class="sponsor" aria-label="스폰서">
+      <div class="sponsor-label">스폰서</div>
       <a href="https://zipssa.kr/" target="_blank" rel="noopener sponsored">
         <div class="badge">집</div>
         <div class="body">
@@ -313,6 +341,43 @@
         </span>
       </a>
     </aside>
+
+    <!-- ── Reference links ─────────────── -->
+    <nav class="ref-links" aria-label="참고 링크">
+      <div class="sponsor-label">참고 링크</div>
+      <ul>
+        <li><a href="https://ecos.bok.or.kr/" target="_blank" rel="noopener">
+          <span class="ref-tag">국내</span>
+          <strong>한국은행 경제통계시스템(ECOS)</strong>
+          <span class="ref-desc">금리·물가·환율·통화량 등 공식 경제통계</span>
+        </a></li>
+        <li><a href="https://eiec.kdi.re.kr/" target="_blank" rel="noopener">
+          <span class="ref-tag">국내</span>
+          <strong>KDI 경제정보센터</strong>
+          <span class="ref-desc">경제 교육 자료, 정책 해설, 경제 동향</span>
+        </a></li>
+        <li><a href="https://nsp.nanet.go.kr/" target="_blank" rel="noopener">
+          <span class="ref-tag">국내</span>
+          <strong>국가전략포털 · 국회도서관</strong>
+          <span class="ref-desc">국내외 국가전략 보고서, 정책 동향, 국가지수</span>
+        </a></li>
+        <li><a href="https://likms.assembly.go.kr/bill/main.do" target="_blank" rel="noopener">
+          <span class="ref-tag">국내</span>
+          <strong>국회 의안정보시스템</strong>
+          <span class="ref-desc">법안 발의부터 처리까지 진행 상황·표결 조회</span>
+        </a></li>
+        <li><a href="https://www.congress.gov/" target="_blank" rel="noopener">
+          <span class="ref-tag ref-tag--us">미국</span>
+          <strong>Congress.gov</strong>
+          <span class="ref-desc">미국 의회 공식 법안·의사록 데이터베이스 (영문)</span>
+        </a></li>
+        <li><a href="https://www.govtrack.us/" target="_blank" rel="noopener">
+          <span class="ref-tag ref-tag--us">미국</span>
+          <strong>GovTrack</strong>
+          <span class="ref-desc">미국 법안 진행·의원 표결 기록 추적 (영문)</span>
+        </a></li>
+      </ul>
+    </nav>
   </main>
 
   <footer>

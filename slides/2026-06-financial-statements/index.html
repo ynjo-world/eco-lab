@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재무제표 기초 — 회사의 건강검진표 읽는 법</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a2e22;          /* deep ledger green-black */
+    --paper:#f3efe3;        /* aged ledger paper */
+    --paper-2:#ebe5d4;      /* slightly darker panel */
+    --rule:#c9bfa3;         /* ruled-line tan */
+    --debit:#1f6f54;        /* asset / debit green */
+    --credit:#9a3b2e;       /* liability / credit rust-red */
+    --equity:#b0892e;       /* equity gold */
+    --accent:#1f6f54;
+    --accent-soft:#dfe9e1;
+    --shadow:rgba(26,46,34,.14);
+    --mono:'IBM Plex Mono',monospace;
+    --serif:'Gowun Batang',serif;
+    --sans:'IBM Plex Sans KR',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{animation:none!important;transition:none!important;}
+  }
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--paper);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* ruled-paper background texture */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      linear-gradient(var(--paper),var(--paper)),
+      repeating-linear-gradient(transparent 0 38px, rgba(201,191,163,.28) 38px 39px);
+    background-blend-mode:multiply;
+    pointer-events:none;
+  }
+  body::after{
+    content:"";position:fixed;top:0;bottom:0;left:64px;width:1px;z-index:-1;
+    background:rgba(154,59,46,.25);pointer-events:none;
+  }
+  @media (max-width:760px){body::after{left:22px;}}
+
+  /* ===== progress bar ===== */
+  #progress{
+    position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--debit),var(--equity),var(--credit));
+    z-index:200;transition:width .1s linear;
+  }
+
+  /* ===== back button ===== */
+  .backbtn{
+    position:fixed;top:14px;left:14px;z-index:150;
+    display:inline-flex;align-items:center;gap:6px;
+    padding:9px 15px;border-radius:999px;
+    background:#1a2e22;color:#f3efe3;text-decoration:none;
+    font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;font-weight:600;
+    box-shadow:0 4px 14px rgba(26,46,34,.32);
+    border:1px solid rgba(243,239,227,.25);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .backbtn:hover,.backbtn:focus{background:#26432f;transform:translateY(-1px);}
+  .backbtn:focus-visible{outline:3px solid #b0892e;outline-offset:2px;}
+
+  /* ===== side panel toggle ===== */
+  .panelbtn{
+    position:fixed;top:14px;right:14px;z-index:150;
+    display:inline-flex;align-items:center;gap:6px;
+    padding:9px 15px;border-radius:999px;
+    background:rgba(243,239,227,.92);color:#1a2e22;cursor:pointer;
+    font-family:var(--sans);font-size:14px;font-weight:600;
+    box-shadow:0 4px 14px var(--shadow);border:1px solid var(--rule);
+    transition:transform .15s ease;
+  }
+  .panelbtn:hover{transform:translateY(-1px);}
+  .panelbtn:focus-visible{outline:3px solid var(--equity);outline-offset:2px;}
+  #sidePanel{
+    position:fixed;top:0;right:-340px;width:320px;max-width:86vw;height:100%;
+    background:#1a2e22;color:#f3efe3;z-index:300;
+    transition:right .32s cubic-bezier(.4,0,.2,1);
+    box-shadow:-8px 0 30px rgba(0,0,0,.3);padding:64px 22px 30px;overflow-y:auto;
+  }
+  #sidePanel.open{right:0;}
+  #sidePanel h3{font-family:var(--serif);font-size:18px;margin:0 0 4px;color:#e8c97a;}
+  #sidePanel .sp-sub{font-size:12px;opacity:.6;margin-bottom:18px;}
+  #sidePanel a{
+    display:block;color:#f3efe3;text-decoration:none;padding:9px 11px;border-radius:8px;
+    font-size:14px;border-left:2px solid transparent;margin-bottom:3px;transition:background .15s;
+  }
+  #sidePanel a:hover,#sidePanel a:focus-visible{background:rgba(243,239,227,.12);border-left-color:#e8c97a;outline:none;}
+  #sidePanel a.child{padding-left:24px;font-size:13px;opacity:.85;}
+  .sp-close{position:absolute;top:16px;right:18px;background:none;border:none;color:#f3efe3;font-size:26px;cursor:pointer;line-height:1;}
+  .sp-close:focus-visible{outline:2px solid #e8c97a;}
+  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:250;opacity:0;visibility:hidden;transition:.3s;}
+  #overlay.show{opacity:1;visibility:visible;}
+
+  /* ===== layout ===== */
+  .wrap{max-width:1080px;margin:0 auto;padding:0 26px;}
+  @media (max-width:760px){.wrap{padding:0 18px;}}
+
+  section{padding:74px 0;border-bottom:1px solid transparent;}
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal.in{opacity:1;transform:none;}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--credit);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--credit);display:inline-block;}
+  h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.25;}
+  h2{font-size:clamp(26px,4vw,40px);margin:0 0 18px;letter-spacing:-.01em;}
+  h3{font-size:22px;margin:26px 0 10px;}
+  p{margin:0 0 16px;}
+  .lead{font-size:clamp(17px,2vw,20px);color:#33483b;}
+
+  /* ===== hero ===== */
+  #hero{
+    min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    padding:90px 0 60px;position:relative;
+  }
+  .hero-tag{font-family:var(--mono);font-size:13px;letter-spacing:.3em;color:var(--credit);margin-bottom:22px;text-transform:uppercase;}
+  #hero h1{font-size:clamp(38px,8vw,82px);margin:0 0 8px;letter-spacing:-.02em;}
+  #hero h1 .em{color:var(--debit);font-style:italic;}
+  .hero-sub{font-size:clamp(17px,2.4vw,23px);color:#3a5044;max-width:640px;margin-top:14px;}
+  .scroll-hint{margin-top:46px;font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:#6c7a6f;display:flex;align-items:center;gap:10px;}
+  .scroll-hint .dot{width:8px;height:8px;border-radius:50%;background:var(--equity);animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.7);opacity:.4;}}
+
+  /* the balance equation visual in hero */
+  .balance{
+    margin-top:42px;display:flex;align-items:stretch;gap:0;max-width:680px;
+    border:2px solid var(--ink);border-radius:14px;overflow:hidden;
+    font-family:var(--mono);box-shadow:6px 6px 0 rgba(26,46,34,.12);background:var(--paper-2);
+  }
+  .balance .cell{flex:1;padding:18px 14px;text-align:center;}
+  .balance .lbl{font-size:11px;letter-spacing:.12em;color:#6c7a6f;text-transform:uppercase;}
+  .balance .big{font-family:var(--serif);font-size:clamp(19px,3vw,27px);font-weight:700;margin-top:5px;}
+  .balance .op{flex:0 0 44px;display:flex;align-items:center;justify-content:center;font-size:26px;font-family:var(--serif);background:var(--ink);color:var(--paper);}
+  .balance .asset .big{color:var(--debit);}
+  .balance .liab .big{color:var(--credit);}
+  .balance .eq .big{color:var(--equity);}
+  @media (max-width:620px){
+    .balance{flex-wrap:wrap;}
+    .balance .cell{flex:1 1 38%;}
+    .balance .op{flex:1 1 100%;height:34px;}
+  }
+
+  /* ===== TOC ===== */
+  #toc-wrap{background:var(--paper-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+  .toc-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:22px 0;}
+  .toc-head h2{font-size:21px;margin:0;}
+  .toc-toggle{font-family:var(--mono);font-size:13px;color:var(--credit);border:1px solid var(--credit);border-radius:6px;padding:4px 10px;background:none;cursor:pointer;}
+  #toc-list{list-style:none;padding:0;margin:0 0 26px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  @media (max-width:680px){#toc-list{grid-template-columns:1fr;}#toc-list.collapsed{display:none;}}
+  #toc-list li a{
+    display:flex;gap:12px;align-items:baseline;text-decoration:none;color:var(--ink);
+    padding:11px 14px;border-radius:9px;border:1px solid transparent;transition:.18s;font-size:15px;
+  }
+  #toc-list li a:hover{background:var(--accent-soft);border-color:var(--rule);}
+  #toc-list li a:focus-visible{outline:3px solid var(--equity);outline-offset:1px;}
+  #toc-list li a.active{background:var(--ink);color:var(--paper);}
+  #toc-list li a.active .num{color:var(--equity);}
+  #toc-list .num{font-family:var(--mono);font-size:13px;color:var(--credit);font-weight:600;min-width:24px;}
+
+  /* ===== boxes ===== */
+  .def-box{
+    background:var(--ink);color:var(--paper);border-radius:14px;padding:28px 30px;margin:26px 0;
+    position:relative;box-shadow:6px 6px 0 rgba(26,46,34,.14);
+  }
+  .def-box .tag{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--equity);text-transform:uppercase;}
+  .def-box p{margin:8px 0 0;font-family:var(--serif);font-size:clamp(18px,2.4vw,23px);line-height:1.5;}
+  .def-box .em{color:#e8c97a;}
+
+  .analogy{
+    background:var(--accent-soft);border-left:5px solid var(--debit);border-radius:0 12px 12px 0;
+    padding:20px 24px;margin:24px 0;
+  }
+  .analogy .tag{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--debit);text-transform:uppercase;font-weight:600;}
+  .analogy p:last-child{margin-bottom:0;}
+  .analogy .em{color:var(--credit);font-weight:600;}
+
+  .note{font-size:14px;color:#5d6c61;font-style:italic;border-top:1px dashed var(--rule);padding-top:10px;margin-top:18px;}
+
+  /* ===== cards ===== */
+  .grid{display:grid;gap:16px;margin:24px 0;}
+  .grid.g3{grid-template-columns:repeat(3,1fr);}
+  .grid.g2{grid-template-columns:repeat(2,1fr);}
+  @media (max-width:760px){.grid.g3,.grid.g2{grid-template-columns:1fr;}}
+  .card{
+    background:var(--paper-2);border:1px solid var(--rule);border-radius:12px;padding:22px;
+    transition:transform .18s ease,box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 24px var(--shadow);}
+  .card .ic{font-family:var(--serif);font-size:18px;font-weight:700;line-height:1;margin-bottom:10px;display:inline-block;padding:5px 11px;border-radius:7px;background:rgba(26,46,34,.06);}
+  .card.asset{border-top:4px solid var(--debit);}
+  .card.asset .ic{color:var(--debit);}
+  .card.liab{border-top:4px solid var(--credit);}
+  .card.liab .ic{color:var(--credit);}
+  .card.eq{border-top:4px solid var(--equity);}
+  .card.eq .ic{color:var(--equity);}
+  .card h4{margin:0 0 6px;font-family:var(--sans);font-size:17px;font-weight:600;}
+  .card p{font-size:14.5px;margin:0;color:#3f5347;}
+
+  /* ===== timeline ===== */
+  .timeline{position:relative;margin:34px 0 10px;padding-left:34px;}
+  .timeline::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--rule);}
+  .tl-item{position:relative;margin-bottom:30px;}
+  .tl-item::before{content:"";position:absolute;left:-30px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--paper);border:3px solid var(--debit);}
+  .tl-item.rust::before{border-color:var(--credit);}
+  .tl-item.gold::before{border-color:var(--equity);}
+  .tl-year{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--credit);letter-spacing:.04em;}
+  .tl-item h4{margin:3px 0 5px;font-family:var(--serif);font-size:19px;}
+  .tl-item p{font-size:15px;margin:0;color:#3f5347;}
+
+  /* ===== comparison table ===== */
+  .tbl-wrap{overflow-x:auto;margin:24px 0;border-radius:12px;border:1px solid var(--rule);}
+  table{border-collapse:collapse;width:100%;min-width:520px;background:var(--paper-2);font-size:14.5px;}
+  th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--rule);}
+  th{background:var(--ink);color:var(--paper);font-family:var(--sans);font-weight:600;font-size:13.5px;letter-spacing:.02em;}
+  tr:last-child td{border-bottom:none;}
+  td:first-child{font-weight:600;}
+  tbody tr:hover{background:var(--accent-soft);}
+
+  /* ===== statement diagram ===== */
+  .stmt-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0;}
+  @media(max-width:760px){.stmt-flow{grid-template-columns:1fr;}}
+  .stmt{border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--paper-2);}
+  .stmt .hd{padding:12px 16px;font-family:var(--serif);font-weight:700;color:var(--paper);font-size:16px;}
+  .stmt.bs .hd{background:var(--debit);}
+  .stmt.is .hd{background:var(--credit);}
+  .stmt.cf .hd{background:var(--equity);}
+  .stmt .bd{padding:14px 16px;font-size:14px;}
+  .stmt .bd .q{font-family:var(--mono);font-size:12px;color:#6c7a6f;margin-bottom:6px;}
+  .stmt ul{margin:8px 0 0;padding-left:18px;}
+  .stmt li{margin-bottom:4px;}
+
+  /* ===== quiz ===== */
+  .quiz{
+    background:var(--paper-2);border:1px solid var(--rule);border-left:5px solid var(--equity);
+    border-radius:0 14px 14px 0;padding:24px 26px;margin:30px 0;
+  }
+  .quiz .qtag{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--equity);text-transform:uppercase;font-weight:600;}
+  .quiz .q{font-family:var(--serif);font-size:19px;font-weight:700;margin:7px 0 16px;}
+  .opt{
+    display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--rule);
+    border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;font-family:var(--sans);
+    font-size:15px;color:var(--ink);transition:.15s;min-height:48px;
+  }
+  .opt:hover{border-color:var(--debit);background:var(--accent-soft);}
+  .opt:focus-visible{outline:3px solid var(--equity);outline-offset:1px;}
+  .opt.correct{background:#dceee4;border-color:var(--debit);color:#14503c;font-weight:600;}
+  .opt.wrong{background:#f3dcd6;border-color:var(--credit);color:#7a2c20;}
+  .opt.dim{opacity:.5;}
+  .opt .mk{font-family:var(--mono);font-weight:600;margin-right:10px;color:var(--credit);}
+  .explain{
+    max-height:0;overflow:hidden;transition:max-height .4s ease;
+    background:var(--ink);color:var(--paper);border-radius:10px;margin-top:6px;
+  }
+  .explain.show{max-height:420px;}
+  .explain .inner{padding:16px 18px;font-size:14.5px;line-height:1.65;}
+  .explain .inner b{color:#e8c97a;}
+
+  /* ===== audience question ===== */
+  .ask{
+    background:linear-gradient(135deg,var(--ink),#26432f);color:var(--paper);
+    border-radius:14px;padding:24px 28px;margin:30px 0;position:relative;overflow:hidden;
+  }
+  .ask::after{content:"?";position:absolute;right:18px;bottom:-18px;font-family:var(--serif);font-size:120px;font-weight:700;color:rgba(232,201,122,.12);line-height:1;}
+  .ask .tag{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:#e8c97a;text-transform:uppercase;}
+  .ask p{font-family:var(--serif);font-size:clamp(17px,2.2vw,21px);margin:8px 0 0;position:relative;z-index:1;line-height:1.5;}
+
+  /* person profile */
+  .profile{display:flex;gap:20px;align-items:flex-start;background:var(--paper-2);border:1px solid var(--rule);border-radius:14px;padding:24px;margin:24px 0;}
+  .profile .av{flex:0 0 64px;height:64px;border-radius:50%;background:var(--ink);color:var(--equity);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:26px;font-weight:700;}
+  .profile h4{margin:0 0 4px;font-family:var(--serif);font-size:20px;}
+  .profile .role{font-family:var(--mono);font-size:12px;color:var(--credit);letter-spacing:.06em;margin-bottom:8px;}
+  .profile p{font-size:14.5px;margin:0;color:#3f5347;}
+  @media(max-width:620px){.profile{flex-direction:column;gap:12px;}}
+
+  /* recap */
+  #recap{background:var(--ink);color:var(--paper);border-radius:0;}
+  #recap .eyebrow{color:#e8c97a;}
+  #recap .eyebrow::before{background:#e8c97a;}
+  #recap h2{color:var(--paper);}
+  .recap-list{list-style:none;padding:0;margin:26px 0;counter-reset:r;}
+  .recap-list li{
+    counter-increment:r;display:flex;gap:18px;align-items:flex-start;
+    padding:18px 0;border-bottom:1px solid rgba(243,239,227,.16);
+  }
+  .recap-list li::before{
+    content:counter(r,decimal-leading-zero);font-family:var(--mono);font-size:15px;font-weight:600;
+    color:#e8c97a;flex:0 0 auto;border:1px solid rgba(232,201,122,.4);border-radius:8px;padding:6px 9px;
+  }
+  .recap-list b{color:#e8c97a;}
+  .recap-list p{margin:0;font-size:15.5px;}
+
+  .discuss{border:2px dashed rgba(232,201,122,.5);border-radius:14px;padding:26px;margin-top:30px;}
+  .discuss .tag{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:#e8c97a;text-transform:uppercase;}
+  .discuss p{font-family:var(--serif);font-size:clamp(18px,2.5vw,23px);margin:10px 0 0;line-height:1.5;}
+
+  /* ledger journal-entry example */
+  .ledger{
+    font-family:var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+    border-radius:12px;overflow:hidden;margin:18px 0;font-size:14px;
+  }
+  .ledger .lh{background:var(--ink);color:var(--paper);padding:10px 16px;font-weight:600;font-size:13px;letter-spacing:.04em;}
+  .ledger .lrow{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule);}
+  .ledger .lrow:first-of-type{border-top:none;}
+  .ledger .lc{padding:11px 16px;}
+  .ledger .lc.debit{border-right:2px solid var(--ink);}
+  .ledger .lc .side{font-size:11px;color:#6c7a6f;letter-spacing:.08em;display:block;margin-bottom:3px;}
+  .ledger .lc.debit .amt{color:var(--debit);font-weight:600;}
+  .ledger .lc.credit .amt{color:var(--credit);font-weight:600;}
+  .ledger .lfoot{background:var(--accent-soft);padding:9px 16px;font-size:12.5px;color:#3f5347;border-top:1px solid var(--rule);font-family:var(--sans);}
+
+  /* simple mini ledger sheet (1600s example) */
+  .oldbook{
+    background:repeating-linear-gradient(var(--paper-2),var(--paper-2) 30px,#e3dcc7 30px,#e3dcc7 31px);
+    border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin:18px 0;font-family:var(--mono);font-size:13.5px;
+  }
+  .oldbook .obh{font-family:var(--serif);font-weight:700;font-size:15px;margin-bottom:8px;color:var(--ink);}
+  .oldbook .obl{display:flex;justify-content:space-between;padding:3px 0;}
+  .oldbook .obl.tot{border-top:1.5px solid var(--ink);margin-top:6px;padding-top:6px;font-weight:600;}
+
+  /* stock chart svg holder */
+  .chartbox{background:var(--paper-2);border:1px solid var(--rule);border-radius:12px;padding:20px 18px 12px;margin:20px 0;}
+  .chartbox .ct{font-family:var(--sans);font-weight:600;font-size:15px;margin-bottom:2px;}
+  .chartbox .cs{font-size:12.5px;color:#6c7a6f;margin-bottom:10px;}
+  .chartbox svg{width:100%;height:auto;display:block;}
+
+  /* expandable detail (용어/디테일 펼치기) */
+  .detail{border:1px solid var(--rule);border-radius:10px;margin:12px 0;overflow:hidden;background:var(--paper-2);}
+  .detail summary{
+    cursor:pointer;padding:13px 18px;font-weight:600;font-size:15px;list-style:none;
+    display:flex;justify-content:space-between;align-items:center;color:var(--ink);
+  }
+  .detail summary::-webkit-details-marker{display:none;}
+  .detail summary:focus-visible{outline:3px solid var(--equity);outline-offset:-2px;}
+  .detail summary .chev{font-family:var(--mono);color:var(--credit);transition:transform .2s;}
+  .detail[open] summary .chev{transform:rotate(90deg);}
+  .detail .dbody{padding:0 18px 16px;font-size:14.5px;color:#3f5347;}
+  .detail .dbody p{margin:6px 0;}
+
+  /* real financial statement table styling */
+  .fin-tbl table{min-width:480px;}
+  .fin-tbl td.r,.fin-tbl th.r{text-align:right;font-family:var(--mono);}
+  .fin-tbl tr.sub td{background:rgba(201,191,163,.18);font-weight:600;}
+  .fin-tbl tr.grand td{background:var(--ink);color:var(--paper);font-weight:700;}
+  .fin-tbl tr.grand td .mono{font-family:var(--mono);}
+  .fin-tbl .cap{font-size:12.5px;color:#6c7a6f;margin-top:8px;font-style:italic;}
+
+  /* glossary grid */
+  .gloss{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0;}
+  @media(max-width:680px){.gloss{grid-template-columns:1fr;}}
+  .term{background:var(--paper-2);border:1px solid var(--rule);border-left:4px solid var(--debit);border-radius:0 10px 10px 0;padding:14px 16px;}
+  .term:nth-child(3n+2){border-left-color:var(--credit);}
+  .term:nth-child(3n){border-left-color:var(--equity);}
+  .term .w{font-family:var(--serif);font-weight:700;font-size:16px;margin-bottom:3px;}
+  .term .w .en{font-family:var(--mono);font-size:11px;color:#6c7a6f;font-weight:400;margin-left:6px;}
+  .term p{font-size:14px;margin:0;color:#3f5347;}
+
+  /* top button */
+  #topbtn{
+    position:fixed;right:18px;bottom:18px;z-index:120;width:46px;height:46px;border-radius:50%;
+    background:var(--ink);color:var(--paper);border:none;cursor:pointer;font-size:20px;
+    box-shadow:0 6px 18px var(--shadow);opacity:0;visibility:hidden;transition:.25s;
+  }
+  #topbtn.show{opacity:1;visibility:visible;}
+  #topbtn:focus-visible{outline:3px solid var(--equity);outline-offset:2px;}
+
+  footer{background:var(--paper-2);border-top:1px solid var(--rule);padding:38px 0;font-size:13px;color:#5d6c61;}
+  footer a{color:var(--credit);}
+  footer h4{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;color:var(--ink);}
+  footer ul{margin:0;padding-left:18px;}
+  footer li{margin-bottom:4px;}
+
+  .hl{background:linear-gradient(transparent 60%, rgba(176,137,46,.35) 60%);font-weight:600;}
+  strong{color:var(--ink);}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<a href="../../" class="backbtn" style="position:fixed;top:14px;left:14px;z-index:150;display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:999px;background:#1a2e22;color:#f3efe3;text-decoration:none;font-family:sans-serif;font-size:14px;font-weight:600;box-shadow:0 4px 14px rgba(26,46,34,.32);border:1px solid rgba(243,239,227,.25);">← 목록으로</a>
+<button class="panelbtn" id="panelBtn" aria-label="다른 발표 목록 열기">☰ 발표 목록</button>
+
+<div id="overlay"></div>
+<nav id="sidePanel" aria-label="발표 목록">
+  <button class="sp-close" id="spClose" aria-label="닫기">×</button>
+  <h3>eco-lab</h3>
+  <div class="sp-sub">경제·금융 스터디 발표 모음</div>
+  <div id="spList"><a href="../../">← 허브로 돌아가기</a></div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<header id="hero">
+  <div class="wrap reveal in">
+    <div class="hero-tag">eco-lab · 재무제표 기초</div>
+    <h1>회사의 <span class="em">건강검진표</span><br>읽는 법</h1>
+    <p class="hero-sub">숫자 울렁증이 있어도 괜찮아요. 오늘 20분이면 "이 회사, 믿어도 되나?"를 스스로 판단하는 눈을 가지게 됩니다.</p>
+
+    <div class="balance" aria-label="회계 기본 등식: 자산은 부채 더하기 자본">
+      <div class="cell asset"><div class="lbl">가진 것</div><div class="big">자산</div></div>
+      <div class="op">=</div>
+      <div class="cell liab"><div class="lbl">빌린 것</div><div class="big">부채</div></div>
+      <div class="op">+</div>
+      <div class="cell eq"><div class="lbl">내 것</div><div class="big">자본</div></div>
+    </div>
+
+    <div class="scroll-hint"><span class="dot"></span> 스크롤해서 시작하기</div>
+  </div>
+</header>
+
+<!-- ===== TOC ===== -->
+<div id="toc-wrap">
+  <div class="wrap">
+    <div class="toc-head" id="tocHead" role="button" tabindex="0" aria-expanded="true">
+      <h2>목차</h2>
+      <button class="toc-toggle" id="tocToggle" aria-hidden="true">접기 −</button>
+    </div>
+    <ol id="toc-list">
+      <li><a href="#s1"><span class="num">01</span> 왜 생겨났나 — 회계의 탄생</a></li>
+      <li><a href="#s2"><span class="num">02</span> 재무제표란 무엇인가</a></li>
+      <li><a href="#s3"><span class="num">03</span> 어떻게 돌아가나 — 3대 표</a></li>
+      <li><a href="#s4"><span class="num">04</span> 한국의 제도와 감시자들</a></li>
+      <li><a href="#s5"><span class="num">05</span> 현업의 시선</a></li>
+      <li><a href="#s6"><span class="num">06</span> 국제 비교와 전망</a></li>
+      <li><a href="#s7"><span class="num">07</span> 내 자산에 미치는 영향</a></li>
+      <li><a href="#s8"><span class="num">08</span> 실전 도감 — 항목·용어</a></li>
+      <li><a href="#recap"><span class="num">09</span> 오늘 기억할 7가지</a></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ===== S1 HISTORY ===== -->
+<section id="s1">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">탄생 배경</div>
+      <h2>"믿을 수가 없어서" 만들어진 숫자</h2>
+      <p class="lead">재무제표는 천재가 발명한 게 아니라, <span class="hl">사기를 당하지 않으려는 사람들</span>이 수백 년에 걸쳐 만들어낸 방어 장치입니다. 그 역사를 짧게 따라가 볼게요.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="analogy">
+        <div class="tag">상상해 보세요</div>
+        <p>15세기 베네치아. 당신은 향신료를 실은 배에 돈을 댄 투자자입니다. 배는 1년 뒤 돌아오고, 선장은 "남는 게 별로 없었어요"라고 말합니다. <span class="em">진짜일까요, 빼돌린 걸까요?</span> 장부가 없으면 영원히 알 수 없습니다. 이 불신을 풀기 위해 등장한 게 바로 '두 번 기록하는' 복식부기였습니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-year">1494년 · 이탈리아</div>
+          <h4>수도사 파치올리, 복식부기를 책으로 정리하다</h4>
+          <p>원거리 무역과 조합(partnership)이 늘면서 자본과 이익을 구분하고 투자자에게 정직하게 분배하는 일이 복잡해졌습니다. 그 해법이 <strong>복식부기</strong>, 즉 거래 하나를 '두 번' 기록하는 방식이었고, 수학자 루카 파치올리가 이를 체계적으로 책에 담았습니다.</p>
+
+          <details class="detail">
+            <summary>복식부기가 뭐길래 '두 번' 기록할까? <span class="chev">▶</span></summary>
+            <div class="dbody">
+              <p>핵심은 <strong>"돈이 들어오면, 반드시 그 출처도 같이 적는다"</strong>입니다. 한 거래를 <span style="color:var(--debit);font-weight:600;">왼쪽(차변)</span>과 <span style="color:var(--credit);font-weight:600;">오른쪽(대변)</span>에 동시에 적어 양쪽 합이 항상 똑같아지게 만듭니다. 그래서 한쪽만 조작하면 금방 균형이 깨져 들통납니다.</p>
+              <p style="margin-top:10px;"><strong>예시 ① 현금 100만원을 빌렸다</strong></p>
+              <div class="ledger">
+                <div class="lh">거래: 은행에서 현금 100만원 대출</div>
+                <div class="lrow">
+                  <div class="lc debit"><span class="side">차변 (들어온 것)</span>현금 <span class="amt">+100만원</span></div>
+                  <div class="lc credit"><span class="side">대변 (그 출처)</span>차입금(빚) <span class="amt">+100만원</span></div>
+                </div>
+                <div class="lfoot">현금이라는 '자산'이 늘었지만, 동시에 갚아야 할 '빚'도 똑같이 늘었음을 양쪽에 기록 → 좌우 합 일치 ✓</div>
+              </div>
+              <p style="margin-top:10px;"><strong>예시 ② 커피 한 잔을 현금 5천원에 팔았다</strong></p>
+              <div class="ledger">
+                <div class="lh">거래: 커피 판매, 현금 5,000원 수령</div>
+                <div class="lrow">
+                  <div class="lc debit"><span class="side">차변 (들어온 것)</span>현금 <span class="amt">+5,000원</span></div>
+                  <div class="lc credit"><span class="side">대변 (그 이유)</span>매출 <span class="amt">+5,000원</span></div>
+                </div>
+                <div class="lfoot">현금이 5천원 늘어난 '이유'가 매출임을 함께 기록. 현금만 슬쩍 늘릴 수 없게 만드는 구조입니다.</div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-year">1600년대 · 네덜란드·영국</div>
+          <h4>주식회사의 탄생 — "남의 돈"을 받기 시작하다</h4>
+          <p>동인도회사처럼 수많은 사람의 돈을 모은 주식회사가 등장하자, 경영자가 아닌 주주들이 "회사가 잘 굴러가는지" 확인할 장치가 절실해졌습니다. 이때의 보고서는 지금처럼 정교하진 않았지만, <strong>"가진 것과 갚을 것을 한 장에 적어 차액(주주 몫)을 보여주는"</strong> 단순한 형태였습니다.</p>
+
+          <details class="detail">
+            <summary>그 시절 재무제표는 이렇게 생겼어요 <span class="chev">▶</span></summary>
+            <div class="dbody">
+              <p>오늘날 재무상태표의 조상 격입니다. 항해 한 번이 끝나면 이런 식으로 정산했어요.</p>
+              <div class="oldbook">
+                <div class="obh">○○호 항해 정산서 (1620년)</div>
+                <div class="obl"><span>· 남은 향신료·은화 (가진 것)</span><span>12,000길더</span></div>
+                <div class="obl"><span>· 선원 미지급 임금 (갚을 것)</span><span>−3,000길더</span></div>
+                <div class="obl"><span>· 선박 수리비 외상 (갚을 것)</span><span>−1,000길더</span></div>
+                <div class="obl tot"><span>= 주주에게 나눌 몫 (자본)</span><span>8,000길더</span></div>
+              </div>
+              <p>"가진 것 − 갚을 것 = 내 몫"이라는 <strong>회계 등식</strong>이 이미 여기 살아 있습니다. 주주는 이 한 장으로 "내 투자금이 늘었나 줄었나"를 확인했습니다.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="tl-item rust">
+          <div class="tl-year">1929~1933년 · 미국</div>
+          <h4>대공황 — "공시 의무"가 법으로</h4>
+          <p>1929년 10월, 부풀려진 장부와 투기로 달아오른 뉴욕 증시가 대폭락했습니다. 다우지수는 약 3년 만에 <span class="hl">고점의 10분의 1 수준까지</span> 추락했고, 부실을 숨긴 장부에 속아 전 재산을 잃은 투자자가 속출했습니다.</p>
+
+          <div class="chartbox">
+            <div class="ct">대공황 당시 미국 다우존스 산업평균지수</div>
+            <div class="cs">1929년 고점 약 381 → 1932년 저점 약 41 (대략적 추이)</div>
+            <svg viewBox="0 0 600 240" role="img" aria-label="1929년부터 1932년까지 다우지수가 약 381에서 41로 급락하는 그래프">
+              <!-- axes -->
+              <line x1="48" y1="20" x2="48" y2="200" stroke="#c9bfa3" stroke-width="1.5"/>
+              <line x1="48" y1="200" x2="580" y2="200" stroke="#c9bfa3" stroke-width="1.5"/>
+              <!-- y labels -->
+              <text x="42" y="28" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6c7a6f">381</text>
+              <text x="42" y="115" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6c7a6f">200</text>
+              <text x="42" y="204" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="#6c7a6f">41</text>
+              <!-- gridlines -->
+              <line x1="48" y1="111" x2="580" y2="111" stroke="#e3dcc7" stroke-width="1"/>
+              <!-- the crash line -->
+              <polyline fill="none" stroke="#9a3b2e" stroke-width="2.5"
+                points="70,30 150,38 200,150 250,120 320,165 400,185 480,192 540,170"/>
+              <!-- crash marker -->
+              <circle cx="150" cy="38" r="5" fill="#9a3b2e"/>
+              <text x="150" y="30" text-anchor="middle" font-family="IBM Plex Sans KR" font-size="11" font-weight="600" fill="#9a3b2e">1929.9 고점</text>
+              <circle cx="200" cy="150" r="5" fill="#9a3b2e"/>
+              <text x="206" y="148" font-family="IBM Plex Sans KR" font-size="10.5" fill="#9a3b2e">1929.10 대폭락</text>
+              <circle cx="400" cy="185" r="5" fill="#1a2e22"/>
+              <text x="400" y="178" text-anchor="middle" font-family="IBM Plex Sans KR" font-size="11" font-weight="600" fill="#1a2e22">1932 바닥</text>
+              <!-- x labels -->
+              <text x="70" y="216" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#6c7a6f">1928</text>
+              <text x="250" y="216" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#6c7a6f">1930</text>
+              <text x="480" y="216" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#6c7a6f">1932</text>
+            </svg>
+          </div>
+          <p>이 충격으로 미국은 1933~34년 증권법·증권거래법을 만들어 상장기업이 검증된 재무제표를 의무적으로 공개하도록 했습니다. "정직한 숫자를 강제로 보여줘라"가 국가의 규칙이 된 순간입니다.</p>
+          <p class="note">그래프 수치는 역사적 기록에 기반한 근사치이며, 추이를 보여주기 위한 도식입니다.</p>
+        </div>
+
+        <div class="tl-item rust">
+          <div class="tl-year">2001~2002년 · 엔론 사태</div>
+          <h4>거대 기업의 분식회계, 그리고 SOX법</h4>
+          <p>엔론은 미국 텍사스의 <strong>에너지 회사</strong>였습니다. 원래는 천연가스를 생산·운송·판매하던 평범한 회사였는데, 천연가스를 주식·채권처럼 사고파는 <span class="hl">'에너지 거래 시장'을 만들어</span> 단숨에 미국 7위 기업으로 떠올랐습니다. 2000년 매출 1,110억 달러, 직원 2만여 명. 포춘지가 6년 연속 '미국에서 가장 혁신적인 기업'으로 꼽았죠.</p>
+
+          <details class="detail">
+            <summary>엔론은 정확히 뭘 팔던 회사였나? <span class="chev">▶</span></summary>
+            <div class="dbody">
+              <p>우리가 마트에서 집어드는 '상품'은 없었습니다. 엔론이 판 건 <strong>전기·천연가스 같은 에너지를 미래에 정해진 값에 사고팔 권리(일종의 선물 거래)</strong>였어요. 여기에 날씨 파생상품, 통신망 임대까지 손을 댔습니다.</p>
+              <p>온라인 거래소 <strong>'엔론 온라인(EnronOnline)'</strong>까지 만들어 에너지를 인터넷으로 거래했습니다. 겉보기엔 첨단 금융기업이었지만, 실제론 빚을 유령 자회사로 빼돌려 숨기고 이익을 부풀린 <strong>분식회계</strong>로 지탱되고 있었습니다. 2000~2001년 캘리포니아 전력위기 때 가격을 조작했다는 의혹까지 받았고요.</p>
+              <p>결국 2001년 파산. 회계를 맡았던 세계 5대 회계법인 <strong>아서 앤더슨</strong>까지 함께 무너졌고, CEO 제프리 스킬링은 징역 24년을 선고받았습니다.</p>
+            </div>
+          </details>
+
+          <p style="margin-top:12px;">이 충격으로 2002년 미국은 사베인스-옥슬리법(SOX)을 만들어 CEO·CFO가 재무제표 정확성에 직접 서명·책임지게 하고, 상장기업 감사를 감독하는 기구(PCAOB)를 세웠습니다.</p>
+        </div>
+
+        <div class="tl-item gold">
+          <div class="tl-year">2011년 · 한국</div>
+          <h4>한국, 국제 표준(K-IFRS)을 전면 도입</h4>
+          <p>2007년 공표된 한국채택국제회계기준(K-IFRS)이 2011년부터 모든 상장사와 대부분의 금융회사에 의무 적용됐습니다. 한국 기업의 숫자를 외국 투자자도 같은 잣대로 읽을 수 있게 된 것입니다.</p>
+
+          <details class="detail">
+            <summary>"국제 표준"이라면서 왜 앞에 'K'가 붙죠? <span class="chev">▶</span></summary>
+            <div class="dbody">
+              <p>원본 국제 표준의 이름은 <strong>IFRS</strong>(International Financial Reporting Standards, 국제회계기준)입니다. 영국 런던에 본부를 둔 국제회계기준위원회(IASB)가 만들어 전 세계 140여 개국이 씁니다.</p>
+              <p style="margin-top:10px;">한국은 이 IFRS를 그대로 가져오되, <strong>한국 법률·언어·실무에 맞게 공식 번역하고 일부를 조정</strong>해 '한국이 채택한 버전'으로 만들었습니다. 그래서 'Korea'의 K를 붙여 <strong>K-IFRS</strong>라고 부릅니다. 내용의 뼈대는 국제 표준과 같고, 포장지에 한국 라벨이 붙은 셈이에요.</p>
+              <p style="margin-top:10px;"><strong>그럼 DART에서 보는 재무제표는 다 K-IFRS인가요?</strong> → 대체로 그렇지만 전부는 아닙니다. <strong>상장사·금융회사는 K-IFRS 의무</strong>지만, 규모가 작은 비상장 회사는 더 단순한 <strong>'일반기업회계기준(K-GAAP)'</strong>을 쓸 수 있습니다. 그래서 보고서를 볼 때 어떤 기준으로 작성됐는지(연결/별도 포함)를 먼저 확인하는 게 좋습니다.</p>
+              <p class="note" style="margin-top:10px;">DART(전자공시시스템)는 금융감독원이 운영하는, 기업 공시 서류를 누구나 무료로 볼 수 있는 사이트입니다 — dart.fss.or.kr</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="ask">
+        <div class="tag">생각해 볼 질문</div>
+        <p>만약 세상에 재무제표라는 공통 양식이 아예 없다면, 당신은 어떤 회사의 주식에 돈을 넣을 수 있을까요? 무엇을 보고 결정하시겠어요?</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="quiz" data-answer="2">
+        <div class="qtag">Quiz 01</div>
+        <div class="q">재무제표가 발전해 온 가장 근본적인 이유는?</div>
+        <button class="opt" data-i="0"><span class="mk">A</span>세금을 더 많이 걷기 위해</button>
+        <button class="opt" data-i="1"><span class="mk">B</span>회계사라는 직업을 만들기 위해</button>
+        <button class="opt" data-i="2"><span class="mk">C</span>'남의 돈'을 맡은 회사가 정직한지 확인하기 위해</button>
+        <button class="opt" data-i="3"><span class="mk">D</span>컴퓨터 계산을 쉽게 하기 위해</button>
+        <div class="explain"><div class="inner">정답은 <b>C</b>. 복식부기·주식회사·공시 의무·SOX법까지, 재무제표 역사의 핵심 동력은 일관되게 <b>투자자 보호와 신뢰</b>였습니다. 내 돈을 맡은 회사가 거짓말을 하는지 검증하려는 욕구가 이 모든 제도를 낳았습니다.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S2 DEFINITION ===== -->
+<section id="s2">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">개념 정의</div>
+      <h2>재무제표란 무엇인가</h2>
+    </div>
+
+    <div class="reveal">
+      <div class="def-box">
+        <div class="tag">한 문장 정의</div>
+        <p>재무제표는 한 회사가 <span class="em">"무엇을 얼마나 가졌고, 어떻게 벌었으며, 돈이 실제로 어떻게 들고 났는지"</span>를 정해진 양식으로 요약한, 회사의 공식 성적표이자 건강검진표입니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="analogy">
+        <div class="tag">일상 비유 · 건강검진표</div>
+        <p>병원 검진표를 떠올려 보세요. <strong>혈압·체중·혈당</strong> 같은 '지금 상태'가 있고, <strong>한 해 동안 살이 얼마나 쪘는지</strong> 같은 '기간의 변화'가 있고, <strong>실제 통장에 돈이 도는지</strong> 같은 '현금 흐름'이 있습니다. 회사도 똑같이 세 장의 표로 검진을 받습니다. 매출이 아무리 커도(겉보기 건강) 현금이 안 돌면(혈액순환 문제) 쓰러질 수 있다는 게 핵심입니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>모든 것의 출발점: 회계 등식</h3>
+      <p>재무제표의 심장에는 단 하나의 공식이 있습니다. 절대 깨지지 않는, 양팔 저울 같은 균형입니다.</p>
+      <div class="balance" style="margin-top:18px;">
+        <div class="cell asset"><div class="lbl">회사가 가진 모든 것</div><div class="big">자산</div></div>
+        <div class="op">=</div>
+        <div class="cell liab"><div class="lbl">남에게 갚을 것</div><div class="big">부채</div></div>
+        <div class="op">+</div>
+        <div class="cell eq"><div class="lbl">진짜 내 몫</div><div class="big">자본</div></div>
+      </div>
+      <p style="margin-top:16px;">3억짜리 집(자산)을 2억 대출(부채) 끼고 샀다면, 실제 내 몫(자본)은 1억입니다. 회사도 똑같습니다. <span class="hl">자산에서 부채를 빼야 진짜 회사 가치(자본)</span>가 나옵니다. 그래서 '자산이 크다'는 말에 속으면 안 됩니다. 빚으로 채운 자산일 수도 있으니까요.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="ask">
+        <div class="tag">생각해 볼 질문</div>
+        <p>고급 외제차를 몰고 명품을 걸친 사람이 있습니다. 자산은 화려한데, 알고 보니 전부 할부와 대출이라면? 이 사람의 '자본'은 어떤 상태일까요?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S3 HOW IT WORKS ===== -->
+<section id="s3">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">작동 원리</div>
+      <h2>회사를 비추는 3개의 표</h2>
+      <p class="lead">재무제표는 보통 세 장이 한 세트입니다. 각각 다른 질문에 답합니다. 셋을 같이 봐야 회사가 입체적으로 보입니다.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="stmt-flow">
+        <div class="stmt bs">
+          <div class="hd">재무상태표</div>
+          <div class="bd">
+            <div class="q">"지금 이 순간, 뭘 얼마나 가졌나?"</div>
+            특정 시점의 스냅사진. 자산·부채·자본을 한 장에 보여줍니다.
+            <ul><li>현금·건물·재고 = 자산</li><li>대출·외상값 = 부채</li><li>차액 = 자본</li></ul>
+          </div>
+        </div>
+        <div class="stmt is">
+          <div class="hd">손익계산서</div>
+          <div class="bd">
+            <div class="q">"한 해 동안 얼마 벌었나?"</div>
+            일정 기간의 동영상. 매출에서 비용을 빼 이익을 계산합니다.
+            <ul><li>매출 − 원가 − 비용</li><li>= 영업이익</li><li>= 당기순이익</li></ul>
+          </div>
+        </div>
+        <div class="stmt cf">
+          <div class="hd">현금흐름표</div>
+          <div class="bd">
+            <div class="q">"진짜 현금이 돌긴 했나?"</div>
+            거짓말하기 가장 어려운 표. 실제 들어오고 나간 현금만 추적합니다.
+            <ul><li>영업활동 현금</li><li>투자활동 현금</li><li>재무활동 현금</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>실제 기업으로 보기: 삼성전자 2023년</h3>
+      <p>추상적인 설명만으론 와닿지 않죠. 누구나 아는 <strong>삼성전자의 2023년 연결재무제표</strong> 숫자를 세 표로 나눠 보겠습니다. 단위가 '조'라 현실감이 좀 떨어질 수 있지만, 구조는 동네 카페와 똑같습니다.</p>
+
+      <div class="tbl-wrap fin-tbl">
+        <table>
+          <thead><tr><th>① 재무상태표 (2023년 말, 연결)</th><th class="r">금액</th></tr></thead>
+          <tbody>
+            <tr><td>자산총계 <span style="font-weight:400;color:#6c7a6f;font-size:13px;">가진 것 전부</span></td><td class="r">약 456조 원</td></tr>
+            <tr><td>부채총계 <span style="font-weight:400;color:#6c7a6f;font-size:13px;">갚을 것</span></td><td class="r">약 92조 원</td></tr>
+            <tr class="grand"><td>자본총계 <span style="font-weight:400;font-size:13px;opacity:.8;">진짜 회사 몫 (자산−부채)</span></td><td class="r"><span class="mono">약 364조 원</span></td></tr>
+          </tbody>
+        </table>
+        <div class="cap">빚(92조)이 자산(456조)에 비해 작아 재무구조가 탄탄하다는 뜻. 부채비율이 낮은 우량 기업의 전형입니다.</div>
+      </div>
+
+      <div class="tbl-wrap fin-tbl">
+        <table>
+          <thead><tr><th>② 손익계산서 (2023년 한 해, 연결)</th><th class="r">금액</th></tr></thead>
+          <tbody>
+            <tr><td>매출액 <span style="font-weight:400;color:#6c7a6f;font-size:13px;">번 돈 전체</span></td><td class="r">약 258.9조 원</td></tr>
+            <tr><td>영업이익 <span style="font-weight:400;color:#6c7a6f;font-size:13px;">본업으로 남긴 이익</span></td><td class="r">약 6.6조 원</td></tr>
+            <tr class="grand"><td>당기순이익 <span style="font-weight:400;font-size:13px;opacity:.8;">세금까지 떼고 최종 남은 것</span></td><td class="r"><span class="mono">약 15.5조 원</span></td></tr>
+          </tbody>
+        </table>
+        <div class="cap">2022년 대비 매출 14%↓, 영업이익은 무려 85%↓. 반도체 시황 악화로 '한 해 성과'가 크게 꺾였음을 손익계산서가 보여줍니다. 같은 회사라도 해마다 달라지는 게 손익계산서예요.</div>
+      </div>
+
+      <div class="reveal">
+        <div class="analogy">
+          <div class="tag">두 표를 함께 읽으면</div>
+          <p>재무상태표(364조 자본)는 "그동안 쌓아온 <span class="em">재산</span>"을, 손익계산서(영업이익 6.6조)는 "올해의 <span class="em">성적</span>"을 보여줍니다. 재산은 두둑한데 올해 성적은 부진 — 마치 자산가가 한 해 장사를 잘 못한 상황입니다. 그래서 <strong>'쌓인 것'과 '올해 번 것'을 반드시 같이</strong> 봐야 합니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="analogy">
+        <div class="tag">왜 세 장이나 필요할까 · 흑자도산</div>
+        <p>물건을 외상으로 100억어치 팔면 손익계산서엔 '매출 100억, 큰 이익'으로 찍힙니다. 보기엔 대박이죠. 그런데 거래처가 돈을 안 갚으면? <strong>현금흐름표엔 0원</strong>입니다. 장부상 흑자인데 직원 월급 줄 현금이 없어 망하는 '<span class="em">흑자도산</span>'이 이렇게 일어납니다. 그래서 이익만 보지 말고 현금이 실제로 도는지 반드시 함께 확인해야 합니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>실전 예시: 카페 '오늘'의 1년</h3>
+      <p>작은 카페 하나로 세 표를 연결해 볼게요. 숫자가 어떻게 이어지는지 느껴보세요.</p>
+      <div class="grid g3">
+        <div class="card asset">
+          <div class="ic">상태</div>
+          <h4>재무상태표</h4>
+          <p>커피머신·인테리어·현금 = 자산 8천만. 창업 대출 5천만(부채)을 빼면 진짜 내 몫(자본)은 3천만.</p>
+        </div>
+        <div class="card liab">
+          <div class="ic">손익</div>
+          <h4>손익계산서</h4>
+          <p>1년 매출 1억 2천. 원두·임대료·인건비 빼니 당기순이익 1천 5백만. "장사 됐네!"</p>
+        </div>
+        <div class="card eq">
+          <div class="ic">현금</div>
+          <h4>현금흐름표</h4>
+          <p>그런데 기프티콘 외상·미수금 빼면 실제 통장에 남은 현금은 4백만. "왜 이렇게 빠듯하지?"의 답.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="quiz" data-answer="1">
+        <div class="qtag">Quiz 02</div>
+        <div class="q">매출도 크고 이익도 났는데 회사가 망할 수 있는 이유는?</div>
+        <button class="opt" data-i="0"><span class="mk">A</span>손익계산서가 틀려서</button>
+        <button class="opt" data-i="1"><span class="mk">B</span>이익은 났지만 실제 현금이 안 돌아서 (흑자도산)</button>
+        <button class="opt" data-i="2"><span class="mk">C</span>자산이 너무 많아서</button>
+        <button class="opt" data-i="3"><span class="mk">D</span>세금을 안 내서</button>
+        <div class="explain"><div class="inner">정답은 <b>B</b>. 손익계산서의 '이익'은 외상 매출도 포함하는 장부상 숫자입니다. 실제 현금이 들어오지 않으면 월급·임대료를 못 내 무너집니다. 그래서 <b>현금흐름표</b>가 "거짓말하기 가장 어려운 표"라 불립니다.</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="ask">
+        <div class="tag">생각해 볼 질문</div>
+        <p>세 장 중 딱 하나만 볼 수 있다면, 당신은 어떤 표를 고르시겠어요? 그리고 그 이유는요?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S4 KOREA ===== -->
+<section id="s4">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">한국의 제도</div>
+      <h2>한국에선 누가 이 숫자를 감시할까</h2>
+      <p class="lead">회사가 스스로 만든 숫자를 그냥 믿을 순 없겠죠. 한국엔 단계별 감시망이 있습니다.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="grid g2">
+        <div class="card asset">
+          <div class="ic">①</div>
+          <h4>회사 → 외부감사인</h4>
+          <p>일정 규모 이상 회사는 회계법인의 <strong>외부감사</strong>를 의무로 받습니다. 감사인이 "이 숫자 믿을 만함(적정의견)"인지 판정합니다.</p>
+        </div>
+        <div class="card liab">
+          <div class="ic">②</div>
+          <h4>금융위·금감원</h4>
+          <p>금융위원회와 금융감독원이 회계 규율을 감독하고, 분식회계가 의심되면 감리(특별조사)에 들어갑니다.</p>
+        </div>
+        <div class="card eq">
+          <div class="ic">③</div>
+          <h4>회계기준원(KASB)</h4>
+          <p>한국이 쓸 회계 규칙(K-IFRS 등)을 정하고 다듬는 곳. '숫자를 어떻게 적을지'의 룰북을 만듭니다.</p>
+        </div>
+        <div class="card asset">
+          <div class="ic">④</div>
+          <h4>증권선물위원회</h4>
+          <p>위반이 적발되면 과징금·대표이사 해임권고·검찰 통보 같은 제재를 결정하는 의결 기구입니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>'신외감법' — 대형 사고가 바꾼 규칙</h3>
+      <p>1981년 만들어진 외부감사법은 <span class="hl">대우조선해양 분식회계 사건</span>을 계기로 2017년 전면 개정돼 2018년부터 시행됐습니다(흔히 '신외감법'). 핵심 변화는 이렇습니다.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>바뀐 점</th><th>무엇을 노렸나</th></tr></thead>
+          <tbody>
+            <tr><td>감사 대상 확대</td><td>주식회사뿐 아니라 유한회사까지 — 감사를 피하려 형태만 바꾸는 꼼수 차단</td></tr>
+            <tr><td>주기적 감사인 지정제</td><td>회사가 감사인을 오래 '친한 사이'로 두지 못하게, 일정 주기마다 금융당국이 감사인을 지정</td></tr>
+            <tr><td>제재 강화</td><td>분식회계 시 분식금액의 일정 비율을 과징금으로, 감사인 부실감사도 과징금 대상</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">미국의 엔론 사태가 SOX법을 낳았듯, 한국도 대형 분식 사건이 터질 때마다 규칙이 촘촘해져 왔습니다. 제도는 사고를 먹고 자랍니다.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="quiz" data-answer="2">
+        <div class="qtag">Quiz 03</div>
+        <div class="q">'주기적 감사인 지정제'가 막으려는 문제는?</div>
+        <button class="opt" data-i="0"><span class="mk">A</span>감사 비용이 너무 비싼 것</button>
+        <button class="opt" data-i="1"><span class="mk">B</span>회사가 감사를 너무 자주 받는 것</button>
+        <button class="opt" data-i="2"><span class="mk">C</span>회사와 감사인이 오래 유착돼 눈감아 주는 것</button>
+        <button class="opt" data-i="3"><span class="mk">D</span>외국 회계법인의 진입</button>
+        <div class="explain"><div class="inner">정답은 <b>C</b>. 같은 감사인을 수십 년 쓰면 정이 들어 잘못을 눈감아 줄 위험이 커집니다. 그래서 일정 주기마다 <b>금융당국이 감사인을 강제로 지정</b>해 독립성을 지키도록 한 것이 신외감법의 핵심 장치입니다.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S5 PRACTITIONER ===== -->
+<section id="s5">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">현업의 시선</div>
+      <h2>실무자는 재무제표를 이렇게 본다</h2>
+      <p class="lead">회계사·애널리스트·은행원은 숫자를 '읽지' 않고 '의심'합니다. 그들의 직업적 시선을 빌려볼게요.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="grid g3">
+        <div class="card asset">
+          <div class="ic">감사</div>
+          <h4>회계감사인</h4>
+          <p>"이 매출, 진짜 발생했나?" 숫자 뒤의 증빙(계약서·송장)을 추적합니다. 특히 <strong>현금흐름과 이익의 격차</strong>가 크면 경고등을 켭니다.</p>
+        </div>
+        <div class="card liab">
+          <div class="ic">분석</div>
+          <h4>증권 애널리스트</h4>
+          <p>한 해 숫자보다 <strong>추세</strong>를 봅니다. 매출은 느는데 이익률이 꺾이는지, 재고가 비정상적으로 쌓이는지 — 미래의 위험을 먼저 읽으려 합니다.</p>
+        </div>
+        <div class="card eq">
+          <div class="ic">여신</div>
+          <h4>은행 여신심사역</h4>
+          <p>"돈 떼이지 않을까?"가 전부. 자본 대비 부채가 얼마인지(부채비율), 갚을 현금을 버는지를 따져 대출 여부를 정합니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="analogy">
+        <div class="tag">현업의 직감 · "이익의 질"</div>
+        <p>실무자들이 입버릇처럼 쓰는 말이 "<span class="em">이익의 질(quality of earnings)</span>"입니다. 같은 10억 이익이라도, 본업에서 현금으로 번 10억과 건물 한 번 팔아 만든 10억은 완전히 다릅니다. 전자는 내년에도 반복되지만 후자는 일회성이죠. 그래서 고수는 <strong>'얼마 벌었나'보다 '어떻게 벌었나'</strong>를 먼저 봅니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="ask">
+        <div class="tag">생각해 볼 질문</div>
+        <p>친구가 "우리 회사 작년에 순이익 50억 났어"라고 자랑합니다. 당신이 현업 실무자라면, 박수를 치기 전에 어떤 질문 하나를 던지겠어요?</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="quiz" data-answer="0">
+        <div class="qtag">Quiz 04</div>
+        <div class="q">실무자가 말하는 '이익의 질이 좋다'는 어떤 뜻에 가까울까요?</div>
+        <button class="opt" data-i="0"><span class="mk">A</span>본업에서 꾸준히, 현금으로 반복해 버는 이익</button>
+        <button class="opt" data-i="1"><span class="mk">B</span>금액이 가장 큰 이익</button>
+        <button class="opt" data-i="2"><span class="mk">C</span>세금을 가장 적게 낸 이익</button>
+        <button class="opt" data-i="3"><span class="mk">D</span>건물을 팔아 한 번에 만든 이익</button>
+        <div class="explain"><div class="inner">정답은 <b>A</b>. 이익의 '질'은 <b>지속성과 현금성</b>입니다. 일회성 자산 매각이나 회계적 평가이익은 같은 금액이라도 질이 낮습니다. 내년에도 반복될 본업의 현금 이익이야말로 진짜 실력입니다.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S6 INTERNATIONAL ===== -->
+<section id="s6">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">국제 비교 · 전망</div>
+      <h2>전 세계가 같은 언어를 쓰려는 중</h2>
+      <p class="lead">돈은 국경을 넘는데 회계 규칙이 나라마다 다르면 비교가 안 되겠죠. 그래서 '회계의 공용어'가 퍼지고 있습니다.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>구분</th><th>IFRS 계열</th><th>미국 US-GAAP</th></tr></thead>
+          <tbody>
+            <tr><td>쓰는 곳</td><td>한국·EU·일본(선택)·140여 개국</td><td>주로 미국</td></tr>
+            <tr><td>성격</td><td>'원칙 중심' — 큰 원칙을 주고 판단 여지를 둠</td><td>'규칙 중심' — 세밀한 규정으로 촘촘하게</td></tr>
+            <tr><td>한국 적용</td><td>2011년부터 상장사 K-IFRS 의무</td><td>한국 상장사엔 미적용</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>한국은 2007년 K-IFRS를 공표하고 2011년 전면 도입하면서, 국내 기업의 재무제표를 외국 투자자도 같은 틀로 읽을 수 있게 됐습니다. 이는 외국인 투자 유치와 '코리아 디스카운트' 완화를 위한 큰 걸음이었습니다.</p>
+    </div>
+
+    <div class="reveal">
+      <h3>잠깐, '코리아 디스카운트'가 뭐죠?</h3>
+      <div class="def-box">
+        <div class="tag">용어 풀이</div>
+        <p><span class="em">코리아 디스카운트</span>란, 똑같은 이익·자산을 가진 회사라도 <span class="em">한국 상장기업의 주가가 외국 기업보다 유독 낮게 평가되는 현상</span>입니다. 2000년대 초부터 줄곧 지적돼 온 한국 증시의 고질병이에요.</p>
+      </div>
+      <p>같은 실력인데 한국 회사만 'C학점'을 받는 셈인데, 왜 그럴까요? 전문가들이 꼽는 대표 원인은 이렇습니다.</p>
+      <div class="grid g3">
+        <div class="card asset">
+          <div class="ic">지배구조</div>
+          <h4>불투명한 지배구조</h4>
+          <p>대주주(오너 일가)를 견제할 장치가 약해, 회사 이익이 소액주주가 아닌 극소수에게 쏠릴 수 있다는 우려.</p>
+        </div>
+        <div class="card liab">
+          <div class="ic">배당</div>
+          <h4>인색한 주주환원</h4>
+          <p>번 돈을 배당이나 자사주 소각으로 주주에게 돌려주기보다 회사에 쌓아두는 경향이 강함.</p>
+        </div>
+        <div class="card eq">
+          <div class="ic">리스크</div>
+          <h4>지정학 리스크</h4>
+          <p>남북 대치 같은 한반도 특유의 불확실성도 외국인 투자자에게는 할인 요인으로 작용.</p>
+        </div>
+      </div>
+      <p>그래서 '재무제표를 국제 표준으로 통일'한 건 이 할인을 줄이기 위한 노력의 하나였고, 최근엔 정부가 기업 가치를 끌어올리려는 '밸류업' 정책도 추진하고 있습니다. <span class="hl">결국 신뢰할 수 있는 투명한 숫자가 곧 주가</span>라는 이야기로 돌아옵니다.</p>
+    </div>
+
+    <div class="reveal">
+      <h3>앞으로의 흐름 <span style="font-family:var(--mono);font-size:13px;color:var(--credit);">— 확정이 아닌 시나리오</span></h3>
+      <div class="grid g3">
+        <div class="card asset">
+          <div class="ic">ESG</div>
+          <h4>비재무 정보의 부상</h4>
+          <p>돈 숫자 외에 탄소배출·지배구조 같은 <strong>지속가능성 공시</strong>가 재무제표 옆에 나란히 자리잡는 흐름. 국제기준(ISSB)도 마련됐습니다.</p>
+        </div>
+        <div class="card liab">
+          <div class="ic">AI</div>
+          <h4>감사의 자동화</h4>
+          <p>AI가 전체 거래를 훑어 이상 징후를 찾는 방식이 확산 중. 사람이 표본만 보던 감사가 '전수 점검'으로 바뀌는 방향.</p>
+        </div>
+        <div class="card eq">
+          <div class="ic">⏱</div>
+          <h4>실시간 공시</h4>
+          <p>1년에 한 번 결산이 아니라, 데이터가 모이는 대로 더 자주·빠르게 공개하라는 압력이 커지는 추세.</p>
+        </div>
+      </div>
+      <p class="note">위 전망은 현재 논의되는 방향을 정리한 시나리오이며, 확정된 미래가 아닙니다. 규제·기술 변화에 따라 달라질 수 있습니다.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="ask">
+        <div class="tag">생각해 볼 질문</div>
+        <p>회사의 가치를 평가할 때, 돈으로 환산되는 숫자(매출·이익) 말고도 점점 중요해지는 게 있다면 무엇일까요? 탄소? 직원 만족도? 데이터?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S7 IMPACT ===== -->
+<section id="s7">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">내 자산에 미치는 영향</div>
+      <h2>이게 내 통장과 무슨 상관일까</h2>
+      <p class="lead">재무제표는 회계사만의 것이 아닙니다. 주식·전세·취업 어디에나 닿아 있습니다.</p>
+    </div>
+
+    <div class="reveal">
+      <h3>실제 사례 · 오스템임플란트 횡령·분식</h3>
+
+      <div class="def-box">
+        <div class="tag">먼저, 분식회계란?</div>
+        <p><span class="em">분식(粉飾)</span>은 '분칠해 꾸민다'는 뜻. <span class="em">분식회계</span>는 회사 실적이 실제보다 좋아 보이도록 <span class="em">장부를 거짓으로 꾸미는 것</span>입니다. 손실을 숨기거나, 없는 매출을 만들거나, 현금이 많은 척 부풀리는 식이죠. 명백한 범죄입니다.</p>
+      </div>
+
+      <p>2022년 초, 임플란트 세계 4위 기업 오스템임플란트에서 자금관리 직원 한 명이 회사 자기자본을 넘는 거액(약 2,215억 원)을 빼돌린 사실이 드러났습니다. '단군 이래 최대 횡령'으로 불린 사건입니다.</p>
+
+      <details class="detail">
+        <summary>① 어떻게 한 명이 그 큰돈을 빼돌렸을까? <span class="chev">▶</span></summary>
+        <div class="dbody">
+          <p>핵심은 <strong>'돈을 관리하는 사람'과 '그 돈을 감시하는 사람'이 분리돼 있지 않았다</strong>는 점입니다. 문제의 직원은 회사 자금을 관리하는 <strong>재무팀장</strong>이었습니다.</p>
+          <p>그는 회사 계좌에서 돈을 빼내면서, 그 사실이 장부에 드러나지 않도록 <strong>잔액 증명서 등을 위조</strong>하는 방식으로 메꿨습니다. 빼돌릴 권한과 그것을 숨길 권한을 한 사람이 동시에 쥐고 있었던 것 — 이것이 바로 '<strong>내부통제 결함</strong>'입니다.</p>
+          <p>빼돌린 돈은 주식 단타, 금괴 851kg(약 680억 원), 부동산 등에 투자됐는데, 주식에서 큰 손실을 보면서 상당액이 회수 불가능해졌습니다.</p>
+        </div>
+      </details>
+
+      <details class="detail">
+        <summary>② 어떻게 발각됐을까? <span class="chev">▶</span></summary>
+        <div class="dbody">
+          <p>2021년 12월 말, 회사가 자금 상황을 점검하는 과정에서 <strong>장부상 현금과 실제 통장 잔액이 맞지 않는다</strong>는 사실이 포착됐습니다. 빼돌린 직원은 그 시점에 잠적했고, 회사는 12월 31일 경찰에 고소장을 제출하며 사건이 세상에 드러났습니다.</p>
+          <p>여기서 <strong>현금흐름·실제 잔액 대조</strong>가 결국 거짓을 잡아냈다는 점이 중요합니다. 앞서 배운 "현금은 거짓말하기 가장 어렵다"가 그대로 적용된 셈이죠.</p>
+          <p>이후 금융당국(증권선물위원회) 조사에서 회사가 <strong>투자 손실을 누락하고 현금자산을 부풀린 분식회계</strong> 사실까지 확인됐고, 대표이사 해임 권고와 검찰 통보로 이어졌습니다. 결국 2023년 코스닥 상장 16년 만에 상장폐지됐고, <strong>소액주주들이 큰 손실</strong>을 봤습니다.</p>
+        </div>
+      </details>
+
+      <div class="analogy">
+        <div class="tag">교훈</div>
+        <p>이 사건의 불씨는 멀리 있지 않았습니다. 2017년 금융당국 감리에서 이미 분식회계가 적발됐지만 경징계에 그쳤고, <strong>내부통제 결함이 방치된 것</strong>이 더 큰 사고로 이어졌습니다. 재무제표 뒤의 '현금 관리·내부통제'를 가볍게 본 대가를 결국 일반 투자자가 함께 치른 셈입니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>내 삶의 장면들</h3>
+      <div class="grid g2">
+        <div class="card asset">
+          <div class="ic">주식</div>
+          <h4>주식 투자</h4>
+          <p>'유명한 회사'라는 이유로 사기 전에, 부채비율과 영업현금흐름을 한 번만 봐도 지뢰를 피할 수 있습니다. 상장폐지·감자는 대개 재무제표가 미리 신호를 줍니다.</p>
+        </div>
+        <div class="card liab">
+          <div class="ic">전세</div>
+          <h4>전세·임대</h4>
+          <p>법인이 가진 건물에 전세로 들어갈 때, 그 법인의 재무상태가 부실하면 보증금 회수가 위험해질 수 있습니다.</p>
+        </div>
+        <div class="card eq">
+          <div class="ic">취업</div>
+          <h4>취업·이직</h4>
+          <p>가고 싶은 회사의 재무제표는 공개돼 있습니다. 적자가 누적되고 현금이 마르는 회사인지 미리 확인하면 커리어 리스크를 줄입니다.</p>
+        </div>
+        <div class="card asset">
+          <div class="ic">거래</div>
+          <h4>거래·납품</h4>
+          <p>외상으로 물건을 대주기 전, 거래처 재무제표로 '돈 떼일 위험'을 가늠하는 건 자영업자에게 생존의 문제입니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="quiz" data-answer="3">
+        <div class="qtag">Quiz 05</div>
+        <div class="q">오스템임플란트 사례가 일반 투자자에게 주는 핵심 교훈은?</div>
+        <button class="opt" data-i="0"><span class="mk">A</span>큰 회사 주식은 언제나 안전하다</button>
+        <button class="opt" data-i="1"><span class="mk">B</span>매출만 크면 믿어도 된다</button>
+        <button class="opt" data-i="2"><span class="mk">C</span>상장폐지는 미리 알 방법이 전혀 없다</button>
+        <button class="opt" data-i="3"><span class="mk">D</span>현금·내부통제의 부실 신호는 미리 나타나며, 결국 투자자가 피해를 본다</button>
+        <div class="explain"><div class="inner">정답은 <b>D</b>. 세계 4위 기업도 내부통제가 무너지면 상장폐지에 이를 수 있고, 그 손실은 소액주주가 떠안습니다. 게다가 2017년 감리에서 이미 경고가 있었습니다. <b>재무제표와 그 뒤의 현금·통제 신호를 읽는 능력</b>이 곧 내 자산을 지키는 힘입니다.</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>이 변화를 만든 사람 · 폴 사베인스</h3>
+      <div class="profile">
+        <div class="av">P</div>
+        <div>
+          <h4>폴 사베인스 (Paul Sarbanes)</h4>
+          <div class="role">전 미국 상원의원 (민주·메릴랜드)</div>
+          <p>엔론·월드컴 사태로 미국 증시 신뢰가 무너지자, 하원의 마이클 옥슬리 의원과 함께 2002년 회계개혁법(SOX)을 발의해 자신의 이름을 남겼습니다. 이 법은 CEO·CFO에게 재무제표 정확성을 직접 서명·책임지게 하고, 상장기업 감사를 감독하는 PCAOB를 만들었습니다. 오늘날 전 세계 회계 신뢰 제도의 한 축이 그의 이름을 달고 있으며, '재무 투명성'은 이후 각국 규제의 기본 원칙으로 자리잡았습니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S8 GLOSSARY & LINE ITEMS ===== -->
+<section id="s8">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">실전 도감</div>
+      <h2>재무제표를 펼치면 보이는 것들</h2>
+      <p class="lead">막상 보고서를 열면 낯선 용어가 쏟아집니다. 실제로 어떤 항목이 어디에 있는지, 그리고 자주 만나는 용어를 쉬운 말로 정리했어요.</p>
+    </div>
+
+    <div class="reveal">
+      <h3>① 실제 항목 미리보기 — 어디에 뭐가 적히나</h3>
+      <p>세 표에 실제로 등장하는 대표 줄(line item)들입니다. 처음엔 이 정도만 알아도 충분합니다.</p>
+
+      <div class="tbl-wrap fin-tbl">
+        <table>
+          <thead><tr><th>재무상태표에서 만나는 항목</th><th>쉽게 말하면</th></tr></thead>
+          <tbody>
+            <tr class="sub"><td colspan="2">자산 (가진 것)</td></tr>
+            <tr><td>현금및현금성자산</td><td>당장 쓸 수 있는 돈</td></tr>
+            <tr><td>매출채권</td><td>물건은 줬는데 아직 못 받은 외상값 (받을 권리)</td></tr>
+            <tr><td>재고자산</td><td>아직 안 팔린 상품·원재료</td></tr>
+            <tr><td>유형자산</td><td>건물·기계·토지 같은 만질 수 있는 재산</td></tr>
+            <tr class="sub"><td colspan="2">부채 (갚을 것)</td></tr>
+            <tr><td>매입채무</td><td>내가 아직 안 갚은 외상값 (줄 의무)</td></tr>
+            <tr><td>차입금</td><td>은행 등에서 빌린 돈</td></tr>
+            <tr class="sub"><td colspan="2">자본 (진짜 내 몫)</td></tr>
+            <tr><td>자본금</td><td>주주가 처음 낸 밑천</td></tr>
+            <tr><td>이익잉여금</td><td>그동안 번 이익 중 안 쓰고 쌓아둔 것</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-wrap fin-tbl">
+        <table>
+          <thead><tr><th>손익계산서에서 만나는 항목 (위에서 아래로)</th><th>쉽게 말하면</th></tr></thead>
+          <tbody>
+            <tr><td>매출액</td><td>팔아서 번 돈 전체</td></tr>
+            <tr><td>− 매출원가</td><td>그 물건을 만들거나 사 오는 데 든 돈</td></tr>
+            <tr><td>= 매출총이익</td><td>물건 자체에서 남긴 1차 이익</td></tr>
+            <tr><td>− 판매비와관리비</td><td>광고비·월급·임대료 등 운영 비용</td></tr>
+            <tr><td>= 영업이익</td><td><strong>본업으로 남긴 진짜 실력 이익</strong></td></tr>
+            <tr class="grand"><td>= 당기순이익</td><td>이자·세금까지 다 떼고 최종 남은 것</td></tr>
+          </tbody>
+        </table>
+        <div class="cap">손익계산서는 이렇게 '매출에서 비용을 단계별로 빼 내려가는' 구조입니다. 어느 단계에서 이익이 깎이는지를 보면 회사의 약점이 보여요.</div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <h3>② 자주 만나는 용어, 쉬운 풀이</h3>
+      <div class="gloss">
+        <div class="term"><div class="w">유동 / 비유동 <span class="en">current</span></div><p>'유동'은 1년 안에 현금이 되거나 갚아야 하는 것, '비유동'은 1년 넘게 걸리는 것. 시간 기준 분류입니다.</p></div>
+        <div class="term"><div class="w">부채비율 <span class="en">D/E</span></div><p>자본 대비 빚이 얼마나 되는지. 낮을수록 안전. 200%를 넘으면 빚이 자기 돈의 2배라는 뜻이라 주의해서 봅니다.</p></div>
+        <div class="term"><div class="w">영업이익률</div><p>매출에서 영업이익이 차지하는 비율. 100원 팔아 몇 원 남기는지를 보여주는 '장사 효율'.</p></div>
+        <div class="term"><div class="w">연결 / 별도</div><p>'연결'은 자회사까지 한 가족으로 묶은 숫자, '별도'는 그 회사 하나만의 숫자. 대기업은 보통 연결로 봅니다.</p></div>
+        <div class="term"><div class="w">감가상각</div><p>기계·건물이 해마다 닳는 만큼을 비용으로 나눠 반영하는 것. 1천만 원 기계를 10년 쓰면 매년 100만 원씩.</p></div>
+        <div class="term"><div class="w">충당금</div><p>아직 안 나갔지만 곧 나갈 게 뻔한 돈(못 받을 외상 등)을 미리 비용으로 잡아두는 것. 보수적으로 대비하는 장치.</p></div>
+        <div class="term"><div class="w">감사의견</div><p>외부 감사인의 판정. '적정'이면 합격, '한정·부적정·의견거절'이면 빨간불 — 상장폐지 사유가 되기도 합니다.</p></div>
+        <div class="term"><div class="w">자기자본이익률 <span class="en">ROE</span></div><p>내 돈(자본)으로 1년에 몇 % 이익을 냈는지. 주주 입장의 '투자 수익률'에 가깝습니다.</p></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="quiz" data-answer="1">
+        <div class="qtag">Quiz 06</div>
+        <div class="q">'매출채권'이 많은데 '현금'은 적은 회사. 무엇을 의심해야 할까요?</div>
+        <button class="opt" data-i="0"><span class="mk">A</span>이 회사는 무조건 우량하다</button>
+        <button class="opt" data-i="1"><span class="mk">B</span>팔긴 했지만 돈을 아직 못 받고 있을 수 있다 (현금 회수 위험)</button>
+        <button class="opt" data-i="2"><span class="mk">C</span>세금을 많이 냈다는 뜻이다</button>
+        <button class="opt" data-i="3"><span class="mk">D</span>자본금이 크다는 뜻이다</button>
+        <div class="explain"><div class="inner">정답은 <b>B</b>. 매출채권은 '받을 외상값'입니다. 이게 유난히 크고 현금이 마른다면, 장부상 매출은 잡혔지만 <b>실제 돈이 안 들어오고 있을</b> 가능성을 의심해야 합니다. 흑자도산의 전형적 신호이기도 합니다.</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="ask">
+        <div class="tag">생각해 볼 질문</div>
+        <p>오늘 배운 항목 중 딱 하나, 회사를 처음 볼 때 '가장 먼저 확인할 숫자'를 고른다면 무엇을 고르시겠어요? 그 이유는요?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S9 RECAP ===== -->
+<section id="recap">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">마무리</div>
+      <h2>오늘 기억할 7가지</h2>
+    </div>
+    <div class="reveal">
+      <ul class="recap-list">
+        <li><p><b>재무제표는 신뢰의 도구다.</b> 천재의 발명이 아니라, '남의 돈'을 맡은 회사가 정직한지 검증하려는 수백 년의 노력이 만든 방어 장치입니다.</p></li>
+        <li><p><b>심장은 회계 등식이다.</b> 자산 = 부채 + 자본. 자산이 크다고 좋은 게 아니라, 빚을 뺀 '자본'이 진짜 회사 가치입니다.</p></li>
+        <li><p><b>표는 세 장이 한 세트다.</b> 재무상태표(지금 상태)·손익계산서(기간의 성과)·현금흐름표(실제 현금)를 함께 봐야 합니다.</p></li>
+        <li><p><b>현금흐름표가 거짓말에 가장 강하다.</b> 이익은 부풀릴 수 있어도, 실제 들고 난 현금은 숨기기 어렵습니다. '흑자도산'을 기억하세요.</p></li>
+        <li><p><b>한국엔 다층 감시망이 있다.</b> 외부감사 → 금감원 감리 → 증선위 제재. 대형 사고(대우조선·오스템) 때마다 규칙이 촘촘해져 왔습니다.</p></li>
+        <li><p><b>'얼마 벌었나'보다 '어떻게 벌었나'.</b> 본업에서 현금으로 반복해 버는 이익이 질 좋은 이익입니다.</p></li>
+        <li><p><b>이건 내 자산의 문제다.</b> 주식·전세·취업 어디서든, 재무제표를 읽는 눈이 곧 내 돈을 지키는 힘입니다.</p></li>
+      </ul>
+    </div>
+
+    <div class="reveal">
+      <div class="discuss">
+        <div class="tag">마무리 토론</div>
+        <p>오늘 배운 세 장의 표 중 하나로, 당신이 관심 있는 회사(또는 다니는 회사)를 검진해 본다면 — 어떤 표를 먼저 펼치고, 가장 먼저 어떤 숫자를 확인하시겠어요? 그 이유를 옆 사람과 한 번 나눠 보세요.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <h4>출처 · 참고자료</h4>
+    <ul>
+      <li>한국회계기준원(KASB), K-IFRS 도입 경과 — kasb.or.kr</li>
+      <li>금융위원회, 외부감사법 개정(신외감법) 자료 — fsc.go.kr</li>
+      <li>삼성전자 2023년 연결 경영실적 공시 (매출·영업이익·당기순이익) — 삼성전자 IR / DART</li>
+      <li>코리아 디스카운트 원인 분석 — 자본시장연구원·KDI 경제교육정보센터</li>
+      <li>주식회사 등의 외부감사에 관한 법률 / 사베인스-옥슬리법 / 엔론 — 위키백과·나무위키·미래에셋증권 웹진</li>
+      <li>오스템임플란트 횡령·분식회계 및 증선위 조치 — 한국일보·파이낸셜뉴스·중앙일보 (2022~2024)</li>
+      <li>회계·복식부기 역사 — 한국민족문화대백과사전, taxwatch.co.kr</li>
+    </ul>
+    <p style="margin-top:18px;">전망 관련 내용은 <strong>확정된 예측이 아닌 시나리오</strong>이며, 시장·규제 변화에 따라 달라질 수 있습니다. 본 자료는 일반 교육용이며 특정 종목의 투자 권유가 아닙니다.</p>
+    <p style="margin-top:8px;color:#8a9690;">eco-lab · 재무제표 기초 · 2026</p>
+  </div>
+</footer>
+
+<button id="topbtn" aria-label="맨 위로">↑</button>
+
+<script>
+(function(){
+  // progress bar
+  var prog=document.getElementById('progress');
+  var topbtn=document.getElementById('topbtn');
+  function onScroll(){
+    var h=document.documentElement;
+    var sc=(h.scrollTop)/(h.scrollHeight-h.clientHeight);
+    prog.style.width=(sc*100)+'%';
+    topbtn.classList.toggle('show', h.scrollTop>600);
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  onScroll();
+
+  topbtn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+
+  // reveal on scroll
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);} });
+  },{threshold:0.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+
+  // TOC active highlight (scrollspy)
+  var links=Array.prototype.slice.call(document.querySelectorAll('#toc-list a'));
+  var sections=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function spy(){
+    var pos=window.scrollY+140;var idx=-1;
+    for(var i=0;i<sections.length;i++){ if(sections[i]&&sections[i].offsetTop<=pos) idx=i; }
+    links.forEach(function(l,i){l.classList.toggle('active',i===idx);});
+  }
+  window.addEventListener('scroll',spy,{passive:true});spy();
+
+  // TOC collapse
+  var tocHead=document.getElementById('tocHead');
+  var tocList=document.getElementById('toc-list');
+  var tocToggle=document.getElementById('tocToggle');
+  function toggleToc(){
+    var collapsed=tocList.classList.toggle('collapsed');
+    tocToggle.textContent=collapsed?'펼치기 +':'접기 −';
+    tocHead.setAttribute('aria-expanded',(!collapsed).toString());
+  }
+  tocHead.addEventListener('click',toggleToc);
+  tocHead.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleToc();} });
+
+  // quizzes
+  document.querySelectorAll('.quiz').forEach(function(q){
+    var ans=parseInt(q.getAttribute('data-answer'),10);
+    var opts=q.querySelectorAll('.opt');
+    var explain=q.querySelector('.explain');
+    var done=false;
+    opts.forEach(function(opt){
+      opt.addEventListener('click',function(){
+        if(done)return; done=true;
+        var i=parseInt(opt.getAttribute('data-i'),10);
+        opts.forEach(function(o){
+          var oi=parseInt(o.getAttribute('data-i'),10);
+          if(oi===ans)o.classList.add('correct');
+          else if(oi===i)o.classList.add('wrong');
+          else o.classList.add('dim');
+        });
+        explain.classList.add('show');
+      });
+    });
+  });
+
+  // side panel
+  var panel=document.getElementById('sidePanel');
+  var overlay=document.getElementById('overlay');
+  function openPanel(){panel.classList.add('open');overlay.classList.add('show');}
+  function closePanel(){panel.classList.remove('open');overlay.classList.remove('show');}
+  document.getElementById('panelBtn').addEventListener('click',openPanel);
+  document.getElementById('spClose').addEventListener('click',closePanel);
+  overlay.addEventListener('click',closePanel);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closePanel();});
+
+  // load presentations.json for side panel
+  fetch('../../presentations.json').then(function(r){return r.json();}).then(function(data){
+    var list=Array.isArray(data)?data:(data.presentations||[]);
+    var box=document.getElementById('spList');
+    var here=location.pathname.replace(/\/index\.html?$/,'').split('/').filter(Boolean).pop();
+    var html='<a href="../../">← 허브로 돌아가기</a>';
+    list.forEach(function(p){
+      var cls=p.parent?'child':'';
+      var cur=(p.slug===here)?' style="color:#e8c97a;font-weight:600;"':'';
+      html+='<a class="'+cls+'" href="../'+p.slug+'/"'+cur+'>'+(p.title||p.slug)+'</a>';
+    });
+    box.innerHTML=html;
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
